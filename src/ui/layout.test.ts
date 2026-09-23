@@ -1,7 +1,7 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { test } from "node:test";
 
-import { clock, place, usage } from "./layout.ts";
+import { clock, linesFor, place, usage } from "./layout.ts";
 import type { Day, Line, Seat, Status } from "./types.ts";
 
 const SEATS: Seat[] = [
@@ -52,6 +52,15 @@ test("something running past closing is clipped, not pushed off the grid", () =>
 test("something shorter than a row still gets one", () => {
   const { span } = place({ startsAt: "10:00", endsAt: "10:05" }, 600, 1200);
   strictEqual(span, 1);
+});
+
+test("a quarter-hour block holds one line, and says so", () => {
+  // The bug this replaces showed three lines in a box with room for one, so
+  // every short treatment had its guest's name cut through the middle.
+  strictEqual(linesFor(1), 1);
+  strictEqual(linesFor(2), 2);
+  strictEqual(linesFor(3), 3);
+  strictEqual(linesFor(12), 3);
 });
 
 test("the peak counts seats in use at once, not treatments in the day", () => {

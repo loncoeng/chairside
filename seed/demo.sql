@@ -70,19 +70,30 @@ INSERT OR IGNORE INTO currencies (code, rate_to_base, active, sort_order) VALUES
   ('HKD', 1.00, 1, 2),
   ('CNY', 1.00, 1, 3);
 
--- Invented customers. The mix of scripts is the point: the shop's guests
--- write their names in kanji, kana, Chinese and Latin, and search has to
--- cope. search_key holds a second spelling to find them by.
-INSERT OR IGNORE INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
-  (1,  '田中 美咲',   'tanaka misaki',  '6612 3401', '肩につく長さを維持',        '2021-06-12'),
-  (2,  '佐藤 健',     'sato ken',       '6612 3402', NULL,                         '2022-02-03'),
-  (3,  '陳 嘉雯',     'chan ka man',    '6612 3403', '広東語',                     '2020-11-20'),
-  (4,  'Emily Wong',  'wong emily',     '6612 3404', '英語のみ',                   '2023-08-05'),
-  (5,  '李 偉強',     'lei wai keong',  '6612 3405', NULL,                         '2019-03-18'),
-  (6,  'やまもと ゆか','yamamoto yuka', '6612 3406', '頭皮が弱い。薬剤は弱めで',   '2024-01-09'),
-  (7,  '黄 詩婷',     'wong sze ting',  '6612 3407', NULL,                         '2024-05-22'),
-  (8,  '松本 遼',     'matsumoto ryo',  '6612 3408', '毎回カットのみ',             '2022-09-30'),
-  (9,  'Sofia Lopes', 'lopes sofia',    '6612 3409', 'ポルトガル語／英語',         '2025-02-14'),
-  (10, '林 家豪',     'lam ka ho',      '6612 3410', NULL,                         '2023-12-01'),
-  (11, '渡辺 さくら', 'watanabe sakura','6612 3411', '前回より明るめ希望',         '2025-07-07'),
-  (12, '張 曉彤',     'cheung hiu tung','6612 3412', NULL,                         '2021-10-25');
+-- Invented customers.
+--
+-- Mostly local, which is what a salon in Macau looks like even when the
+-- stylist is Japanese. Three Japanese guests out of twelve, the rest Chinese
+-- with a couple of Portuguese-speaking regulars. An earlier draft had five
+-- Japanese names and read like a salon in Tokyo.
+--
+-- The mix of scripts is the point: names arrive in kanji, kana, Chinese and
+-- Latin, and search has to cope with all of them. search_key holds a second
+-- spelling to find them by.
+--
+-- REPLACE rather than IGNORE for this table: the public instance's sample
+-- identities belong to this file, so correcting one here corrects it there.
+-- A shop would never apply this file at all.
+INSERT OR REPLACE INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
+  (1,  '陳 嘉雯',     'chan ka man',     '6612 3401', '広東語。肩につく長さを維持', '2020-11-20'),
+  (2,  '李 偉強',     'lei wai keong',   '6612 3402', NULL,                          '2019-03-18'),
+  (3,  '黄 詩婷',     'wong sze ting',   '6612 3403', NULL,                          '2024-05-22'),
+  (4,  'Emily Wong',  'wong emily',      '6612 3404', '英語のみ',                    '2023-08-05'),
+  (5,  '張 曉彤',     'cheung hiu tung', '6612 3405', '前回より明るめ希望',          '2021-10-25'),
+  (6,  '林 家豪',     'lam ka ho',       '6612 3406', NULL,                          '2023-12-01'),
+  (7,  '何 俊傑',     'ho chun kit',     '6612 3407', '毎回カットのみ',              '2022-09-30'),
+  (8,  '吳 佩珊',     'ng pui shan',     '6612 3408', '頭皮が弱い。薬剤は弱めで',    '2024-01-09'),
+  (9,  'Sofia Lopes', 'lopes sofia',     '6612 3409', 'ポルトガル語／英語',          '2025-02-14'),
+  (10, 'Ana Ferreira','ferreira ana',    '6612 3410', NULL,                          '2025-06-03'),
+  (11, '田中 美咲',   'tanaka misaki',   '6612 3411', NULL,                          '2021-06-12'),
+  (12, '渡辺 さくら', 'watanabe sakura', '6612 3412', NULL,                          '2022-02-03');

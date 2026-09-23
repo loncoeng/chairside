@@ -1,0 +1,66 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # Called by deploy, so that nothing ships without passing first. Writing
+  # the same steps into deploy would let the two drift apart.
+  workflow_call:
+    secrets:
+      FORBIDDEN_TERMS:
+        required: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # publish-guard reads the whole history, so a shallow clone would
+          # make the check meaningless.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+
+      - name: Types
+        run: npm run check
+      - name: Build
+        run: npm run build
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The shop's name, the owner's name and the address must not reach the
+      # history. A public repository cannot carry that list in a committed
+      # config file — writing the terms down to forbid them would publish
+      # them — so they arrive from a secret and the config is built here.
+      #
+      # An unset secret skips the check loudly. Passing silently would be
+      # worse than failing.
+      - name: Nothing identifying in the history
+        env:
+          FORBIDDEN_TERMS: ${{ secrets.FORBIDDEN_TERMS }}
+        run: |
+          if [ -z "${FORBIDDEN_TERMS}" ]; then
+            echo "::warning::FORBIDDEN_TERMS is not set — the history was not checked."
+            exit 0
+          fi
+          python -m pip install --quiet publish-guard
+          python - <<'PY' > publish-guard.generated.toml
+          import os
+          terms = [t.strip() for t in os.environ["FORBIDDEN_TERMS"].splitlines() if t.strip()]
+          print("[forbidden]")
+          print("terms = [")
+          for t in terms:
+              print(f"  {t!r},".replace("'", '"'))
+          print("]")
+          PY
+          publish-guard verify . --config publish-guard.generated.toml
+          rm -f publish-guard.generated.toml

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+*.log
+*.sqlite
+*.sqlite3
+.DS_Store
+publish-guard.generated.toml
+publish-guard.local.toml

@@ -1,0 +1,150 @@
+/* Built for the shop's PC first and a phone second, but responsive from the
+   first screen rather than retrofitted. Going back over ninety pages to add
+   it later costs far more than doing it now. */
+
+:root {
+  --ground: #F4F3EF;
+  --surface: #FFFFFF;
+  --ink: #1C1B18;
+  --ink-soft: #5F5C55;
+  --ink-faint: #918D85;
+  --rule: #DAD7CF;
+  --accent: #8A5A3B;
+  --accent-soft: #F0E7E0;
+  --styling: #4B6FA8;
+  --shampoo: #3F8A7A;
+
+  --sans: "Hiragino Kaku Gothic ProN", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #171614;
+    --surface: #201E1B;
+    --ink: #E9E6E0;
+    --ink-soft: #A29D95;
+    --ink-faint: #74706A;
+    --rule: #34312C;
+    --accent: #C98C68;
+    --accent-soft: #2A241F;
+    --styling: #7E9FD4;
+    --shampoo: #6FB8A6;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem) 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.tagline { color: var(--ink-soft); margin: 0.25rem 0 0; }
+
+h2 {
+  font-size: 1.125rem;
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.lede { color: var(--ink-soft); margin: 0 0 1.25rem; max-width: 46ch; }
+
+.rows { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.row-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.row-label { font-weight: 600; }
+
+.row-count {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 0 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.row-note { color: var(--ink-faint); font-size: 0.8125rem; }
+
+.seats { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.seat {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.3rem 0.6rem;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.row:first-child .seat { border-bottom: 2px solid var(--styling); }
+.row:last-child .seat { border-bottom: 2px solid var(--shampoo); }
+
+.staff {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.4rem;
+}
+
+.staff li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.45rem 0.7rem;
+}
+
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+.role {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+}
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.25rem;
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+}
+
+footer p { margin: 0; max-width: 52ch; }
+code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }

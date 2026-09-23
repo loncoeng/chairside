@@ -17,3 +17,16 @@ preview_urls = false
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+
+# The database. SQLite underneath, which is what lets the same schema run on a
+# shop PC and in the browser demo.
+#
+# database_id is an identifier, not a credential — it is useless without an API
+# token — so it belongs in the repository. Committing it is what makes a fresh
+# clone deploy against the right database instead of silently creating a second
+# one.
+[[d1_databases]]
+binding = "DB"
+database_name = "chairside"
+database_id = "d41da5eb-cb84-4a59-ad0c-4c5d0cc6ec72"
+migrations_dir = "./migrations"

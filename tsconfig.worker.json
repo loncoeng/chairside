@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // No DOM. The Worker runtime has its own globals, and letting `document`
+    // typecheck in code that runs on the edge is how a browser-only call gets
+    // shipped.
+    "lib": ["ES2023"],
+    "types": ["./worker-configuration.d.ts"]
+  },
+  "include": ["src/worker", "src/db", "worker-configuration.d.ts"]
+}

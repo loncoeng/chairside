@@ -16,5 +16,5 @@
     "jsxImportSource": "preact",
     "types": ["node"]
   },
-  "include": ["src", "scripts", "vite.config.ts"]
+  "include": ["src/ui", "src/db", "scripts", "vite.config.ts"]
 }

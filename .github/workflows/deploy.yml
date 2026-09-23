@@ -51,6 +51,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      # Sample rows, for the public instance only. INSERT OR IGNORE with the
+      # ids written out, so running it on every deploy adds nothing the
+      # second time. A shop would never apply this file.
+      - name: Put the sample rows in
+        run: npx wrangler d1 execute chairside --remote --file seed/demo.sql
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Ship it
         run: npx wrangler deploy
         env:
@@ -59,17 +68,46 @@ jobs:
 
       # Check that what was shipped actually answers. Without this, a deploy
       # that put nothing reachable on the internet is recorded as a success.
+      #
+      # The API is checked too, and separately. The page is static and will
+      # keep loading with the database gone, so a page that renders says
+      # nothing about whether D1 is reachable.
       - name: Does it answer
         run: |
-          url=https://chairside.loncoeng.workers.dev/
+          base=https://chairside.loncoeng.workers.dev
           for attempt in 1 2 3 4 5; do
-            code=$(curl -s -o /tmp/body -w '%{http_code}' --max-time 20 "$url" || true)
-            if [ "$code" = "200" ] && grep -q 'chairside' /tmp/body; then
-              echo "answering"
-              exit 0
+            code=$(curl -s -o /tmp/page -w '%{http_code}' --max-time 20 "$base/" || true)
+            if [ "$code" = "200" ] && grep -q 'chairside' /tmp/page; then
+              echo "the page answers"
+              break
             fi
             echo "not yet (HTTP $code) — attempt $attempt/5"
             sleep 10
+            if [ "$attempt" = "5" ]; then echo "deployed, but nothing answered"; exit 1; fi
           done
-          echo "deployed, but nothing answered"
-          exit 1
+
+          # run_worker_first sends /api/* to the Worker. If that is wrong, the
+          # SPA fallback returns the HTML page with a 200 on it, so the body
+          # is checked, not just the status.
+          code=$(curl -s -o /tmp/api -w '%{http_code}' --max-time 20 "$base/api/room" || true)
+          echo "GET /api/room -> HTTP $code"
+          head -c 400 /tmp/api; echo
+          if [ "$code" != "200" ]; then
+            echo "the API did not answer"
+            exit 1
+          fi
+          if ! grep -q '"seats"' /tmp/api; then
+            echo "the API answered, but not with JSON from the database"
+            exit 1
+          fi
+
+          # 12 seats and 8 on the team, from seed/demo.sql. A reply with empty
+          # arrays is still valid JSON, and would pass a check that only looked
+          # at the shape.
+          seats=$(grep -o '"id"' /tmp/api | wc -l)
+          echo "rows returned (seats + staff): $seats"
+          if [ "$seats" -lt 20 ]; then
+            echo "the database answered, but came back short"
+            exit 1
+          fi
+          echo "the database answers"

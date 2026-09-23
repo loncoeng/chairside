@@ -13,10 +13,16 @@ preview_urls = false
 # have to sit above it. Written underneath, they are silently ignored and
 # the setting never takes effect.
 
-# The interface ships as static files. The API comes later.
+# The API. Static files are still served without waking this up.
+main = "./src/worker/index.ts"
+
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+# Without this, an unmatched path falls to the SPA fallback and /api/room
+# comes back as the HTML page with a 200 on it — which looks like it works
+# until something tries to parse it.
+run_worker_first = ["/api/*"]
 
 # The database. SQLite underneath, which is what lets the same schema run on a
 # shop PC and in the browser demo.

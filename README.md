@@ -69,7 +69,7 @@ Each stage ends with a deploy. Building the whole thing and shipping once at
 the end leaves nothing standing when a step goes wrong partway.
 
 - [x] **1 — Shell.** Deployed and reachable, no database yet
-- [ ] 2 — D1 and the schema
+- [x] **2 — D1 and the schema.** The screen reads its rows off the database
 - [ ] 3 — The calendar, and taking a booking
 - [ ] 4 — Customers and treatment records
 - [ ] 5 — Payments and revenue
@@ -82,6 +82,9 @@ the end leaves nothing standing when a step goes wrong partway.
 npm install
 npm run dev
 ```
+
+`npm run dev` serves the interface on its own; the API needs the Worker, so
+`npx wrangler dev` runs both together against a local copy of the database.
 
 ## Personal data
 

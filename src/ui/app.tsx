@@ -1,16 +1,39 @@
-// Stage one: the shell, deployed and reachable, with no database behind it
-// yet. Building everything and deploying once at the end leaves nothing
-// standing when a step goes wrong partway.
-//
-// What this screen shows is the shape of the room — the seats and their
-// kinds — because that is what the schema is built around and the first
-// thing worth seeing on a calendar.
+// Stage two: the same screen, now reading from D1 instead of a file of
+// constants. The shape of the room is the first thing a calendar needs, so
+// it is the first thing to come off the database.
 
-import { SEATS, STAFF } from "./fixtures.ts";
+import { useEffect, useState } from "preact/hooks";
+
+type Seat = { id: number; name: string; kind: "styling" | "shampoo" };
+type Person = { id: number; name: string; role: string; color: string | null };
+type Room = { seats: Seat[]; staff: Person[] };
+
+type State =
+  | { status: "loading" }
+  | { status: "ready"; room: Room }
+  | { status: "failed"; reason: string };
 
 export function App() {
-  const styling = SEATS.filter((s) => s.kind === "styling");
-  const shampoo = SEATS.filter((s) => s.kind === "shampoo");
+  const [state, setState] = useState<State>({ status: "loading" });
+
+  useEffect(() => {
+    // Abandoned if the component goes away mid-request, so a late response
+    // cannot write into a screen that has moved on.
+    const stop = new AbortController();
+
+    fetch("/api/room", { signal: stop.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return (await response.json()) as Room;
+      })
+      .then((room) => setState({ status: "ready", room }))
+      .catch((error: unknown) => {
+        if (stop.signal.aborted) return;
+        setState({ status: "failed", reason: String(error) });
+      });
+
+    return () => stop.abort();
+  }, []);
 
   return (
     <main>
@@ -19,39 +42,74 @@ export function App() {
         <p class="tagline">Booking and customer records for one hair salon.</p>
       </header>
 
+      {state.status === "loading" && <p class="lede">Reading the room…</p>}
+
+      {/* Said plainly rather than shown as an empty room. A screen that
+          quietly renders nothing is read as "no bookings today". */}
+      {state.status === "failed" && (
+        <p class="failed" role="alert">
+          The database did not answer. <span class="reason">{state.reason}</span>
+        </p>
+      )}
+
+      {state.status === "ready" && <Room room={state.room} />}
+
+      <footer>
+        <p>
+          Stage two. The rows above come from D1 — the same SQLite schema that
+          runs on a shop PC and in the browser demo. Why it is shaped this way
+          is in <code>DESIGN.md</code>.
+        </p>
+      </footer>
+    </main>
+  );
+}
+
+function Room({ room }: { room: Room }) {
+  const styling = room.seats.filter((s) => s.kind === "styling");
+  const shampoo = room.seats.filter((s) => s.kind === "shampoo");
+
+  return (
+    <>
       <section aria-labelledby="room">
         <h2 id="room">The room</h2>
         <p class="lede">
-          Nine styling chairs, three shampoo stations, {STAFF.length} stylists. The
-          ceilings are different for each, which is why they are not one kind of seat.
+          {styling.length} styling chairs, {shampoo.length} shampoo stations,{" "}
+          {room.staff.length} on the team. The ceilings are different for each, which
+          is why they are not one kind of seat.
         </p>
 
         <div class="rows">
-          <SeatRow label="Styling chairs" seats={styling} note="one more than there are stylists" />
-          <SeatRow label="Shampoo stations" seats={shampoo} note="contested in the evening" />
+          <SeatRow
+            label="Styling chairs"
+            seats={styling}
+            note="one more than there are stylists"
+          />
+          <SeatRow
+            label="Shampoo stations"
+            seats={shampoo}
+            note="contested in the evening"
+          />
         </div>
       </section>
 
       <section aria-labelledby="staff">
         <h2 id="staff">On the team</h2>
         <ul class="staff">
-          {STAFF.map((person) => (
+          {room.staff.map((person) => (
             <li key={person.id}>
-              <span class="dot" style={{ background: person.color }} aria-hidden="true" />
+              <span
+                class="dot"
+                style={{ background: person.color ?? "#888" }}
+                aria-hidden="true"
+              />
               {person.name}
               <span class="role">{person.role}</span>
             </li>
           ))}
         </ul>
       </section>
-
-      <footer>
-        <p>
-          Stage one. No database yet — everything above is invented sample data.
-          The schema, and why it is shaped this way, is in <code>DESIGN.md</code>.
-        </p>
-      </footer>
-    </main>
+    </>
   );
 }
 

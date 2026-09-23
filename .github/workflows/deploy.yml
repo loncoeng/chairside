@@ -48,7 +48,9 @@ jobs:
       # that put nothing reachable on the internet is recorded as a success.
       - name: Does it answer
         run: |
-          url=https://chairside.loncoeng.workers.dev/
+          # The workers.dev subdomain belongs to Cloudflare and was not
+          # affected by the GitHub rename, so it still has the hyphen.
+          url=https://chairside.lon-coeng.workers.dev/
           for attempt in 1 2 3 4 5; do
             code=$(curl -s -o /tmp/body -w '%{http_code}' --max-time 20 "$url" || true)
             if [ "$code" = "200" ] && grep -q 'chairside' /tmp/body; then

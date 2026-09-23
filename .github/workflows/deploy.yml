@@ -3,7 +3,7 @@
 # Tests are not copied in here; test.yml is called, so the two cannot drift.
 #
 # Required secrets:
-#   CLOUDFLARE_API_TOKEN    scoped to Workers only
+#   CLOUDFLARE_API_TOKEN    Workers Scripts:Edit and D1:Edit
 #   CLOUDFLARE_ACCOUNT_ID   where it goes
 
 name: deploy
@@ -37,6 +37,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+
+      # Before the code that expects the tables, not after. A deploy that
+      # lands first would run against a database it does not match.
+      #
+      # Applying an already-applied migration is a no-op: wrangler keeps its
+      # own record in the database, so re-running this on every push is safe.
+      # The command asks for confirmation interactively; on a non-interactive
+      # terminal it skips the question and still takes a backup first.
+      - name: Bring the database up to date
+        run: npx wrangler d1 migrations apply chairside --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Ship it
         run: npx wrangler deploy

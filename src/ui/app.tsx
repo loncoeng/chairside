@@ -1,137 +1,151 @@
-// Stage two: the same screen, now reading from D1 instead of a file of
-// constants. The shape of the room is the first thing a calendar needs, so
-// it is the first thing to come off the database.
+// Stage three: the day. The room from stage two is still here, further down,
+// because the calendar only makes sense once you know what the columns are.
 
-import { useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
+import { Calendar, Peak } from "./calendar.tsx";
+import type { Day, Room } from "./types.ts";
+import { shiftDate, todayInShop, weekdayName } from "./types.ts";
 
-type Seat = { id: number; name: string; kind: "styling" | "shampoo" };
-type Person = { id: number; name: string; role: string; color: string | null };
-type Room = { seats: Seat[]; staff: Person[] };
-
-type State =
+type Load<T> =
   | { status: "loading" }
-  | { status: "ready"; room: Room }
+  | { status: "ready"; value: T }
   | { status: "failed"; reason: string };
 
+async function get<T>(path: string, signal: AbortSignal): Promise<T> {
+  const response = await fetch(path, { signal });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as T;
+}
+
 export function App() {
-  const [state, setState] = useState<State>({ status: "loading" });
+  const [date, setDate] = useState(todayInShop);
+  const [room, setRoom] = useState<Load<Room>>({ status: "loading" });
+  const [day, setDay] = useState<Load<Day>>({ status: "loading" });
 
   useEffect(() => {
-    // Abandoned if the component goes away mid-request, so a late response
-    // cannot write into a screen that has moved on.
     const stop = new AbortController();
-
-    fetch("/api/room", { signal: stop.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return (await response.json()) as Room;
-      })
-      .then((room) => setState({ status: "ready", room }))
+    get<Room>("/api/room", stop.signal)
+      .then((value) => setRoom({ status: "ready", value }))
       .catch((error: unknown) => {
-        if (stop.signal.aborted) return;
-        setState({ status: "failed", reason: String(error) });
+        if (!stop.signal.aborted) setRoom({ status: "failed", reason: String(error) });
       });
-
     return () => stop.abort();
   }, []);
 
+  useEffect(() => {
+    const stop = new AbortController();
+    setDay({ status: "loading" });
+    get<Day>(`/api/day?date=${date}`, stop.signal)
+      .then((value) => setDay({ status: "ready", value }))
+      .catch((error: unknown) => {
+        if (!stop.signal.aborted) setDay({ status: "failed", reason: String(error) });
+      });
+    return () => stop.abort();
+  }, [date]);
+
+  const go = useCallback((days: number) => setDate((d) => shiftDate(d, days)), []);
+
   return (
-    <main>
+    <main class="wide">
       <header>
         <h1>chairside</h1>
         <p class="tagline">Booking and customer records for one hair salon.</p>
       </header>
 
-      {state.status === "loading" && <p class="lede">Reading the room…</p>}
+      <section aria-labelledby="day">
+        <div class="day-bar">
+          <h2 id="day">
+            {date}
+            <span class="day-weekday">（{weekdayName(new Date(`${date}T00:00:00Z`).getUTCDay())}）</span>
+          </h2>
+          <div class="day-nav">
+            <button type="button" onClick={() => go(-1)} aria-label="前の日">
+              ←
+            </button>
+            <button type="button" onClick={() => setDate(todayInShop())} disabled={date === todayInShop()}>
+              今日
+            </button>
+            <button type="button" onClick={() => go(1)} aria-label="次の日">
+              →
+            </button>
+          </div>
+        </div>
 
-      {/* Said plainly rather than shown as an empty room. A screen that
-          quietly renders nothing is read as "no bookings today". */}
-      {state.status === "failed" && (
-        <p class="failed" role="alert">
-          The database did not answer. <span class="reason">{state.reason}</span>
-        </p>
-      )}
+        {day.status === "loading" && <p class="lede">読み込み中…</p>}
 
-      {state.status === "ready" && <Room room={state.room} />}
+        {day.status === "failed" && (
+          <p class="failed" role="alert">
+            この日の予約を読み込めませんでした。<span class="reason">{day.reason}</span>
+          </p>
+        )}
+
+        {day.status === "ready" && room.status === "ready" && (
+          <>
+            {day.value.holidays.length > 0 && (
+              <p class="holiday-note">
+                {day.value.holidays.map((h) => `${h.region}：${h.name}`).join("　")}
+              </p>
+            )}
+
+            <Peak day={day.value} seats={room.value.seats} />
+            <Calendar day={day.value} seats={room.value.seats} />
+
+            {/* Sample data sits on a fixed week, so a visitor arriving later
+                lands on an empty day. Saying where the data is beats showing
+                an empty grid and leaving them to guess. */}
+            {day.value.lines.length > 0 || !day.value.bookedRange?.from ? null : (
+              <p class="lede">
+                この日に予約はありません。サンプルは{" "}
+                <button type="button" class="link" onClick={() => setDate(day.value.bookedRange!.from!)}>
+                  {day.value.bookedRange.from} 〜 {day.value.bookedRange.to}
+                </button>{" "}
+                に入っています。
+              </p>
+            )}
+          </>
+        )}
+      </section>
+
+      <section aria-labelledby="room">
+        <h2 id="room">The room</h2>
+        {room.status === "ready" && <RoomSummary room={room.value} />}
+        {room.status === "failed" && (
+          <p class="failed" role="alert">
+            The database did not answer. <span class="reason">{room.reason}</span>
+          </p>
+        )}
+      </section>
 
       <footer>
         <p>
-          Stage two. The rows above come from D1 — the same SQLite schema that
-          runs on a shop PC and in the browser demo. Why it is shaped this way
-          is in <code>DESIGN.md</code>.
+          Stage three. The grid is one column per seat and one row per quarter
+          hour, reading from D1. Why the room is counted this way is in{" "}
+          <code>DESIGN.md</code>.
         </p>
       </footer>
     </main>
   );
 }
 
-function Room({ room }: { room: Room }) {
-  const styling = room.seats.filter((s) => s.kind === "styling");
-  const shampoo = room.seats.filter((s) => s.kind === "shampoo");
+function RoomSummary({ room }: { room: Room }) {
+  const styling = room.seats.filter((s) => s.kind === "styling").length;
+  const shampoo = room.seats.filter((s) => s.kind === "shampoo").length;
 
   return (
     <>
-      <section aria-labelledby="room">
-        <h2 id="room">The room</h2>
-        <p class="lede">
-          {styling.length} styling chairs, {shampoo.length} shampoo stations,{" "}
-          {room.staff.length} on the team. The ceilings are different for each, which
-          is why they are not one kind of seat.
-        </p>
-
-        <div class="rows">
-          <SeatRow
-            label="Styling chairs"
-            seats={styling}
-            note="one more than there are stylists"
-          />
-          <SeatRow
-            label="Shampoo stations"
-            seats={shampoo}
-            note="contested in the evening"
-          />
-        </div>
-      </section>
-
-      <section aria-labelledby="staff">
-        <h2 id="staff">On the team</h2>
-        <ul class="staff">
-          {room.staff.map((person) => (
-            <li key={person.id}>
-              <span
-                class="dot"
-                style={{ background: person.color ?? "#888" }}
-                aria-hidden="true"
-              />
-              {person.name}
-              <span class="role">{person.role}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </>
-  );
-}
-
-function SeatRow(props: {
-  label: string;
-  note: string;
-  seats: readonly { id: number; name: string }[];
-}) {
-  return (
-    <div class="row">
-      <div class="row-head">
-        <span class="row-label">{props.label}</span>
-        <span class="row-count">{props.seats.length}</span>
-        <span class="row-note">{props.note}</span>
-      </div>
-      <div class="seats">
-        {props.seats.map((seat) => (
-          <span class="seat" key={seat.id}>
-            {seat.name}
-          </span>
+      <p class="lede">
+        セット面 {styling} 台、シャンプー台 {shampoo} 台、在籍 {room.staff.length} 名。
+        上限になるものが種類ごとに違うので、ひとまとめの「席」にはしていません。
+      </p>
+      <ul class="staff">
+        {room.staff.map((person) => (
+          <li key={person.id}>
+            <span class="dot" style={{ background: person.color ?? "#888" }} aria-hidden="true" />
+            {person.name}
+            <span class="role">{person.role}</span>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </>
   );
 }

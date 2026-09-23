@@ -63,7 +63,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Ship it
-        run: npx wrangler deploy
+        run: npx wrangler deploy --var BUILD:${{ github.sha }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -74,23 +74,28 @@ jobs:
         run: |
           base=https://chairside.loncoeng.workers.dev
 
-          # Which bundle this build produced. The edge can still be serving
-          # the previous version for a few seconds after wrangler returns, and
-          # checking "does a page come back" passes against the old one — so
-          # wait for this exact filename before believing anything below.
+          # The edge can still be serving the previous version for a few
+          # seconds after wrangler returns, so wait for this commit by name
+          # before believing anything below.
+          #
+          # Asking the Worker rather than looking at the bundle filename: a
+          # change that touches only the API leaves the assets byte-identical,
+          # and a check that watched the bundle would pass against the old
+          # code without noticing.
           bundle=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)
-          echo "waiting for $bundle"
+          echo "waiting for ${GITHUB_SHA} and $bundle"
 
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
-            code=$(curl -s -o /tmp/page -w '%{http_code}' --max-time 20 "$base/" || true)
-            if [ "$code" = "200" ] && grep -q "$bundle" /tmp/page; then
-              echo "this build is live"
+            live=$(curl -s --max-time 20 "$base/api/version" || true)
+            page=$(curl -s -o /tmp/page -w '%{http_code}' --max-time 20 "$base/" || true)
+            if echo "$live" | grep -q "$GITHUB_SHA" && [ "$page" = "200" ] && grep -q "$bundle" /tmp/page; then
+              echo "this commit is live"
               break
             fi
-            echo "not this build yet (HTTP $code) — attempt $attempt/10"
+            echo "not yet — worker says ${live:-nothing}, page HTTP $page (attempt $attempt/10)"
             sleep 6
             if [ "$attempt" = "10" ]; then
-              echo "deployed, but the edge never served this build"
+              echo "deployed, but the edge never served this commit"
               exit 1
             fi
           done

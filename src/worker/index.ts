@@ -24,6 +24,11 @@ export default {
     const url = new URL(request.url);
 
     try {
+      // Which commit is answering. Asked for by the deploy check, which
+      // otherwise cannot tell new code from old.
+      if (url.pathname === "/api/version") {
+        return json({ build: env.BUILD });
+      }
       if (url.pathname === "/api/room") {
         return json(await room(env));
       }

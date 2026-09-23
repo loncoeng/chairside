@@ -28,6 +28,23 @@ export function place(
   };
 }
 
+/**
+ * How many lines of text a block has room for.
+ *
+ * Worked out rather than guessed: a row is 1.3rem, the text is 0.72rem at
+ * 1.25 line height, and a block loses about 4px to padding and borders. A
+ * quarter-hour block therefore holds one line and no more.
+ *
+ * Getting this wrong does not look like a bug. It looks like a name with its
+ * bottom half sliced off, which reads as a rendering glitch rather than as
+ * too much text in too small a box.
+ */
+export function linesFor(span: number): 1 | 2 | 3 {
+  if (span <= 1) return 1;
+  if (span === 2) return 2;
+  return 3;
+}
+
 export type Usage = {
   kind: "styling" | "shampoo";
   /** The most seats of this kind in use at once. */

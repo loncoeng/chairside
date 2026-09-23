@@ -313,13 +313,16 @@ button.link {
 
 .cal-who { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-what { color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cal-by { color: var(--ink-faint); font-size: 0.68rem; margin-top: auto; }
+.cal-by { color: var(--ink-faint); font-size: 0.68rem; margin-top: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-nom { color: var(--accent); margin-right: 1px; }
 
-/* A short line has room for one line of text and no more, so the service
-   name is dropped rather than clipped mid-character. */
-.cal-block.is-short { padding-top: 0; }
-.cal-block.is-short .cal-by { display: none; }
+/* How many lines a block shows is decided in layout.ts from its height, and
+   the ones that do not fit are not rendered at all. Hiding them here instead
+   would still let a third line push the first one out of view — the clipping
+   this replaces looked like a rendering fault rather than too much text. */
+.cal-block.rows-1 { padding-top: 0; padding-bottom: 0; }
+.cal-block.rows-1 .cal-who { line-height: 1.15; }
+.cal-block > span { min-height: 0; }
 
 .cal-block.is-done { opacity: 0.62; }
 .cal-block.is-arrived { box-shadow: inset 0 0 0 1px var(--accent); }

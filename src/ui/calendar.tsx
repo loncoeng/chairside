@@ -7,7 +7,7 @@
 
 import type { Day, Line, Seat } from "./types.ts";
 import { minutesOf } from "./types.ts";
-import { STEP, clock, place, usage } from "./layout.ts";
+import { STEP, clock, linesFor, place, usage } from "./layout.ts";
 
 export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
   const { opensAt, closesAt } = day.hours;
@@ -35,7 +35,7 @@ export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
         class="cal"
         style={{
           gridTemplateColumns: `4rem repeat(${columns.length}, minmax(5.5rem, 1fr))`,
-          gridTemplateRows: `auto repeat(${rows}, 1.15rem)`,
+          gridTemplateRows: `auto repeat(${rows}, 1.3rem)`,
         }}
       >
         <div class="cal-corner" />
@@ -78,6 +78,7 @@ export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
             <Block
               key={line.itemId}
               line={line}
+              lines={linesFor(span)}
               style={{ gridColumn: col, gridRow: `${row} / span ${span}` }}
             />
           );
@@ -87,12 +88,18 @@ export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
   );
 }
 
-function Block({ line, style }: { line: Line; style: Record<string, string | number> }) {
-  const short = minutesOf(line.endsAt) - minutesOf(line.startsAt) <= 20;
-
+function Block({
+  line,
+  lines,
+  style,
+}: {
+  line: Line;
+  lines: 1 | 2 | 3;
+  style: Record<string, string | number>;
+}) {
   return (
     <div
-      class={`cal-block is-${line.status}${short ? " is-short" : ""}`}
+      class={`cal-block is-${line.status} rows-${lines}`}
       style={{ ...style, borderLeftColor: line.staffColor ?? "var(--ink-faint)" }}
       title={`${line.startsAt}–${line.endsAt}　${line.customerName ?? "—"}　${line.serviceJa ?? ""}　${line.staffName ?? ""}`}
     >
@@ -100,8 +107,8 @@ function Block({ line, style }: { line: Line; style: Record<string, string | num
         {line.nominated && <span class="cal-nom" title="指名">★</span>}
         {line.customerName ?? "—"}
       </span>
-      {!short && <span class="cal-what">{line.serviceJa}</span>}
-      <span class="cal-by">{line.staffName}</span>
+      {lines >= 2 && <span class="cal-what">{line.serviceJa}</span>}
+      {lines >= 3 && <span class="cal-by">{line.staffName}</span>}
     </div>
   );
 }

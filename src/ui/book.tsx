@@ -7,6 +7,8 @@
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type { Person } from "./types.ts";
+import { useText } from "./lang-context.ts";
+import { serviceName } from "./i18n.ts";
 
 export type Service = {
   id: number;
@@ -20,7 +22,13 @@ export type Service = {
 
 export type Customer = { id: number; name: string; searchKey: string | null };
 
-type Verdict = { level: "stop" | "warn"; code: string; message: string };
+type Verdict = {
+  level: "stop" | "warn";
+  code: string;
+  /** Japanese, from the server. Used only for a code this build cannot name. */
+  message: string;
+  data?: Record<string, string | number>;
+};
 
 type Reply = {
   ok?: boolean;
@@ -45,6 +53,7 @@ export function BookingForm({
   onBooked: () => void;
   onClose: () => void;
 }) {
+  const { t, lang, verdict: sayVerdict } = useText();
   const [startsAt, setStartsAt] = useState("10:00");
   const [staffId, setStaffId] = useState<number | null>(staff[0]?.id ?? null);
   const [customerId, setCustomerId] = useState<number | null>(null);
@@ -116,17 +125,17 @@ export function BookingForm({
   const stopped = verdicts.some((v) => v.level === "stop");
 
   return (
-    <div class="sheet" role="dialog" aria-label="予約を取る">
+    <div class="sheet" role="dialog" aria-label={t("takeBooking")}>
       <div class="sheet-head">
-        <h3>{date} に予約を取る</h3>
-        <button type="button" class="sheet-close" onClick={onClose} aria-label="閉じる">
+        <h3>{t("bookOn", { date })}</h3>
+        <button type="button" class="sheet-close" onClick={onClose} aria-label={t("close")}>
           ×
         </button>
       </div>
 
       <div class="field-row">
         <label class="field">
-          <span>開始</span>
+          <span>{t("startsAt")}</span>
           <input
             type="time"
             step={900}
@@ -136,7 +145,7 @@ export function BookingForm({
         </label>
 
         <label class="field">
-          <span>担当</span>
+          <span>{t("withWhom")}</span>
           <select
             value={staffId ?? ""}
             onChange={(e) => setStaffId(Number((e.target as HTMLSelectElement).value) || null)}
@@ -150,12 +159,12 @@ export function BookingForm({
         </label>
 
         <label class="field">
-          <span>お客様</span>
+          <span>{t("guest")}</span>
           <select
             value={customerId ?? ""}
             onChange={(e) => setCustomerId(Number((e.target as HTMLSelectElement).value) || null)}
           >
-            <option value="">（未登録）</option>
+            <option value="">{t("noGuest")}</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -167,8 +176,10 @@ export function BookingForm({
 
       <fieldset class="menu">
         <legend>
-          メニュー
-          {minutes > 0 && <span class="menu-total">合計 {minutes} 分</span>}
+          {t("menu")}
+          {minutes > 0 && (
+            <span class="menu-total">{t("totalMinutes", { n: minutes })}</span>
+          )}
         </legend>
         <div class="menu-grid">
           {services.map((service) => {
@@ -184,8 +195,8 @@ export function BookingForm({
                 {/* The order is shown because it decides the times: the lines
                     run back to back from the start, shampoo first. */}
                 {order >= 0 && <span class="menu-order">{order + 1}</span>}
-                <span class="menu-name">{service.nameJa}</span>
-                <span class="menu-min">{service.durationMin}分</span>
+                <span class="menu-name">{serviceName(lang, service)}</span>
+                <span class="menu-min">{t("minutes", { n: service.durationMin })}</span>
               </button>
             );
           })}
@@ -199,10 +210,10 @@ export function BookingForm({
             checked={nominated}
             onChange={(e) => setNominated((e.target as HTMLInputElement).checked)}
           />
-          <span>指名</span>
+          <span>{t("nominated")}</span>
         </label>
         <label class="field grow">
-          <span>メモ</span>
+          <span>{t("note")}</span>
           <input
             type="text"
             value={note}
@@ -222,8 +233,8 @@ export function BookingForm({
         <ul class="verdicts">
           {verdicts.map((v) => (
             <li key={v.code + v.message} class={`verdict is-${v.level}`}>
-              <span class="verdict-tag">{v.level === "stop" ? "不可" : "確認"}</span>
-              {v.message}
+              <span class="verdict-tag">{v.level === "stop" ? t("tagStop") : t("tagWarn")}</span>
+              {sayVerdict(v)}
             </li>
           ))}
         </ul>
@@ -231,7 +242,7 @@ export function BookingForm({
 
       <div class="sheet-actions">
         <button type="button" onClick={onClose}>
-          やめる
+          {t("cancel")}
         </button>
 
         {/* Two buttons rather than one that changes meaning. Confirming a
@@ -239,7 +250,7 @@ export function BookingForm({
             same button twice without noticing. */}
         {needsConfirmation && !stopped ? (
           <button type="button" class="primary" disabled={sending} onClick={() => send(true)}>
-            確認のうえ入れる
+            {t("submitAnyway")}
           </button>
         ) : (
           <button
@@ -248,7 +259,7 @@ export function BookingForm({
             disabled={sending || chosen.length === 0}
             onClick={() => send(false)}
           >
-            {sending ? "送信中…" : "予約を入れる"}
+            {sending ? t("sending") : t("submit")}
           </button>
         )}
       </div>

@@ -69,7 +69,11 @@ h2 {
   border-bottom: 1px solid var(--rule);
 }
 
-.lede { color: var(--ink-soft); margin: 0 0 1.25rem; max-width: 46ch; }
+/* `ch` is the width of a zero. Japanese and Chinese glyphs are about twice
+   that, so 46ch wrapped at roughly 23 characters and the summary came out
+   three short lines in a very wide column. `em` tracks the font size and
+   measures the same for all three languages. */
+.lede { color: var(--ink-soft); margin: 0 0 1.25rem; max-width: 38em; }
 
 .rows { display: flex; flex-direction: column; gap: 1.25rem; }
 
@@ -158,7 +162,7 @@ code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }
   border-radius: 6px;
   padding: 0.85rem 1rem;
   margin: 0 0 1.25rem;
-  max-width: 46ch;
+  max-width: 38em;
 }
 
 .failed .reason {
@@ -478,3 +482,34 @@ button.primary:disabled { opacity: 0.45; }
 .closed-note strong { color: var(--accent); }
 
 .cal-head-unassigned { color: var(--ink-faint); }
+
+/* The language switch, in the corner. */
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.langs { display: flex; gap: 0.25rem; flex-shrink: 0; }
+
+.langs button {
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0.15rem 0.6rem;
+  cursor: pointer;
+}
+
+.langs button:hover { color: var(--accent); border-color: var(--accent); }
+
+.langs button.is-on {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}

@@ -7,18 +7,30 @@
 
 import type { Day, Line, Seat } from "./types.ts";
 import { STEP, clock, linesFor, place, span as gridSpan, usage } from "./layout.ts";
+import { useText } from "./lang-context.ts";
+import { serviceName } from "./i18n.ts";
+import type { Service } from "./book.tsx";
 
 /** The column for treatments that have no seat yet. */
 const UNASSIGNED = -1;
 
-export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
+export function Calendar({
+  day,
+  seats,
+  services,
+}: {
+  day: Day;
+  seats: Seat[];
+  services: Service[];
+}) {
+  const { t, lang } = useText();
   const { open, close } = gridSpan(day);
 
   const unusual = day.hours.closed || day.closure !== null;
   const notice = unusual ? <ClosedNotice day={day} hasBookings={day.lines.length > 0} /> : null;
 
   if (close <= open) {
-    return <div class="cal-closed">{notice ?? <p class="lede">この日の予定はありません。</p>}</div>;
+    return <div class="cal-closed">{notice ?? <p class="lede">{t("noSchedule")}</p>}</div>;
   }
 
   const rows = Math.ceil((close - open) / STEP);
@@ -32,7 +44,7 @@ export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
   // first version did: the booking went in, the API returned it, and the
   // screen quietly had nowhere to put it.
   if (day.lines.some((line) => line.seatId === null)) {
-    columns.push({ id: UNASSIGNED, name: "未定", kind: "unassigned" });
+    columns.push({ id: UNASSIGNED, name: t("unassigned"), kind: "unassigned" });
   }
 
   const column = new Map(columns.map((seat, index) => [seat.id, index + 2]));
@@ -92,11 +104,13 @@ export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
             if (col === undefined) return null;
 
             const cell = place(line, open, close);
+            const service = services.find((s) => s.id === line.serviceId);
 
             return (
               <Block
                 key={line.itemId}
                 line={line}
+                what={service ? serviceName(lang, service) : (line.serviceJa ?? "")}
                 lines={linesFor(cell.span)}
                 style={{ gridColumn: col, gridRow: `${cell.row} / span ${cell.span}` }}
               />
@@ -110,10 +124,12 @@ export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
 
 function Block({
   line,
+  what,
   lines,
   style,
 }: {
   line: Line;
+  what: string;
   lines: 1 | 2 | 3;
   style: Record<string, string | number>;
 }) {
@@ -121,17 +137,17 @@ function Block({
     <div
       class={`cal-block is-${line.status} rows-${lines}`}
       style={{ ...style, borderLeftColor: line.staffColor ?? "var(--ink-faint)" }}
-      title={`${line.startsAt}–${line.endsAt}　${line.customerName ?? "—"}　${line.serviceJa ?? ""}　${line.staffName ?? ""}`}
+      title={`${line.startsAt}–${line.endsAt}　${line.customerName ?? "—"}　${what}　${line.staffName ?? ""}`}
     >
       <span class="cal-who">
         {line.nominated && (
-          <span class="cal-nom" title="指名">
+          <span class="cal-nom">
             ★
           </span>
         )}
         {line.customerName ?? "—"}
       </span>
-      {lines >= 2 && <span class="cal-what">{line.serviceJa}</span>}
+      {lines >= 2 && <span class="cal-what">{what}</span>}
       {lines >= 3 && <span class="cal-by">{line.staffName}</span>}
     </div>
   );
@@ -150,19 +166,25 @@ function Block({
  * party showed "closed" and hid the bookings.
  */
 function ClosedNotice({ day, hasBookings }: { day: Day; hasBookings: boolean }) {
+  const { t } = useText();
+
   return (
     <p class="closed-note" role="note">
-      {day.hours.closed && <strong>定休日</strong>}
+      {day.hours.closed && <strong>{t("closedDay")}</strong>}
       {day.closure && (
-        <strong>臨時休業{day.closure.reason ? `：${day.closure.reason}` : ""}</strong>
+        <strong>
+          {t("closure")}
+          {day.closure.reason ? `：${day.closure.reason}` : ""}
+        </strong>
       )}
-      {hasBookings ? "ですが、予約が入っています。" : "です。"}
+      {hasBookings ? t("butBooked") : t("fullStop")}
     </p>
   );
 }
 
 /** How full it gets, and when. The arithmetic is in layout.ts, under test. */
 export function Peak({ day, seats }: { day: Day; seats: Seat[] }) {
+  const { t } = useText();
   const counts = usage(day, seats);
   if (counts.length === 0 || day.lines.length === 0) return null;
 
@@ -171,12 +193,12 @@ export function Peak({ day, seats }: { day: Day; seats: Seat[] }) {
       {counts.map((u) => (
         <li key={u.kind} class={u.full ? "is-full" : undefined}>
           <span class={`peak-dot peak-${u.kind}`} aria-hidden="true" />
-          <span class="peak-label">{u.kind === "styling" ? "セット面" : "シャンプー台"}</span>
+          <span class="peak-label">{t(u.kind)}</span>
           <span class="peak-n">
             {u.peak} / {u.total}
           </span>
-          <span class="peak-at">{clock(u.at)} が最も混む</span>
-          {u.full && <span class="peak-note">満席</span>}
+          <span class="peak-at">{t("busiestAt", { at: clock(u.at) })}</span>
+          {u.full && <span class="peak-note">{t("full")}</span>}
         </li>
       ))}
     </ul>

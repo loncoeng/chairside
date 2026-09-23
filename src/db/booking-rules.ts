@@ -17,7 +17,17 @@
 export type Verdict = {
   level: "stop" | "warn";
   code: string;
+  /**
+   * Japanese, and a fallback.
+   *
+   * The screen builds its own wording from `code` and `data`, because the
+   * shop works in three languages and a sentence assembled on the server can
+   * only be in one of them. This stays so that anything not going through the
+   * screen — curl, a log line, a future integration — still reads.
+   */
   message: string;
+  /** The parts of the message, for a client that wants to say it its own way. */
+  data?: Record<string, string | number>;
 };
 
 /** A treatment being placed, before it has an id. */
@@ -89,6 +99,7 @@ export function check(
         level: "stop",
         code: "backwards",
         message: `終わりが始まりより前になっています（${draft.startsAt}→${draft.endsAt}）。`,
+        data: { from: draft.startsAt, to: draft.endsAt },
       });
     }
   }
@@ -103,6 +114,7 @@ export function check(
         level: "stop",
         code: "staff-double-booked",
         message: `${busy.staffName ?? "担当者"}は ${busy.startsAt}–${busy.endsAt} に別の施術が入っています。`,
+        data: { who: busy.staffName ?? "", from: busy.startsAt, to: busy.endsAt },
       });
     }
   }
@@ -115,6 +127,7 @@ export function check(
         level: "stop",
         code: "seat-taken",
         message: `${nameOf.get(draft.seatId) ?? "この席"}は ${taken.startsAt}–${taken.endsAt} に使用中です。`,
+        data: { seat: nameOf.get(draft.seatId) ?? "", from: taken.startsAt, to: taken.endsAt },
       });
     }
   }
@@ -156,6 +169,7 @@ export function check(
         level: "warn",
         code: "outside-hours",
         message: `営業時間（${opensAt}–${closesAt}）の外にかかります。`,
+        data: { opensAt, closesAt },
       });
     }
   }
@@ -189,6 +203,7 @@ export function check(
           kind === "shampoo"
             ? `この時間はシャンプー台 ${total} 台がすべて埋まっています。`
             : `この時間はセット面 ${total} 台がすべて埋まっています。`,
+        data: { total },
       });
     }
   }

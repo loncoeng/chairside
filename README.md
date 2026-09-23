@@ -71,7 +71,7 @@ the end leaves nothing standing when a step goes wrong partway.
 - [x] **1 — Shell.** Deployed and reachable, no database yet
 - [x] **2 — D1 and the schema.** The screen reads its rows off the database
 - [x] **3a — The calendar.** A day as a grid, one column per seat
-- [ ] 3b — Taking a booking
+- [x] **3b — Taking a booking.** Refuse the impossible, say the rest out loud
 - [ ] 4 — Customers and treatment records
 - [ ] 5 — Payments and revenue
 - [ ] 6 — Holidays, opening hours, staff

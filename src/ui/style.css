@@ -338,3 +338,143 @@ button.link {
 
 .cal-closed-why { margin: 0 0 0.35rem; font-weight: 600; color: var(--accent); }
 .cal-closed .lede { margin: 0; max-width: none; }
+
+/* --- Taking a booking ---------------------------------------------------- */
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFF;
+}
+button.primary:hover:not(:disabled) { filter: brightness(1.08); color: #FFF; }
+button.primary:disabled { opacity: 0.45; }
+
+/* Above the calendar rather than over it: the grid is what the receptionist
+   is reading from while they take the booking, and a panel on top of it hides
+   the answer to the question being asked on the phone. */
+.sheet {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 1rem 1.1rem 1.1rem;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-head h3 { margin: 0; font-size: 1rem; }
+
+.sheet-close {
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+}
+
+.field-row { display: flex; flex-wrap: wrap; gap: 0.75rem 1.1rem; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.82rem; }
+.field > span { color: var(--ink-soft); }
+.field.grow { flex: 1 1 14rem; }
+.field.check { flex-direction: row; align-items: center; gap: 0.35rem; }
+
+.field input,
+.field select {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--ground);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0.25rem 0.45rem;
+}
+
+.field.check input { width: auto; }
+
+.menu { border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.8rem 0.8rem; margin: 0; }
+.menu legend { font-size: 0.82rem; color: var(--ink-soft); padding: 0 0.35rem; }
+.menu-total { color: var(--accent); margin-left: 0.6rem; font-variant-numeric: tabular-nums; }
+
+.menu-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.menu-item {
+  font: inherit;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--ground);
+  color: var(--ink);
+  padding: 0.2rem 0.75rem;
+  cursor: pointer;
+}
+
+.menu-item.is-on { border-color: var(--accent); background: var(--accent-soft); }
+.menu-min { color: var(--ink-faint); font-size: 0.75rem; }
+
+/* The number is the order the lines run in, which is what decides the times:
+   shampoo first, then the cut. Without it, picking two services and getting
+   them in the other order looks like a bug. */
+.menu-order {
+  background: var(--accent);
+  color: #FFF;
+  border-radius: 999px;
+  min-width: 1.15em;
+  text-align: center;
+  font-size: 0.7rem;
+  padding: 0 0.3em;
+}
+
+.verdicts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+
+.verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0.35rem 0.6rem;
+}
+
+.verdict-tag {
+  font-size: 0.72rem;
+  border-radius: 3px;
+  padding: 0 0.35rem;
+  white-space: nowrap;
+}
+
+/* Refused and merely unusual do not look alike. One is the end of the
+   matter; the other is a sentence the shop reads and then decides on. */
+.verdict.is-stop { border-color: #B4553F; }
+.verdict.is-stop .verdict-tag { background: #B4553F; color: #FFF; }
+.verdict.is-warn { border-color: var(--accent); background: var(--accent-soft); }
+.verdict.is-warn .verdict-tag { border: 1px solid var(--accent); color: var(--accent); }
+
+.sheet-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.sheet-actions button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0.3rem 0.9rem;
+  cursor: pointer;
+}
+
+.closed-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.closed-note strong { color: var(--accent); }
+
+.cal-head-unassigned { color: var(--ink-faint); }

@@ -6,22 +6,35 @@
 // laying the room out this way puts that on screen instead of in a document.
 
 import type { Day, Line, Seat } from "./types.ts";
-import { minutesOf } from "./types.ts";
-import { STEP, clock, linesFor, place, usage } from "./layout.ts";
+import { STEP, clock, linesFor, place, span as gridSpan, usage } from "./layout.ts";
+
+/** The column for treatments that have no seat yet. */
+const UNASSIGNED = -1;
 
 export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
-  const { opensAt, closesAt } = day.hours;
-  if (day.hours.closed || !opensAt || !closesAt) {
-    return <Closed day={day} />;
+  const { open, close } = gridSpan(day);
+
+  const unusual = day.hours.closed || day.closure !== null;
+  const notice = unusual ? <ClosedNotice day={day} hasBookings={day.lines.length > 0} /> : null;
+
+  if (close <= open) {
+    return <div class="cal-closed">{notice ?? <p class="lede">この日の予定はありません。</p>}</div>;
   }
 
-  const open = minutesOf(opensAt);
-  const close = minutesOf(closesAt);
   const rows = Math.ceil((close - open) / STEP);
 
   const styling = seats.filter((s) => s.kind === "styling");
   const shampoo = seats.filter((s) => s.kind === "shampoo");
-  const columns = [...styling, ...shampoo];
+  const columns: { id: number; name: string; kind: string }[] = [...styling, ...shampoo];
+
+  // A treatment booked without a station is not an error and must not vanish.
+  // It gets a column of its own rather than being dropped, which is what the
+  // first version did: the booking went in, the API returned it, and the
+  // screen quietly had nowhere to put it.
+  if (day.lines.some((line) => line.seatId === null)) {
+    columns.push({ id: UNASSIGNED, name: "未定", kind: "unassigned" });
+  }
+
   const column = new Map(columns.map((seat, index) => [seat.id, index + 2]));
 
   // Every whole hour gets a label. Labelling every quarter turns the left
@@ -30,61 +43,68 @@ export function Calendar({ day, seats }: { day: Day; seats: Seat[] }) {
   for (let at = Math.ceil(open / 60) * 60; at < close; at += 60) hourMarks.push(at);
 
   return (
-    <div class="cal-scroll">
-      <div
-        class="cal"
-        style={{
-          gridTemplateColumns: `4rem repeat(${columns.length}, minmax(5.5rem, 1fr))`,
-          gridTemplateRows: `auto repeat(${rows}, 1.3rem)`,
-        }}
-      >
-        <div class="cal-corner" />
+    <>
+      {notice}
+      <div class="cal-scroll">
+        <div
+          class="cal"
+          style={{
+            gridTemplateColumns: `4rem repeat(${columns.length}, minmax(5.5rem, 1fr))`,
+            gridTemplateRows: `auto repeat(${rows}, 1.3rem)`,
+          }}
+        >
+          <div class="cal-corner" />
 
-        {columns.map((seat) => (
-          <div key={seat.id} class={`cal-head cal-head-${seat.kind}`} style={{ gridColumn: column.get(seat.id) }}>
-            {seat.name}
-          </div>
-        ))}
+          {columns.map((seat) => (
+            <div
+              key={seat.id}
+              class={`cal-head cal-head-${seat.kind}`}
+              style={{ gridColumn: column.get(seat.id) }}
+            >
+              {seat.name}
+            </div>
+          ))}
 
-        {hourMarks.map((at) => (
-          <div
-            key={`t${at}`}
-            class="cal-time"
-            style={{ gridRow: (at - open) / STEP + 2, gridColumn: 1 }}
-          >
-            {String(Math.floor(at / 60)).padStart(2, "0")}:00
-          </div>
-        ))}
+          {hourMarks.map((at) => (
+            <div
+              key={`t${at}`}
+              class="cal-time"
+              style={{ gridRow: (at - open) / STEP + 2, gridColumn: 1 }}
+            >
+              {clock(at)}
+            </div>
+          ))}
 
-        {/* One line across the whole row. Without it the eye cannot follow a
-            time across twelve columns. Kept as its own pass rather than a
-            fragment per hour, which would need a key on the fragment. */}
-        {hourMarks.map((at) => (
-          <div
-            key={`r${at}`}
-            class="cal-rule"
-            style={{ gridRow: (at - open) / STEP + 2, gridColumn: `2 / span ${columns.length}` }}
-            aria-hidden="true"
-          />
-        ))}
-
-        {day.lines.map((line) => {
-          const col = line.seatId === null ? undefined : column.get(line.seatId);
-          if (col === undefined) return null;
-
-          const { row, span } = place(line, open, close);
-
-          return (
-            <Block
-              key={line.itemId}
-              line={line}
-              lines={linesFor(span)}
-              style={{ gridColumn: col, gridRow: `${row} / span ${span}` }}
+          {/* One line across the whole row. Without it the eye cannot follow a
+              time across twelve columns. Kept as its own pass rather than a
+              fragment per hour, which would need a key on the fragment. */}
+          {hourMarks.map((at) => (
+            <div
+              key={`r${at}`}
+              class="cal-rule"
+              style={{ gridRow: (at - open) / STEP + 2, gridColumn: `2 / span ${columns.length}` }}
+              aria-hidden="true"
             />
-          );
-        })}
+          ))}
+
+          {day.lines.map((line) => {
+            const col = column.get(line.seatId ?? UNASSIGNED);
+            if (col === undefined) return null;
+
+            const cell = place(line, open, close);
+
+            return (
+              <Block
+                key={line.itemId}
+                line={line}
+                lines={linesFor(cell.span)}
+                style={{ gridColumn: col, gridRow: `${cell.row} / span ${cell.span}` }}
+              />
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -104,7 +124,11 @@ function Block({
       title={`${line.startsAt}–${line.endsAt}　${line.customerName ?? "—"}　${line.serviceJa ?? ""}　${line.staffName ?? ""}`}
     >
       <span class="cal-who">
-        {line.nominated && <span class="cal-nom" title="指名">★</span>}
+        {line.nominated && (
+          <span class="cal-nom" title="指名">
+            ★
+          </span>
+        )}
         {line.customerName ?? "—"}
       </span>
       {lines >= 2 && <span class="cal-what">{line.serviceJa}</span>}
@@ -114,25 +138,30 @@ function Block({
 }
 
 /**
- * A day with no grid on it.
+ * Why the day is not a normal one.
  *
- * Three different reasons, said separately. "Closed" as a catch-all leaves
- * whoever is looking unable to tell a regular day off from a decision
- * somebody made.
+ * Three different things, said separately. A closed Monday is a rule, a
+ * closure is a decision somebody made, and a holiday is information the shop
+ * may well open through. "Closed" as a catch-all leaves whoever is looking
+ * unable to tell them apart.
+ *
+ * Said above the grid rather than instead of it. An earlier version returned
+ * this in place of the calendar, so a Monday the shop opened for a wedding
+ * party showed "closed" and hid the bookings.
  */
-function Closed({ day }: { day: Day }) {
+function ClosedNotice({ day, hasBookings }: { day: Day; hasBookings: boolean }) {
   return (
-    <div class="cal-closed">
-      {day.hours.closed && <p class="cal-closed-why">定休日</p>}
-      {day.closure && <p class="cal-closed-why">臨時休業{day.closure.reason ? `：${day.closure.reason}` : ""}</p>}
-      <p class="lede">この日は予約を受け付けていません。</p>
-    </div>
+    <p class="closed-note" role="note">
+      {day.hours.closed && <strong>定休日</strong>}
+      {day.closure && (
+        <strong>臨時休業{day.closure.reason ? `：${day.closure.reason}` : ""}</strong>
+      )}
+      {hasBookings ? "ですが、予約が入っています。" : "です。"}
+    </p>
   );
 }
 
-/**
- * How full it gets, and when. The arithmetic is in layout.ts, under test.
- */
+/** How full it gets, and when. The arithmetic is in layout.ts, under test. */
 export function Peak({ day, seats }: { day: Day; seats: Seat[] }) {
   const counts = usage(day, seats);
   if (counts.length === 0 || day.lines.length === 0) return null;

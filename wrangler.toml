@@ -16,6 +16,15 @@ preview_urls = false
 # The API. Static files are still served without waking this up.
 main = "./src/worker/index.ts"
 
+# Which commit is live. Overridden at deploy time with --var BUILD:<sha>.
+#
+# Static assets carry a content hash in their filename, so waiting for a
+# particular bundle proves the new assets are being served. A Worker-only
+# change has no such signal, and a check run straight after a deploy passes
+# against the code that was there before. This is that signal.
+[vars]
+BUILD = "dev"
+
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"

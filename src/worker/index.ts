@@ -18,6 +18,7 @@ import {
   services,
   staff,
 } from "../db/schema.ts";
+import { createBooking, customerList, menu } from "./booking-api.ts";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -31,6 +32,16 @@ export default {
       }
       if (url.pathname === "/api/room") {
         return json(await room(env));
+      }
+      // The one endpoint that writes.
+      if (url.pathname === "/api/bookings" && request.method === "POST") {
+        return await createBooking(env, request);
+      }
+      if (url.pathname === "/api/services") {
+        return json(await menu(drizzle(env.DB)));
+      }
+      if (url.pathname === "/api/customers") {
+        return json(await customerList(drizzle(env.DB)));
       }
       if (url.pathname === "/api/day") {
         const date = url.searchParams.get("date") ?? today();

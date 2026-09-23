@@ -7,5 +7,9 @@
     "lib": ["ES2023"],
     "types": ["./worker-configuration.d.ts"]
   },
-  "include": ["src/worker", "src/db", "worker-configuration.d.ts"]
+  "include": ["src/worker", "src/db", "worker-configuration.d.ts"],
+  // Tests run under Node and use node:test. They never ship to the edge, and
+  // typechecking them against the Worker's lib reports node: imports as
+  // missing modules.
+  "exclude": ["**/*.test.ts"]
 }

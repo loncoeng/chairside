@@ -3,6 +3,8 @@
 
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { Calendar, Peak } from "./calendar.tsx";
+import { BookingForm } from "./book.tsx";
+import type { Customer, Service } from "./book.tsx";
 import type { Day, Room } from "./types.ts";
 import { shiftDate, todayInShop, weekdayName } from "./types.ts";
 
@@ -21,6 +23,11 @@ export function App() {
   const [date, setDate] = useState(todayInShop);
   const [room, setRoom] = useState<Load<Room>>({ status: "loading" });
   const [day, setDay] = useState<Load<Day>>({ status: "loading" });
+  const [services, setServices] = useState<Service[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [booking, setBooking] = useState(false);
+  // Bumped after a booking goes in, to pull the day again.
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     const stop = new AbortController();
@@ -34,6 +41,22 @@ export function App() {
 
   useEffect(() => {
     const stop = new AbortController();
+    Promise.all([
+      get<Service[]>("/api/services", stop.signal),
+      get<Customer[]>("/api/customers", stop.signal),
+    ])
+      .then(([menu, people]) => {
+        setServices(menu);
+        setCustomers(people);
+      })
+      // The form is the only thing that needs these. Failing to load them
+      // should not take the calendar down with it.
+      .catch(() => undefined);
+    return () => stop.abort();
+  }, []);
+
+  useEffect(() => {
+    const stop = new AbortController();
     setDay({ status: "loading" });
     get<Day>(`/api/day?date=${date}`, stop.signal)
       .then((value) => setDay({ status: "ready", value }))
@@ -41,7 +64,7 @@ export function App() {
         if (!stop.signal.aborted) setDay({ status: "failed", reason: String(error) });
       });
     return () => stop.abort();
-  }, [date]);
+  }, [date, revision]);
 
   const go = useCallback((days: number) => setDate((d) => shiftDate(d, days)), []);
 
@@ -68,8 +91,30 @@ export function App() {
             <button type="button" onClick={() => go(1)} aria-label="次の日">
               →
             </button>
+            <button
+              type="button"
+              class="primary"
+              onClick={() => setBooking(true)}
+              disabled={services.length === 0}
+            >
+              予約を取る
+            </button>
           </div>
         </div>
+
+        {booking && (
+          <BookingForm
+            date={date}
+            staff={room.status === "ready" ? room.value.staff : []}
+            services={services}
+            customers={customers}
+            onBooked={() => {
+              setBooking(false);
+              setRevision((n) => n + 1);
+            }}
+            onClose={() => setBooking(false)}
+          />
+        )}
 
         {day.status === "loading" && <p class="lede">読み込み中…</p>}
 

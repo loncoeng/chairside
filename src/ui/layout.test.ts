@@ -1,7 +1,7 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { test } from "node:test";
 
-import { clock, linesFor, place, usage } from "./layout.ts";
+import { clock, linesFor, place, span, usage } from "./layout.ts";
 import type { Day, Line, Seat, Status } from "./types.ts";
 
 const SEATS: Seat[] = [
@@ -114,7 +114,26 @@ test("the shampoo stations fill before the chairs do", () => {
   strictEqual(counts.find((u) => u.kind === "styling")!.full, false);
 });
 
-test("a closed day reports nothing rather than zeroes", () => {
+test("a closed day with nothing on it reports nothing rather than zeroes", () => {
   const shut = day([], { opensAt: null, closesAt: null, closed: true });
   deepStrictEqual(usage(shut, SEATS), []);
+  deepStrictEqual(span(shut), { open: 0, close: 0 });
+});
+
+test("a closed day that has bookings still gets a grid", () => {
+  // The shop opens on a Monday for a wedding party. The booking screen allows
+  // it, so the calendar has to show it — an earlier version printed "closed"
+  // in place of the grid and the booking disappeared.
+  const monday = day(
+    [line({ itemId: 1, seatId: 1, startsAt: "13:00", endsAt: "13:45" })],
+    { opensAt: null, closesAt: null, closed: true },
+  );
+
+  deepStrictEqual(span(monday), { open: 13 * 60, close: 14 * 60 });
+  strictEqual(usage(monday, SEATS).find((u) => u.kind === "styling")!.peak, 1);
+});
+
+test("something booked past closing widens the grid to hold it", () => {
+  const late = day([line({ itemId: 1, seatId: 1, startsAt: "19:45", endsAt: "21:15" })]);
+  deepStrictEqual(span(late), { open: 10 * 60, close: 22 * 60 });
 });

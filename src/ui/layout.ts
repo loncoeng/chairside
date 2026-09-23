@@ -9,6 +9,32 @@ import { minutesOf } from "./types.ts";
 export const STEP = 15;
 
 /**
+ * When the grid starts and ends.
+ *
+ * Opening hours where there are any, widened to cover anything booked outside
+ * them. Where there are none — a Monday the shop opened anyway — the bookings
+ * themselves decide.
+ *
+ * A day with a booking on it has to be able to show that booking. Returning
+ * "closed, nothing to see" hides the very thing somebody opened the day to
+ * look at, and the booking screen deliberately lets such bookings be made.
+ */
+export function span(day: Day): { open: number; close: number } {
+  const { opensAt, closesAt, closed } = day.hours;
+  const usual = !closed && opensAt !== null && closesAt !== null;
+
+  let open = usual ? minutesOf(opensAt!) : 24 * 60;
+  let close = usual ? minutesOf(closesAt!) : 0;
+
+  for (const line of day.lines) {
+    open = Math.min(open, Math.floor(minutesOf(line.startsAt) / 60) * 60);
+    close = Math.max(close, Math.ceil(minutesOf(line.endsAt) / 60) * 60);
+  }
+
+  return close > open ? { open, close } : { open: 0, close: 0 };
+}
+
+/**
  * Where a treatment sits in the grid.
  *
  * Row 1 is the header, so the first quarter hour of the day is row 2.
@@ -66,11 +92,11 @@ export type Usage = {
  * room busier than it was and make the number useless for planning.
  */
 export function usage(day: Day, seats: Seat[]): Usage[] {
-  const { opensAt, closesAt } = day.hours;
-  if (day.hours.closed || !opensAt || !closesAt) return [];
+  // Measured over whatever the grid covers, not over the opening hours, so a
+  // day the shop opened outside its pattern still gets counted.
+  const { open, close } = span(day);
+  if (close <= open) return [];
 
-  const open = minutesOf(opensAt);
-  const close = minutesOf(closesAt);
   const kindOf = new Map(seats.map((s) => [s.id, s.kind]));
 
   const peak: Record<string, { n: number; at: number }> = {

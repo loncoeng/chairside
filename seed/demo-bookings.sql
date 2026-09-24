@@ -226,7 +226,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (197, 139, '2026-07-04', '13:15', '15:05', 'done', 1, 'staff', NULL),
   (198, 196, '2026-07-04', '13:30', '15:20', 'done', 0, 'staff', NULL),
   (199, NULL, '2026-07-04', '13:45', '15:35', 'done', 1, 'staff', NULL),
-  (200, 133, '2026-07-04', '13:45', '15:35', 'done', 1, 'wechat', NULL),
+  (200, 133, '2026-07-04', '13:45', '15:35', 'done', 1, 'wechat', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (201, 136, '2026-07-04', '14:30', '16:20', 'done', 1, 'staff', NULL),
   (202, 335, '2026-07-04', '14:30', '15:00', 'done', 0, 'wechat', NULL),
   (203, 299, '2026-07-04', '14:30', '15:35', 'done', 1, 'phone', NULL),
@@ -426,7 +428,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (397, 146, '2026-07-10', '12:00', '13:05', 'done', 1, 'wechat', NULL),
   (398, 207, '2026-07-10', '10:00', '11:05', 'done', 1, 'staff', NULL),
   (399, 237, '2026-07-10', '12:15', '12:45', 'done', 0, 'staff', NULL),
-  (400, 153, '2026-07-10', '12:30', '14:20', 'done', 1, 'wechat', NULL),
+  (400, 153, '2026-07-10', '12:30', '14:20', 'done', 1, 'wechat', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (401, 131, '2026-07-10', '12:30', '12:45', 'done', 1, 'phone', NULL),
   (402, 162, '2026-07-10', '12:30', '12:45', 'cancelled', 1, 'wechat', NULL),
   (403, 128, '2026-07-10', '12:45', '13:15', 'done', 1, 'phone', NULL),
@@ -626,7 +630,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (597, 210, '2026-07-15', '17:15', '17:30', 'done', 1, 'phone', NULL),
   (598, 241, '2026-07-15', '17:30', '17:45', 'no_show', 1, 'wechat', NULL),
   (599, NULL, '2026-07-15', '16:45', '19:05', 'done', 1, 'phone', NULL),
-  (600, 229, '2026-07-15', '17:45', '19:20', 'done', 1, 'staff', NULL),
+  (600, 229, '2026-07-15', '17:45', '19:20', 'done', 1, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (601, 115, '2026-07-15', '18:00', '18:30', 'done', 0, 'staff', NULL),
   (602, 267, '2026-07-15', '18:00', '18:15', 'done', 0, 'wechat', NULL),
   (603, 125, '2026-07-15', '13:00', '14:50', 'done', 1, 'staff', NULL),
@@ -826,7 +832,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (797, NULL, '2026-07-21', '10:00', '10:15', 'done', 1, 'phone', NULL),
   (798, 236, '2026-07-21', '10:00', '10:30', 'done', 0, 'staff', NULL),
   (799, NULL, '2026-07-21', '17:00', '18:05', 'done', 0, 'staff', NULL),
-  (800, 171, '2026-07-21', '10:00', '13:20', 'done', 0, 'phone', NULL),
+  (800, 171, '2026-07-21', '10:00', '13:20', 'done', 0, 'phone', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (801, 306, '2026-07-21', '17:15', '17:45', 'done', 0, 'wechat', NULL),
   (802, NULL, '2026-07-21', '17:30', '18:00', 'done', 0, 'staff', NULL),
   (803, 266, '2026-07-21', '10:00', '12:20', 'done', 0, 'phone', NULL),
@@ -1026,7 +1034,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (997, NULL, '2026-07-26', '11:30', '12:35', 'done', 1, 'staff', NULL),
   (998, 292, '2026-07-26', '11:45', '12:15', 'done', 0, 'staff', NULL),
   (999, NULL, '2026-07-26', '12:00', '13:35', 'done', 1, 'staff', NULL),
-  (1000, 272, '2026-07-26', '12:00', '12:15', 'done', 1, 'staff', NULL),
+  (1000, 272, '2026-07-26', '12:00', '12:15', 'done', 1, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (1001, 180, '2026-07-26', '12:15', '12:30', 'done', 0, 'phone', NULL),
   (1002, 237, '2026-07-26', '12:30', '14:50', 'done', 0, 'staff', NULL),
   (1003, 242, '2026-07-26', '12:30', '12:45', 'done', 0, 'wechat', NULL),
@@ -1226,7 +1236,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (1197, NULL, '2026-08-01', '11:30', '13:05', 'done', 1, 'staff', NULL),
   (1198, 186, '2026-08-01', '12:15', '13:20', 'done', 1, 'staff', NULL),
   (1199, 263, '2026-08-01', '12:15', '13:20', 'done', 0, 'staff', NULL),
-  (1200, 106, '2026-08-01', '12:30', '13:00', 'done', 1, 'staff', NULL),
+  (1200, 106, '2026-08-01', '12:30', '13:00', 'done', 1, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (1201, 149, '2026-08-01', '12:45', '14:10', 'done', 0, 'staff', NULL),
   (1202, NULL, '2026-08-01', '12:45', '13:50', 'done', 0, 'staff', NULL),
   (1203, NULL, '2026-08-01', '10:00', '10:30', 'done', 0, 'phone', NULL),
@@ -1426,7 +1438,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (1397, 134, '2026-08-06', '13:15', '16:35', 'done', 1, 'phone', NULL),
   (1398, 201, '2026-08-06', '14:15', '14:30', 'done', 1, 'staff', NULL),
   (1399, 277, '2026-08-06', '14:30', '15:15', 'done', 0, 'staff', NULL),
-  (1400, 287, '2026-08-06', '15:00', '15:45', 'done', 0, 'staff', NULL),
+  (1400, 287, '2026-08-06', '15:00', '15:45', 'done', 0, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (1401, 185, '2026-08-06', '15:15', '15:45', 'done', 0, 'staff', NULL),
   (1402, NULL, '2026-08-06', '16:15', '18:05', 'done', 1, 'staff', NULL),
   (1403, 240, '2026-08-06', '17:00', '18:25', 'done', 0, 'staff', NULL),
@@ -1626,7 +1640,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (1597, 200, '2026-08-12', '14:15', '15:20', 'done', 0, 'staff', NULL),
   (1598, 287, '2026-08-12', '14:45', '15:15', 'done', 0, 'staff', NULL),
   (1599, 111, '2026-08-12', '14:45', '15:15', 'done', 0, 'phone', NULL),
-  (1600, NULL, '2026-08-12', '15:00', '15:30', 'done', 0, 'staff', NULL),
+  (1600, NULL, '2026-08-12', '15:00', '15:30', 'done', 0, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (1601, 260, '2026-08-12', '15:30', '15:45', 'done', 0, 'staff', NULL),
   (1602, 132, '2026-08-12', '15:45', '17:35', 'done', 1, 'staff', NULL),
   (1603, NULL, '2026-08-12', '15:45', '16:00', 'done', 1, 'staff', NULL),
@@ -1826,7 +1842,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (1797, 286, '2026-08-18', '11:30', '12:00', 'done', 1, 'staff', NULL),
   (1798, 244, '2026-08-18', '11:30', '13:20', 'done', 0, 'phone', NULL),
   (1799, NULL, '2026-08-18', '11:45', '12:50', 'done', 0, 'phone', NULL),
-  (1800, NULL, '2026-08-18', '11:45', '12:30', 'done', 1, 'wechat', NULL),
+  (1800, NULL, '2026-08-18', '11:45', '12:30', 'done', 1, 'wechat', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (1801, 242, '2026-08-18', '12:15', '13:40', 'done', 0, 'staff', NULL),
   (1802, 147, '2026-08-18', '12:15', '12:45', 'done', 0, 'staff', NULL),
   (1803, 339, '2026-08-18', '13:15', '14:50', 'done', 1, 'staff', NULL),
@@ -2026,7 +2044,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (1997, 152, '2026-08-22', '17:00', '18:35', 'done', 0, 'wechat', NULL),
   (1998, 171, '2026-08-22', '10:00', '10:30', 'done', 1, 'wechat', NULL),
   (1999, 169, '2026-08-22', '17:15', '18:20', 'done', 0, 'staff', NULL),
-  (2000, 251, '2026-08-22', '13:45', '15:10', 'done', 0, 'phone', NULL),
+  (2000, 251, '2026-08-22', '13:45', '15:10', 'done', 0, 'phone', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (2001, 238, '2026-08-22', '12:45', '13:30', 'done', 0, 'staff', NULL),
   (2002, 175, '2026-08-22', '12:30', '13:00', 'done', 0, 'staff', NULL),
   (2003, 136, '2026-08-22', '18:15', '18:45', 'done', 1, 'staff', NULL),
@@ -2226,7 +2246,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (2197, 317, '2026-08-28', '17:00', '17:15', 'done', 0, 'staff', NULL),
   (2198, 113, '2026-08-28', '17:00', '17:30', 'done', 1, 'staff', NULL),
   (2199, 328, '2026-08-28', '17:15', '18:00', 'done', 0, 'staff', NULL),
-  (2200, NULL, '2026-08-28', '17:30', '18:55', 'done', 0, 'staff', NULL),
+  (2200, NULL, '2026-08-28', '17:30', '18:55', 'done', 0, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (2201, NULL, '2026-08-28', '17:45', '18:30', 'done', 0, 'staff', NULL),
   (2202, 247, '2026-08-28', '17:45', '18:00', 'done', 0, 'staff', NULL),
   (2203, 144, '2026-08-28', '18:00', '18:45', 'done', 0, 'staff', NULL),
@@ -2426,7 +2448,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (2397, 326, '2026-09-03', '14:45', '15:50', 'done', 0, 'wechat', NULL),
   (2398, NULL, '2026-09-03', '15:00', '16:05', 'done', 1, 'phone', NULL),
   (2399, NULL, '2026-09-03', '15:30', '18:50', 'done', 1, 'staff', NULL),
-  (2400, 294, '2026-09-03', '15:45', '16:50', 'done', 0, 'phone', NULL),
+  (2400, 294, '2026-09-03', '15:45', '16:50', 'done', 0, 'phone', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (2401, 187, '2026-09-03', '16:30', '18:20', 'done', 0, 'wechat', NULL),
   (2402, 144, '2026-09-03', '16:30', '17:35', 'done', 0, 'staff', NULL),
   (2403, NULL, '2026-09-03', '17:00', '17:15', 'done', 0, 'staff', NULL),
@@ -2626,7 +2650,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (2597, 111, '2026-09-09', '14:45', '15:15', 'done', 0, 'phone', NULL),
   (2598, NULL, '2026-09-09', '10:00', '10:30', 'done', 0, 'staff', NULL),
   (2599, 260, '2026-09-09', '15:30', '15:45', 'done', 0, 'staff', NULL),
-  (2600, 132, '2026-09-09', '15:30', '17:20', 'done', 1, 'staff', NULL),
+  (2600, 132, '2026-09-09', '15:30', '17:20', 'done', 1, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (2601, NULL, '2026-09-09', '15:45', '16:00', 'done', 1, 'staff', NULL),
   (2602, NULL, '2026-09-09', '17:00', '18:05', 'done', 1, 'staff', NULL),
   (2603, 296, '2026-09-09', '17:00', '17:45', 'done', 0, 'staff', NULL),
@@ -2826,7 +2852,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (2797, 192, '2026-09-15', '12:00', '12:30', 'done', 0, 'wechat', NULL),
   (2798, 286, '2026-09-15', '12:30', '14:05', 'done', 0, 'wechat', NULL),
   (2799, NULL, '2026-09-15', '12:45', '14:35', 'done', 0, 'staff', NULL),
-  (2800, NULL, '2026-09-15', '13:15', '14:20', 'done', 0, 'wechat', NULL),
+  (2800, NULL, '2026-09-15', '13:15', '14:20', 'done', 0, 'wechat', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (2801, NULL, '2026-09-15', '13:45', '15:20', 'done', 0, 'staff', NULL),
   (2802, 173, '2026-09-15', '14:00', '15:05', 'done', 1, 'staff', NULL),
   (2803, 321, '2026-09-15', '10:00', '11:05', 'done', 0, 'staff', NULL),
@@ -3026,7 +3054,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (2997, 281, '2026-09-19', '15:00', '15:30', 'done', 0, 'staff', NULL),
   (2998, 148, '2026-09-19', '15:30', '15:45', 'done', 1, 'wechat', NULL),
   (2999, 256, '2026-09-19', '15:45', '16:30', 'done', 1, 'staff', NULL),
-  (3000, 304, '2026-09-19', '16:15', '17:20', 'done', 0, 'staff', NULL),
+  (3000, 304, '2026-09-19', '16:15', '17:20', 'done', 0, 'staff', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (3001, 174, '2026-09-19', '16:15', '17:20', 'done', 0, 'staff', NULL),
   (3002, 200, '2026-09-19', '16:30', '17:35', 'done', 1, 'staff', NULL),
   (3003, 151, '2026-09-19', '16:30', '17:00', 'done', 0, 'wechat', NULL),
@@ -3226,7 +3256,9 @@ INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominat
   (3197, 105, '2026-09-25', '11:30', '14:50', 'booked', 1, 'staff', NULL),
   (3198, 334, '2026-09-25', '18:30', '18:45', 'booked', 1, 'phone', NULL),
   (3199, 339, '2026-09-25', '19:00', '19:45', 'booked', 0, 'phone', NULL),
-  (3200, 181, '2026-09-25', '12:00', '13:05', 'booked', 1, 'wechat', NULL),
+  (3200, 181, '2026-09-25', '12:00', '13:05', 'booked', 1, 'wechat', NULL);
+
+INSERT INTO bookings (id, customer_id, date, starts_at, ends_at, status, nominated, source, note) VALUES
   (3201, 171, '2026-09-25', '19:15', '19:30', 'booked', 1, 'staff', NULL),
   (3202, 107, '2026-09-25', '13:45', '15:35', 'booked', 0, 'phone', NULL),
   (3203, NULL, '2026-09-25', '13:15', '14:20', 'booked', 0, 'staff', NULL),
@@ -3582,7 +3614,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (197, 103, 4, 6, 11, '11:45', '12:05', 0),
   (198, 103, 1, 6, 1, '12:05', '12:50', 1),
   (199, 103, 9, 8, 10, '12:50', '13:20', 2),
-  (200, 104, 2, 1, 3, '11:45', '12:15', 0),
+  (200, 104, 2, 1, 3, '11:45', '12:15', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (201, 105, 4, 1, 10, '12:15', '12:35', 0),
   (202, 105, 6, 1, 2, '12:35', '14:05', 1),
   (203, 106, 4, 2, 11, '12:15', '12:35', 0),
@@ -3782,7 +3816,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (397, 211, 9, 7, 12, '12:50', '13:20', 2),
   (398, 212, 2, 3, 5, '16:30', '17:00', 0),
   (399, 213, 9, 8, 10, '17:00', '17:30', 0),
-  (400, 214, 4, 2, 11, '17:00', '17:20', 0),
+  (400, 214, 4, 2, 11, '17:00', '17:20', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (401, 214, 7, 2, 3, '17:20', '19:20', 1),
   (402, 215, 4, 5, 12, '17:00', '17:20', 0),
   (403, 215, 6, 5, 4, '17:20', '18:50', 1),
@@ -3982,7 +4018,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (597, 331, 1, 2, 2, '14:50', '15:35', 1),
   (598, 332, 4, 6, 11, '14:30', '14:50', 0),
   (599, 332, 7, 6, 3, '14:50', '16:50', 1),
-  (600, 333, 4, 1, 12, '14:45', '15:05', 0),
+  (600, 333, 4, 1, 12, '14:45', '15:05', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (601, 333, 6, 1, 4, '15:05', '16:35', 1),
   (602, 334, 4, 4, 10, '15:00', '15:20', 0),
   (603, 334, 1, 4, 5, '15:20', '16:05', 1),
@@ -4182,7 +4220,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (797, 446, 4, 5, 12, '11:15', '11:35', 0),
   (798, 446, 5, 5, 4, '11:35', '12:00', 1),
   (799, 447, 4, 8, 10, '11:30', '11:50', 0),
-  (800, 447, 8, 4, 5, '11:50', '14:50', 1),
+  (800, 447, 8, 4, 5, '11:50', '14:50', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (801, 448, 3, 5, 4, '12:15', '12:30', 0),
   (802, 449, 4, 8, 10, '12:30', '12:50', 0),
   (803, 449, 5, 1, 1, '12:50', '13:15', 1),
@@ -4382,7 +4422,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (997, 555, 2, 1, 4, '18:00', '18:30', 0),
   (998, 556, 4, 8, 10, '18:15', '18:35', 0),
   (999, 556, 1, 1, 3, '18:35', '19:20', 1),
-  (1000, 557, 3, 2, 4, '18:30', '18:45', 0),
+  (1000, 557, 3, 2, 4, '18:30', '18:45', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (1001, 558, 4, 3, 11, '18:30', '18:50', 0),
   (1002, 558, 1, 3, 4, '18:50', '19:35', 1),
   (1003, 559, 4, 2, 10, '18:45', '19:05', 0),
@@ -4582,7 +4624,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (1197, 673, 9, 1, 10, '14:35', '15:05', 2),
   (1198, 674, 3, 2, 5, '13:45', '14:00', 0),
   (1199, 675, 2, 2, 2, '14:00', '14:30', 0),
-  (1200, 676, 9, 8, 11, '14:15', '14:45', 0),
+  (1200, 676, 9, 8, 11, '14:15', '14:45', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (1201, 677, 4, 6, 10, '14:00', '14:20', 0),
   (1202, 677, 1, 6, 1, '14:20', '15:05', 1),
   (1203, 678, 4, 2, 12, '14:30', '14:50', 0),
@@ -4782,7 +4826,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (1397, 791, 8, 3, 3, '15:35', '18:35', 1),
   (1398, 792, 4, 8, 11, '15:30', '15:50', 0),
   (1399, 792, 5, 4, 4, '15:50', '16:15', 1),
-  (1400, 793, 10, 7, 12, '15:30', '16:10', 0),
+  (1400, 793, 10, 7, 12, '15:30', '16:10', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (1401, 793, 1, 7, 5, '16:10', '16:55', 1),
   (1402, 794, 4, 8, 10, '16:15', '16:35', 0),
   (1403, 794, 1, 4, 4, '16:35', '17:20', 1),
@@ -4982,7 +5028,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (1597, 901, 4, 7, 12, '15:00', '15:20', 0),
   (1598, 901, 1, 7, 5, '15:20', '16:05', 1),
   (1599, 902, 4, 8, 10, '19:00', '19:20', 0),
-  (1600, 902, 5, 1, 1, '19:20', '19:45', 1),
+  (1600, 902, 5, 1, 1, '19:20', '19:45', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (1601, 903, 4, 8, 11, '18:00', '18:20', 0),
   (1602, 903, 1, 5, 5, '18:20', '19:05', 1),
   (1603, 904, 4, 7, 12, '18:00', '18:20', 0),
@@ -5182,7 +5230,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (1797, 1009, 6, 3, 5, '14:05', '15:35', 1),
   (1798, 1010, 3, 5, 6, '14:00', '14:15', 0),
   (1799, 1011, 4, 8, 11, '14:15', '14:35', 0),
-  (1800, 1011, 1, 5, 3, '14:35', '15:20', 1),
+  (1800, 1011, 1, 5, 3, '14:35', '15:20', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (1801, 1011, 9, 8, 10, '15:20', '15:50', 2),
   (1802, 1012, 4, 6, 12, '10:00', '10:20', 0),
   (1803, 1012, 6, 6, 5, '10:20', '11:50', 1),
@@ -5382,7 +5432,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (1997, 1121, 7, 1, 5, '14:20', '16:20', 1),
   (1998, 1122, 4, 4, 11, '10:45', '11:05', 0),
   (1999, 1122, 1, 4, 3, '11:05', '11:50', 1),
-  (2000, 1122, 9, 8, 12, '11:50', '12:20', 2),
+  (2000, 1122, 9, 8, 12, '11:50', '12:20', 2);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (2001, 1123, 4, 8, 11, '14:15', '14:35', 0),
   (2002, 1123, 1, 2, 2, '14:35', '15:20', 1),
   (2003, 1124, 4, 5, 10, '14:30', '14:50', 0),
@@ -5582,7 +5634,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (2197, 1234, 4, 3, 11, '18:45', '19:05', 0),
   (2198, 1234, 1, 3, 2, '19:05', '19:50', 1),
   (2199, 1235, 4, 6, 11, '13:30', '13:50', 0),
-  (2200, 1235, 1, 6, 4, '13:50', '14:35', 1),
+  (2200, 1235, 1, 6, 4, '13:50', '14:35', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (2201, 1236, 4, 7, 12, '10:30', '10:50', 0),
   (2202, 1236, 1, 7, 5, '10:50', '11:35', 1),
   (2203, 1237, 4, 4, 12, '13:45', '14:05', 0),
@@ -5782,7 +5836,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (2397, 1345, 5, 5, 2, '14:20', '14:45', 1),
   (2398, 1346, 4, 8, 10, '14:15', '14:35', 0),
   (2399, 1346, 7, 1, 3, '14:35', '16:35', 1),
-  (2400, 1347, 10, 4, 12, '14:15', '14:55', 0),
+  (2400, 1347, 10, 4, 12, '14:15', '14:55', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (2401, 1347, 1, 4, 1, '14:55', '15:40', 1),
   (2402, 1348, 2, 6, 4, '14:15', '14:45', 0),
   (2403, 1349, 4, 8, 10, '14:45', '15:05', 0),
@@ -5982,7 +6038,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (2597, 1461, 4, 8, 11, '16:45', '17:05', 0),
   (2598, 1461, 1, 5, 4, '17:05', '17:50', 1),
   (2599, 1462, 3, 1, 4, '19:15', '19:30', 0),
-  (2600, 1463, 2, 3, 2, '10:00', '10:30', 0),
+  (2600, 1463, 2, 3, 2, '10:00', '10:30', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (2601, 1464, 4, 1, 10, '10:00', '10:20', 0),
   (2602, 1464, 6, 1, 1, '10:20', '11:50', 1),
   (2603, 1465, 4, 8, 10, '10:30', '10:50', 0),
@@ -6182,7 +6240,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (2797, 1576, 4, 5, 11, '13:45', '14:05', 0),
   (2798, 1576, 8, 5, 5, '14:05', '17:05', 1),
   (2799, 1577, 4, 7, 11, '13:15', '13:35', 0),
-  (2800, 1577, 1, 7, 2, '13:35', '14:20', 1),
+  (2800, 1577, 1, 7, 2, '13:35', '14:20', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (2801, 1578, 4, 3, 11, '10:45', '11:05', 0),
   (2802, 1578, 1, 3, 4, '11:05', '11:50', 1),
   (2803, 1579, 4, 3, 12, '13:45', '14:05', 0),
@@ -6382,7 +6442,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (2997, 1691, 4, 5, 12, '12:15', '12:35', 0),
   (2998, 1691, 1, 5, 6, '12:35', '13:20', 1),
   (2999, 1692, 2, 2, 2, '17:45', '18:15', 0),
-  (3000, 1693, 4, 3, 12, '18:00', '18:20', 0),
+  (3000, 1693, 4, 3, 12, '18:00', '18:20', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (3001, 1693, 1, 3, 2, '18:20', '19:05', 1),
   (3002, 1694, 4, 4, 12, '15:00', '15:20', 0),
   (3003, 1694, 8, 4, 6, '15:20', '18:20', 1),
@@ -6582,7 +6644,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (3197, 1799, 1, 5, 1, '12:05', '12:50', 1),
   (3198, 1800, 4, 4, 12, '11:45', '12:05', 0),
   (3199, 1800, 5, 4, 3, '12:05', '12:30', 1),
-  (3200, 1801, 10, 8, 10, '12:15', '12:55', 0),
+  (3200, 1801, 10, 8, 10, '12:15', '12:55', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (3201, 1801, 1, 1, 1, '12:55', '13:40', 1),
   (3202, 1802, 2, 1, 4, '12:15', '12:45', 0),
   (3203, 1803, 4, 8, 10, '13:15', '13:35', 0),
@@ -6782,7 +6846,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (3397, 1909, 1, 6, 1, '17:35', '18:20', 1),
   (3398, 1910, 3, 3, 3, '17:15', '17:30', 0),
   (3399, 1911, 4, 8, 10, '17:30', '17:50', 0),
-  (3400, 1911, 7, 2, 3, '17:50', '19:50', 1),
+  (3400, 1911, 7, 2, 3, '17:50', '19:50', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (3401, 1912, 2, 3, 4, '17:45', '18:15', 0),
   (3402, 1913, 2, 4, 5, '17:45', '18:15', 0),
   (3403, 1914, 4, 8, 10, '18:00', '18:20', 0),
@@ -6982,7 +7048,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (3597, 2023, 4, 4, 11, '14:00', '14:20', 0),
   (3598, 2023, 7, 4, 3, '14:20', '16:20', 1),
   (3599, 2024, 4, 5, 11, '14:30', '14:50', 0),
-  (3600, 2024, 1, 5, 1, '14:50', '15:35', 1),
+  (3600, 2024, 1, 5, 1, '14:50', '15:35', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (3601, 2024, 9, 8, 10, '15:35', '16:05', 2),
   (3602, 2025, 4, 8, 10, '14:45', '15:05', 0),
   (3603, 2025, 1, 1, 4, '15:05', '15:50', 1),
@@ -7182,7 +7250,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (3797, 2135, 3, 3, 3, '12:00', '12:15', 0),
   (3798, 2136, 4, 8, 10, '12:15', '12:35', 0),
   (3799, 2136, 1, 1, 1, '12:35', '13:20', 1),
-  (3800, 2137, 2, 3, 3, '12:15', '12:45', 0),
+  (3800, 2137, 2, 3, 3, '12:15', '12:45', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (3801, 2138, 4, 8, 10, '10:00', '10:20', 0),
   (3802, 2138, 1, 2, 2, '10:20', '11:05', 1),
   (3803, 2139, 4, 2, 11, '12:30', '12:50', 0),
@@ -7382,7 +7452,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (3997, 2246, 1, 1, 1, '18:05', '18:50', 1),
   (3998, 2247, 4, 8, 12, '17:45', '18:05', 0),
   (3999, 2247, 1, 3, 4, '18:05', '18:50', 1),
-  (4000, 2248, 4, 8, 11, '10:00', '10:20', 0),
+  (4000, 2248, 4, 8, 11, '10:00', '10:20', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (4001, 2248, 1, 1, 2, '10:20', '11:05', 1),
   (4002, 2249, 3, 4, 3, '18:30', '18:45', 0),
   (4003, 2250, 4, 7, 12, '10:00', '10:20', 0),
@@ -7582,7 +7654,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (4197, 2356, 1, 2, 1, '16:40', '17:25', 1),
   (4198, 2357, 2, 1, 2, '17:00', '17:30', 0),
   (4199, 2358, 4, 8, 10, '17:00', '17:20', 0),
-  (4200, 2358, 1, 3, 3, '17:20', '18:05', 1),
+  (4200, 2358, 1, 3, 3, '17:20', '18:05', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (4201, 2359, 4, 4, 11, '17:00', '17:20', 0),
   (4202, 2359, 1, 4, 4, '17:20', '18:05', 1),
   (4203, 2359, 9, 8, 10, '18:05', '18:35', 2),
@@ -7782,7 +7856,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (4397, 2469, 4, 7, 11, '13:15', '13:35', 0),
   (4398, 2469, 1, 7, 5, '13:35', '14:20', 1),
   (4399, 2469, 9, 7, 10, '14:20', '14:50', 2),
-  (4400, 2470, 4, 6, 12, '13:30', '13:50', 0),
+  (4400, 2470, 4, 6, 12, '13:30', '13:50', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (4401, 2470, 1, 6, 1, '13:50', '14:35', 1),
   (4402, 2471, 2, 5, 6, '13:45', '14:15', 0),
   (4403, 2472, 4, 8, 11, '14:15', '14:35', 0),
@@ -7982,7 +8058,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (4597, 2580, 4, 4, 12, '11:30', '11:50', 0),
   (4598, 2580, 1, 4, 5, '11:50', '12:35', 1),
   (4599, 2580, 9, 4, 10, '12:35', '13:05', 2),
-  (4600, 2581, 2, 5, 6, '11:45', '12:15', 0),
+  (4600, 2581, 2, 5, 6, '11:45', '12:15', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (4601, 2582, 4, 8, 10, '12:00', '12:20', 0),
   (4602, 2582, 1, 3, 2, '12:20', '13:05', 1),
   (4603, 2583, 4, 7, 11, '12:00', '12:20', 0),
@@ -8182,7 +8260,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (4797, 2691, 1, 3, 4, '15:20', '16:05', 1),
   (4798, 2692, 4, 5, 12, '15:15', '15:35', 0),
   (4799, 2692, 1, 5, 1, '15:35', '16:20', 1),
-  (4800, 2693, 4, 1, 10, '15:45', '16:05', 0),
+  (4800, 2693, 4, 1, 10, '15:45', '16:05', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (4801, 2693, 1, 1, 2, '16:05', '16:50', 1),
   (4802, 2694, 4, 8, 11, '16:00', '16:20', 0),
   (4803, 2694, 6, 2, 1, '16:20', '17:50', 1),
@@ -8382,7 +8462,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (4997, 2806, 1, 2, 2, '14:50', '15:35', 1),
   (4998, 2807, 4, 3, 11, '15:00', '15:20', 0),
   (4999, 2807, 5, 3, 1, '15:20', '15:45', 1),
-  (5000, 2808, 4, 1, 12, '15:15', '15:35', 0),
+  (5000, 2808, 4, 1, 12, '15:15', '15:35', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (5001, 2808, 1, 1, 2, '15:35', '16:20', 1),
   (5002, 2809, 4, 8, 10, '15:30', '15:50', 0),
   (5003, 2809, 1, 2, 1, '15:50', '16:35', 1),
@@ -8582,7 +8664,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (5197, 2924, 1, 3, 4, '18:35', '19:20', 1),
   (5198, 2924, 9, 3, 10, '19:20', '19:50', 2),
   (5199, 2925, 4, 8, 12, '11:30', '11:50', 0),
-  (5200, 2925, 5, 7, 5, '11:50', '12:15', 1),
+  (5200, 2925, 5, 7, 5, '11:50', '12:15', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (5201, 2926, 4, 7, 12, '13:45', '14:05', 0),
   (5202, 2926, 6, 7, 6, '14:05', '15:35', 1),
   (5203, 2927, 4, 5, 11, '15:00', '15:20', 0),
@@ -8782,7 +8866,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (5397, 3040, 1, 3, 2, '17:20', '18:05', 1),
   (5398, 3041, 3, 4, 2, '17:00', '17:15', 0),
   (5399, 3042, 3, 4, 6, '17:15', '17:30', 0),
-  (5400, 3043, 4, 6, 11, '10:45', '11:05', 0),
+  (5400, 3043, 4, 6, 11, '10:45', '11:05', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (5401, 3043, 6, 6, 6, '11:05', '12:35', 1),
   (5402, 3044, 4, 4, 11, '17:45', '18:05', 0),
   (5403, 3044, 1, 4, 1, '18:05', '18:50', 1),
@@ -8982,7 +9068,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (5597, 3149, 4, 8, 10, '16:45', '17:05', 0),
   (5598, 3149, 1, 2, 3, '17:05', '17:50', 1),
   (5599, 3150, 4, 8, 10, '10:30', '10:50', 0),
-  (5600, 3150, 7, 7, 6, '10:50', '12:50', 1),
+  (5600, 3150, 7, 7, 6, '10:50', '12:50', 1);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (5601, 3151, 4, 8, 12, '12:15', '12:35', 0),
   (5602, 3151, 6, 5, 5, '12:35', '14:05', 1),
   (5603, 3152, 4, 4, 11, '17:00', '17:20', 0),
@@ -9182,7 +9270,9 @@ INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts
   (5797, 3264, 2, 3, 4, '13:45', '14:15', 0),
   (5798, 3265, 4, 8, 11, '10:30', '10:50', 0),
   (5799, 3265, 1, 5, 6, '10:50', '11:35', 1),
-  (5800, 3266, 4, 1, 11, '14:00', '14:20', 0),
+  (5800, 3266, 4, 1, 11, '14:00', '14:20', 0);
+
+INSERT INTO booking_items (id, booking_id, service_id, staff_id, seat_id, starts_at, ends_at, sort_order) VALUES
   (5801, 3266, 6, 1, 2, '14:20', '15:50', 1),
   (5802, 3267, 9, 8, 10, '14:30', '15:00', 0),
   (5803, 3268, 2, 2, 1, '14:30', '15:00', 0),
@@ -9545,7 +9635,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (197, 94, 1782630000, 'moved', '2026-07-01 18:30', '2026-07-01 19:00', NULL),
   (198, 94, 1782906300, 'status', 'booked', 'done', NULL),
   (199, 95, 1782788400, 'created', NULL, '2026-07-01 18:30', NULL),
-  (200, 95, 1782905700, 'status', 'booked', 'done', NULL),
+  (200, 95, 1782905700, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (201, 96, 1782615600, 'created', NULL, '2026-07-01 19:30', NULL),
   (202, 96, 1782907200, 'status', 'booked', 'done', NULL),
   (203, 97, 1782097200, 'created', NULL, '2026-07-02 10:15', NULL),
@@ -9745,7 +9837,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (397, 191, 1783141500, 'status', 'booked', 'done', NULL),
   (398, 192, 1782356400, 'created', NULL, '2026-07-04 12:15', NULL),
   (399, 192, 1783140300, 'status', 'booked', 'done', NULL),
-  (400, 193, 1782356400, 'created', NULL, '2026-07-04 12:15', NULL),
+  (400, 193, 1782356400, 'created', NULL, '2026-07-04 12:15', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (401, 193, 1783142400, 'status', 'booked', 'no_show', NULL),
   (402, 194, 1782615600, 'created', NULL, '2026-07-04 12:45', NULL),
   (403, 194, 1782964800, 'status', 'booked', 'cancelled', NULL),
@@ -9945,7 +10039,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (597, 287, 1783148400, 'moved', '2026-07-07 12:45', '2026-07-07 13:15', NULL),
   (598, 287, 1783403100, 'status', 'booked', 'done', NULL),
   (599, 288, 1782615600, 'created', NULL, '2026-07-07 13:30', NULL),
-  (600, 288, 1783410600, 'status', 'booked', 'done', NULL),
+  (600, 288, 1783410600, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (601, 289, 1783306800, 'created', NULL, '2026-07-07 13:45', NULL),
   (602, 289, 1783407000, 'status', 'booked', 'done', NULL),
   (603, 290, 1782961200, 'created', NULL, '2026-07-07 14:00', NULL),
@@ -10145,7 +10241,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (797, 381, 1783592100, 'status', 'booked', 'done', NULL),
   (798, 382, 1783393200, 'created', NULL, '2026-07-09 18:00', NULL),
   (799, 382, 1783593000, 'status', 'booked', 'done', NULL),
-  (800, 383, 1782702000, 'created', NULL, '2026-07-09 18:00', NULL),
+  (800, 383, 1782702000, 'created', NULL, '2026-07-09 18:00', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (801, 383, 1783593000, 'status', 'booked', 'done', NULL),
   (802, 384, 1782961200, 'created', NULL, '2026-07-09 18:15', NULL),
   (803, 384, 1783594800, 'status', 'booked', 'done', NULL),
@@ -10345,7 +10443,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (997, 478, 1783827900, 'status', 'booked', 'done', NULL),
   (998, 479, 1783566000, 'created', NULL, '2026-07-12 11:15', NULL),
   (999, 479, 1783830000, 'status', 'booked', 'done', NULL),
-  (1000, 480, 1783393200, 'created', NULL, '2026-07-12 11:15', NULL),
+  (1000, 480, 1783393200, 'created', NULL, '2026-07-12 11:15', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (1001, 480, 1783830000, 'status', 'booked', 'done', NULL),
   (1002, 481, 1783393200, 'created', NULL, '2026-07-12 11:30', NULL),
   (1003, 481, 1783833600, 'status', 'booked', 'done', NULL),
@@ -10545,7 +10645,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (1197, 577, 1783566000, 'created', NULL, '2026-07-15 12:45', NULL),
   (1198, 577, 1784102700, 'status', 'booked', 'done', NULL),
   (1199, 578, 1783220400, 'created', NULL, '2026-07-15 12:45', NULL),
-  (1200, 578, 1784092500, 'status', 'booked', 'done', NULL),
+  (1200, 578, 1784092500, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (1201, 579, 1783566000, 'created', NULL, '2026-07-15 10:00', NULL),
   (1202, 579, 1784084700, 'status', 'booked', 'done', NULL),
   (1203, 580, 1783738800, 'created', NULL, '2026-07-15 13:15', NULL),
@@ -10745,7 +10847,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (1397, 675, 1784269800, 'status', 'booked', 'done', NULL),
   (1398, 676, 1783738800, 'created', NULL, '2026-07-17 14:15', NULL),
   (1399, 676, 1784012400, 'moved', '2026-07-17 13:45', '2026-07-17 14:15', NULL),
-  (1400, 676, 1784088000, 'status', 'booked', 'cancelled', NULL),
+  (1400, 676, 1784088000, 'status', 'booked', 'cancelled', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (1401, 677, 1783825200, 'created', NULL, '2026-07-17 14:00', NULL),
   (1402, 677, 1784271900, 'status', 'booked', 'done', NULL),
   (1403, 678, 1783566000, 'created', NULL, '2026-07-17 14:30', NULL),
@@ -10945,7 +11049,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (1597, 770, 1783825200, 'created', NULL, '2026-07-19 14:30', NULL),
   (1598, 770, 1784446500, 'status', 'booked', 'done', NULL),
   (1599, 771, 1784257200, 'created', NULL, '2026-07-19 14:45', NULL),
-  (1600, 771, 1784450100, 'status', 'booked', 'done', NULL),
+  (1600, 771, 1784450100, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (1601, 772, 1783825200, 'created', NULL, '2026-07-19 18:15', NULL),
   (1602, 772, 1784458800, 'status', 'booked', 'done', NULL),
   (1603, 773, 1783911600, 'created', NULL, '2026-07-19 15:15', NULL),
@@ -11145,7 +11251,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (1797, 866, 1784782800, 'status', 'booked', 'done', NULL),
   (1798, 867, 1784343600, 'created', NULL, '2026-07-23 13:00', NULL),
   (1799, 867, 1784786700, 'status', 'booked', 'done', NULL),
-  (1800, 868, 1783911600, 'created', NULL, '2026-07-23 13:00', NULL),
+  (1800, 868, 1783911600, 'created', NULL, '2026-07-23 13:00', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (1801, 868, 1784787900, 'status', 'booked', 'done', NULL),
   (1802, 869, 1784430000, 'created', NULL, '2026-07-23 10:00', NULL),
   (1803, 869, 1784775900, 'status', 'booked', 'done', NULL),
@@ -11345,7 +11453,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (1997, 963, 1784430000, 'created', NULL, '2026-07-25 13:15', NULL),
   (1998, 963, 1784703600, 'moved', '2026-07-25 12:45', '2026-07-25 13:15', NULL),
   (1999, 963, 1784963100, 'status', 'booked', 'done', NULL),
-  (2000, 964, 1784516400, 'created', NULL, '2026-07-25 13:45', NULL),
+  (2000, 964, 1784516400, 'created', NULL, '2026-07-25 13:45', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (2001, 964, 1784964000, 'status', 'booked', 'done', NULL),
   (2002, 965, 1784084400, 'created', NULL, '2026-07-25 13:45', NULL),
   (2003, 965, 1784962200, 'status', 'booked', 'done', NULL),
@@ -11545,7 +11655,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (2197, 1059, 1785034800, 'created', NULL, '2026-07-28 10:45', NULL),
   (2198, 1059, 1785208500, 'status', 'booked', 'done', NULL),
   (2199, 1060, 1785121200, 'created', NULL, '2026-07-28 12:15', NULL),
-  (2200, 1060, 1785220500, 'status', 'booked', 'done', NULL),
+  (2200, 1060, 1785220500, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (2201, 1061, 1785121200, 'created', NULL, '2026-07-28 17:45', NULL),
   (2202, 1061, 1785233700, 'status', 'booked', 'done', NULL),
   (2203, 1062, 1784430000, 'created', NULL, '2026-07-28 17:45', NULL),
@@ -11745,7 +11857,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (2397, 1154, 1785471300, 'status', 'booked', 'done', NULL),
   (2398, 1155, 1785121200, 'created', NULL, '2026-07-31 12:00', NULL),
   (2399, 1155, 1785482400, 'status', 'booked', 'done', NULL),
-  (2400, 1156, 1785121200, 'created', NULL, '2026-07-31 12:00', NULL),
+  (2400, 1156, 1785121200, 'created', NULL, '2026-07-31 12:00', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (2401, 1156, 1785472200, 'status', 'booked', 'done', NULL),
   (2402, 1157, 1784862000, 'created', NULL, '2026-07-31 12:15', NULL),
   (2403, 1157, 1785472200, 'status', 'booked', 'done', NULL),
@@ -11945,7 +12059,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (2597, 1250, 1785650700, 'status', 'booked', 'done', NULL),
   (2598, 1251, 1784775600, 'created', NULL, '2026-08-02 13:00', NULL),
   (2599, 1251, 1785650700, 'status', 'booked', 'done', NULL),
-  (2600, 1252, 1785121200, 'created', NULL, '2026-08-02 13:30', NULL),
+  (2600, 1252, 1785121200, 'created', NULL, '2026-08-02 13:30', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (2601, 1252, 1785652500, 'status', 'booked', 'done', NULL),
   (2602, 1253, 1785466800, 'created', NULL, '2026-08-02 13:30', NULL),
   (2603, 1253, 1785651300, 'status', 'booked', 'done', NULL),
@@ -12145,7 +12261,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (2797, 1345, 1785639600, 'created', NULL, '2026-08-05 14:00', NULL),
   (2798, 1345, 1785912300, 'status', 'booked', 'done', NULL),
   (2799, 1346, 1785466800, 'created', NULL, '2026-08-05 14:15', NULL),
-  (2800, 1346, 1785654000, 'moved', '2026-08-05 13:45', '2026-08-05 14:15', NULL),
+  (2800, 1346, 1785654000, 'moved', '2026-08-05 13:45', '2026-08-05 14:15', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (2801, 1346, 1785918900, 'status', 'booked', 'done', NULL),
   (2802, 1347, 1785034800, 'created', NULL, '2026-08-05 14:15', NULL),
   (2803, 1347, 1785915600, 'status', 'booked', 'done', NULL),
@@ -12345,7 +12463,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (2997, 1441, 1786085100, 'status', 'booked', 'done', NULL),
   (2998, 1442, 1785985200, 'created', NULL, '2026-08-07 14:15', NULL),
   (2999, 1442, 1786084200, 'status', 'booked', 'done', NULL),
-  (3000, 1443, 1785207600, 'created', NULL, '2026-08-07 15:15', NULL),
+  (3000, 1443, 1785207600, 'created', NULL, '2026-08-07 15:15', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (3001, 1443, 1786090800, 'status', 'booked', 'done', NULL),
   (3002, 1444, 1785553200, 'created', NULL, '2026-08-07 15:15', NULL),
   (3003, 1444, 1786092600, 'status', 'booked', 'done', NULL),
@@ -12545,7 +12665,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (3197, 1539, 1785380400, 'created', NULL, '2026-08-09 11:15', NULL),
   (3198, 1539, 1786248000, 'status', 'booked', 'done', NULL),
   (3199, 1540, 1786158000, 'created', NULL, '2026-08-09 10:00', NULL),
-  (3200, 1540, 1786242600, 'status', 'booked', 'done', NULL),
+  (3200, 1540, 1786242600, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (3201, 1541, 1786158000, 'created', NULL, '2026-08-11 10:30', NULL),
   (3202, 1541, 1786419300, 'status', 'booked', 'done', NULL),
   (3203, 1542, 1785898800, 'created', NULL, '2026-08-11 10:15', NULL),
@@ -12745,7 +12867,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (3397, 1634, 1786345200, 'moved', '2026-08-13 10:30', '2026-08-13 11:00', NULL),
   (3398, 1634, 1786595700, 'status', 'booked', 'done', NULL),
   (3399, 1635, 1786330800, 'created', NULL, '2026-08-13 15:15', NULL),
-  (3400, 1635, 1786611900, 'status', 'booked', 'done', NULL),
+  (3400, 1635, 1786611900, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (3401, 1636, 1786158000, 'created', NULL, '2026-08-13 15:45', NULL),
   (3402, 1636, 1786420800, 'status', 'booked', 'cancelled', NULL),
   (3403, 1637, 1786417200, 'created', NULL, '2026-08-13 16:00', NULL),
@@ -12945,7 +13069,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (3597, 1731, 1786590000, 'created', NULL, '2026-08-15 16:15', NULL),
   (3598, 1731, 1786593600, 'status', 'booked', 'cancelled', NULL),
   (3599, 1732, 1786676400, 'created', NULL, '2026-08-15 16:30', NULL),
-  (3600, 1732, 1786789200, 'status', 'booked', 'done', NULL),
+  (3600, 1732, 1786789200, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (3601, 1733, 1786503600, 'created', NULL, '2026-08-15 16:45', NULL),
   (3602, 1733, 1786787400, 'status', 'booked', 'done', NULL),
   (3603, 1734, 1786071600, 'created', NULL, '2026-08-15 17:00', NULL),
@@ -13145,7 +13271,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (3797, 1826, 1787054400, 'status', 'booked', 'done', NULL),
   (3798, 1827, 1786762800, 'created', NULL, '2026-08-18 11:00', NULL),
   (3799, 1827, 1787027100, 'status', 'booked', 'done', NULL),
-  (3800, 1828, 1786849200, 'created', NULL, '2026-08-18 19:45', NULL),
+  (3800, 1828, 1786849200, 'created', NULL, '2026-08-18 19:45', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (3801, 1828, 1786777200, 'moved', '2026-08-18 19:15', '2026-08-18 19:45', NULL),
   (3802, 1828, 1787054400, 'status', 'booked', 'done', NULL),
   (3803, 1829, 1786244400, 'created', NULL, '2026-08-18 10:00', NULL),
@@ -13345,7 +13473,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (3997, 1923, 1787218500, 'status', 'booked', 'done', NULL),
   (3998, 1924, 1786676400, 'created', NULL, '2026-08-20 10:00', NULL),
   (3999, 1924, 1786950000, 'moved', '2026-08-20 10:00', '2026-08-20 10:00', NULL),
-  (4000, 1924, 1787193000, 'status', 'booked', 'done', NULL),
+  (4000, 1924, 1787193000, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (4001, 1925, 1787108400, 'created', NULL, '2026-08-21 10:30', NULL),
   (4002, 1925, 1787284500, 'status', 'booked', 'done', NULL),
   (4003, 1926, 1786762800, 'created', NULL, '2026-08-21 10:45', NULL),
@@ -13545,7 +13675,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (4197, 2018, 1787462100, 'status', 'booked', 'done', NULL),
   (4198, 2019, 1787281200, 'created', NULL, '2026-08-23 13:00', NULL),
   (4199, 2019, 1787467800, 'status', 'booked', 'done', NULL),
-  (4200, 2020, 1787108400, 'created', NULL, '2026-08-23 13:15', NULL),
+  (4200, 2020, 1787108400, 'created', NULL, '2026-08-23 13:15', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (4201, 2020, 1787466000, 'status', 'booked', 'done', NULL),
   (4202, 2021, 1787108400, 'created', NULL, '2026-08-23 13:15', NULL),
   (4203, 2021, 1787466000, 'status', 'booked', 'done', NULL),
@@ -13745,7 +13877,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (4397, 2113, 1787734800, 'status', 'booked', 'done', NULL),
   (4398, 2114, 1787022000, 'created', NULL, '2026-08-26 16:45', NULL),
   (4399, 2114, 1787739600, 'status', 'booked', 'done', NULL),
-  (4400, 2115, 1787108400, 'created', NULL, '2026-08-26 17:00', NULL),
+  (4400, 2115, 1787108400, 'created', NULL, '2026-08-26 17:00', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (4401, 2115, 1787743200, 'status', 'booked', 'done', NULL),
   (4402, 2116, 1787540400, 'created', NULL, '2026-08-26 10:30', NULL),
   (4403, 2116, 1787715300, 'status', 'booked', 'done', NULL),
@@ -13945,7 +14079,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (4597, 2209, 1787367600, 'created', NULL, '2026-08-28 18:45', NULL),
   (4598, 2209, 1787915700, 'status', 'booked', 'done', NULL),
   (4599, 2210, 1787713200, 'created', NULL, '2026-08-28 19:00', NULL),
-  (4600, 2210, 1787917500, 'status', 'booked', 'done', NULL),
+  (4600, 2210, 1787917500, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (4601, 2211, 1787626800, 'created', NULL, '2026-08-28 10:30', NULL),
   (4602, 2211, 1787888100, 'status', 'booked', 'done', NULL),
   (4603, 2212, 1787626800, 'created', NULL, '2026-08-28 19:15', NULL),
@@ -14145,7 +14281,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (4797, 2305, 1788242400, 'status', 'booked', 'done', NULL),
   (4798, 2306, 1787454000, 'created', NULL, '2026-09-01 13:45', NULL),
   (4799, 2306, 1788247200, 'status', 'booked', 'done', NULL),
-  (4800, 2307, 1787540400, 'created', NULL, '2026-09-01 14:30', NULL),
+  (4800, 2307, 1787540400, 'created', NULL, '2026-09-01 14:30', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (4801, 2307, 1788249900, 'status', 'booked', 'done', NULL),
   (4802, 2308, 1787367600, 'created', NULL, '2026-09-01 10:15', NULL),
   (4803, 2308, 1788230700, 'status', 'booked', 'done', NULL),
@@ -14345,7 +14483,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (4997, 2401, 1787799600, 'created', NULL, '2026-09-03 16:30', NULL),
   (4998, 2401, 1788430800, 'status', 'booked', 'done', NULL),
   (4999, 2402, 1788231600, 'created', NULL, '2026-09-03 16:30', NULL),
-  (5000, 2402, 1788428100, 'status', 'booked', 'done', NULL),
+  (5000, 2402, 1788428100, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (5001, 2403, 1787886000, 'created', NULL, '2026-09-03 17:00', NULL),
   (5002, 2403, 1788426900, 'status', 'booked', 'done', NULL),
   (5003, 2404, 1788231600, 'created', NULL, '2026-09-03 17:00', NULL),
@@ -14545,7 +14685,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (5197, 2498, 1788577200, 'created', NULL, '2026-09-06 12:00', NULL),
   (5198, 2498, 1788671100, 'status', 'booked', 'done', NULL),
   (5199, 2499, 1788058800, 'created', NULL, '2026-09-06 12:15', NULL),
-  (5200, 2499, 1788672000, 'status', 'booked', 'done', NULL),
+  (5200, 2499, 1788672000, 'status', 'booked', 'done', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (5201, 2500, 1788231600, 'created', NULL, '2026-09-06 12:15', NULL),
   (5202, 2500, 1788673200, 'status', 'booked', 'done', NULL),
   (5203, 2501, 1788058800, 'created', NULL, '2026-09-06 12:30', NULL),
@@ -14745,7 +14887,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (5397, 2597, 1788938100, 'status', 'booked', 'done', NULL),
   (5398, 2598, 1788836400, 'created', NULL, '2026-09-09 10:00', NULL),
   (5399, 2598, 1788921000, 'status', 'booked', 'done', NULL),
-  (5400, 2599, 1788404400, 'created', NULL, '2026-09-09 15:30', NULL),
+  (5400, 2599, 1788404400, 'created', NULL, '2026-09-09 15:30', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (5401, 2599, 1788939900, 'status', 'booked', 'done', NULL),
   (5402, 2600, 1788490800, 'created', NULL, '2026-09-09 15:30', NULL),
   (5403, 2600, 1788945600, 'status', 'booked', 'done', NULL),
@@ -14945,7 +15089,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (5597, 2694, 1789120200, 'status', 'booked', 'done', NULL),
   (5598, 2695, 1788836400, 'created', NULL, '2026-09-11 16:00', NULL),
   (5599, 2695, 1789117500, 'status', 'booked', 'done', NULL),
-  (5600, 2696, 1789009200, 'created', NULL, '2026-09-11 16:15', NULL),
+  (5600, 2696, 1789009200, 'created', NULL, '2026-09-11 16:15', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (5601, 2696, 1789122900, 'status', 'booked', 'done', NULL),
   (5602, 2697, 1788577200, 'created', NULL, '2026-09-11 16:30', NULL),
   (5603, 2697, 1789116300, 'status', 'booked', 'done', NULL),
@@ -15145,7 +15291,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (5797, 2792, 1789289400, 'status', 'booked', 'done', NULL),
   (5798, 2793, 1789182000, 'created', NULL, '2026-09-13 12:30', NULL),
   (5799, 2793, 1789277700, 'status', 'booked', 'done', NULL),
-  (5800, 2794, 1788750000, 'created', NULL, '2026-09-15 11:00', NULL),
+  (5800, 2794, 1788750000, 'created', NULL, '2026-09-15 11:00', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (5801, 2794, 1789447800, 'status', 'booked', 'done', NULL),
   (5802, 2795, 1789009200, 'created', NULL, '2026-09-15 11:15', NULL),
   (5803, 2795, 1789443900, 'status', 'booked', 'done', NULL),
@@ -15345,7 +15493,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (5997, 2888, 1789613100, 'status', 'booked', 'done', NULL),
   (5998, 2889, 1789527600, 'created', NULL, '2026-09-17 11:00', NULL),
   (5999, 2889, 1789622400, 'status', 'booked', 'done', NULL),
-  (6000, 2890, 1788922800, 'created', NULL, '2026-09-17 11:00', NULL),
+  (6000, 2890, 1788922800, 'created', NULL, '2026-09-17 11:00', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (6001, 2890, 1789615800, 'status', 'booked', 'done', NULL),
   (6002, 2891, 1789182000, 'created', NULL, '2026-09-17 11:00', NULL),
   (6003, 2891, 1789615800, 'status', 'booked', 'done', NULL),
@@ -15545,7 +15695,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (6197, 2984, 1789789500, 'status', 'booked', 'done', NULL),
   (6198, 2985, 1789182000, 'created', NULL, '2026-09-19 11:15', NULL),
   (6199, 2985, 1789791600, 'status', 'booked', 'done', NULL),
-  (6200, 2986, 1789268400, 'created', NULL, '2026-09-19 11:15', NULL),
+  (6200, 2986, 1789268400, 'created', NULL, '2026-09-19 11:15', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (6201, 2986, 1789793400, 'status', 'booked', 'done', NULL),
   (6202, 2987, 1788922800, 'created', NULL, '2026-09-19 11:45', NULL),
   (6203, 2987, 1789793400, 'status', 'booked', 'done', NULL),
@@ -15745,7 +15897,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (6397, 3078, 1789786800, 'created', NULL, '2026-09-22 15:30', NULL),
   (6398, 3078, 1789801200, 'moved', '2026-09-22 15:00', '2026-09-22 15:30', NULL),
   (6399, 3078, 1790064000, 'status', 'booked', 'done', NULL),
-  (6400, 3079, 1789354800, 'created', NULL, '2026-09-22 15:45', NULL),
+  (6400, 3079, 1789354800, 'created', NULL, '2026-09-22 15:45', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (6401, 3079, 1790069700, 'status', 'booked', 'done', NULL),
   (6402, 3080, 1789873200, 'created', NULL, '2026-09-22 16:00', NULL),
   (6403, 3080, 1790069700, 'status', 'booked', 'done', NULL),
@@ -15945,7 +16099,9 @@ INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id
   (6597, 3220, 1789786800, 'created', NULL, '2026-09-26 14:15', NULL),
   (6598, 3221, 1789873200, 'created', NULL, '2026-09-26 14:30', NULL),
   (6599, 3222, 1789527600, 'created', NULL, '2026-09-26 14:30', NULL),
-  (6600, 3223, 1789614000, 'created', NULL, '2026-09-26 14:45', NULL),
+  (6600, 3223, 1789614000, 'created', NULL, '2026-09-26 14:45', NULL);
+
+INSERT INTO booking_events (id, booking_id, at, kind, before, after, by_staff_id) VALUES
   (6601, 3224, 1789873200, 'created', NULL, '2026-09-26 15:00', NULL),
   (6602, 3225, 1789873200, 'created', NULL, '2026-09-26 15:15', NULL),
   (6603, 3226, 1790132400, 'created', NULL, '2026-09-26 15:30', NULL),

@@ -209,7 +209,9 @@ INSERT INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
   (297, '鄭 雨桐', 'yu tung', '6663 3906', NULL, '2024-02-21'),
   (298, 'Miguel Ferreira', 'ferreira miguel', '6638 9394', NULL, '2020-11-19'),
   (299, '羅 子軒', 'tsz hin', '6613 6858', NULL, '2018-12-11'),
-  (300, '鄭 志强', 'chi keung', '6672 5449', NULL, '2018-07-12'),
+  (300, '鄭 志强', 'chi keung', '6672 5449', NULL, '2018-07-12');
+
+INSERT INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
   (301, 'Rita Costa', 'costa rita', '6664 7720', NULL, '2019-01-06'),
   (302, '許 偉明', 'wai ming', '6677 1161', NULL, '2021-11-13'),
   (303, '鄭 國強', 'kwok keung', '6653 9285', NULL, '2018-05-21'),

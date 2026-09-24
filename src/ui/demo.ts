@@ -17,8 +17,15 @@
 
 import type { Database } from "../db/database.ts";
 
-/** Where the built database sits. Produced by scripts/build-demo-db.ts. */
-const DB_FILE = "/demo.sqlite";
+/**
+ * Where the built database sits. Produced by scripts/build-demo-db.ts.
+ *
+ * Compressed, because Cloudflare compresses by content type and does not
+ * know what a .sqlite is — it went over the wire at its full 640KB. Unpacked
+ * here with DecompressionStream, which every browser this app already needs
+ * has had for years.
+ */
+const DB_FILE = "/demo.sqlite.gz";
 
 let ready: Promise<Database> | null = null;
 let realFetch: typeof fetch | null = null;
@@ -85,7 +92,10 @@ async function build(onProgress?: (what: string) => void): Promise<Database> {
   const response = await (realFetch ?? fetch)(DB_FILE);
   if (!response.ok) throw new Error(`${DB_FILE}: HTTP ${response.status}`);
 
-  const bytes = new Uint8Array(await response.arrayBuffer());
+  const unpacked = response.body?.pipeThrough(new DecompressionStream("gzip"));
+  if (!unpacked) throw new Error("the demo database did not arrive");
+
+  const bytes = new Uint8Array(await new Response(unpacked).arrayBuffer());
   const raw = new SQL.Database(bytes);
 
   // Foreign keys are off by default in SQLite and the schema leans on them:

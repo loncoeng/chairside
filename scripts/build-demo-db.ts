@@ -19,11 +19,12 @@ import { mkdirSync, readFileSync, writeFileSync, statSync, rmSync } from "node:f
 // "/home/runner/..." into a relative path that does not exist. This has a
 // function, and the function knows the difference.
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 
 const FROM = "2026-08-24";
 const TO = "2026-09-30";
 
-const OUT = new URL("../public/demo.sqlite", import.meta.url);
+const OUT = new URL("../public/demo.sqlite.gz", import.meta.url);
 const WORK = new URL("../public/.demo-build.sqlite", import.meta.url);
 
 mkdirSync(new URL("../public/", import.meta.url), { recursive: true });
@@ -85,7 +86,15 @@ db.exec("VACUUM");
 db.close();
 
 const bytes = statSync(fileURLToPath(WORK)).size;
-writeFileSync(OUT, readFileSync(WORK));
+
+// Shipped compressed, and unpacked in the browser.
+//
+// Cloudflare compresses by content type and does not know what a .sqlite is,
+// so it went over the wire at its full 640KB. A database is mostly text and
+// gives up two thirds of itself to gzip; sending it raw is 450KB of somebody
+// else's bandwidth for nothing.
+const packed = gzipSync(readFileSync(WORK), { level: 9 });
+writeFileSync(OUT, packed);
 rmSync(WORK, { force: true });
 
 // SQLite itself, beside the page rather than from a CDN: one origin, no
@@ -99,7 +108,7 @@ const wasm = new URL("../node_modules/sql.js/dist/sql-wasm.wasm", import.meta.ur
 writeFileSync(new URL("../public/sql-wasm.wasm", import.meta.url), readFileSync(wasm));
 
 console.log(
-  `public/demo.sqlite: ${after.n} bookings (from ${before.n}), ${people.n} guests, ` +
-    `${(bytes / 1024).toFixed(0)}KB, ${FROM} to ${TO}` +
+  `public/demo.sqlite.gz: ${after.n} bookings (from ${before.n}), ${people.n} guests, ` +
+    `${(bytes / 1024).toFixed(0)}KB → ${(packed.length / 1024).toFixed(0)}KB, ${FROM} to ${TO}` +
     ` (+ sql-wasm.wasm, ${(statSync(wasm).size / 1024).toFixed(0)}KB)`,
 );

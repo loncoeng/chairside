@@ -19,3 +19,9 @@ publish-guard.local.toml
 # `npm run check`. Committed, it goes stale the moment a binding is added and
 # nothing says so — and every wrangler update is a 16,000-line diff.
 worker-configuration.d.ts
+
+# Built by scripts/build-demo-db.ts during `npm run build`, from the same seed
+# files the live instance uses. Committing it would be a second copy of the
+# sample to keep in step — and 640KB of binary in every diff.
+public/demo.sqlite
+public/sql-wasm.wasm

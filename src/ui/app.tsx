@@ -8,6 +8,7 @@ import { BookingPanel } from "./booking-panel.tsx";
 import { Customers } from "./customers.tsx";
 import { Money } from "./money.tsx";
 import { Shop } from "./shop.tsx";
+import { startDemo, stopDemo } from "./demo.ts";
 import type { Customer, Service } from "./book.tsx";
 import type { Day, Line, Room } from "./types.ts";
 import { shiftDate, todayInShop } from "./types.ts";
@@ -82,6 +83,7 @@ function readHash(): {
 function Screen() {
   const { t, lang, setLang, weekday } = useText();
   const [route, setRoute] = useState(readHash);
+  const [demo, setDemo] = useState<"off" | "loading" | "on" | "failed">("off");
   const [date, setDate] = useState(todayInShop);
   const [room, setRoom] = useState<Load<Room>>({ status: "loading" });
   const [day, setDay] = useState<Load<Day>>({ status: "loading" });
@@ -163,6 +165,33 @@ function Screen() {
           </a>
         </nav>
 
+        {/* Loaded only when asked for: the engine and the shop together are
+            about half a megabyte, and somebody who just wants to read the
+            calendar should not pay for it. */}
+        <button
+          type="button"
+          class={`demo-toggle${demo === "on" ? " is-on" : ""}`}
+          disabled={demo === "loading"}
+          onClick={async () => {
+            if (demo === "on") {
+              stopDemo();
+              setDemo("off");
+              setRevision((n) => n + 1);
+              return;
+            }
+            setDemo("loading");
+            try {
+              await startDemo();
+              setDemo("on");
+              setRevision((n) => n + 1);
+            } catch {
+              setDemo("failed");
+            }
+          }}
+        >
+          {demo === "loading" ? t("demoLoading") : demo === "on" ? t("demoLeave") : t("demoOn")}
+        </button>
+
         <div class="langs" role="group" aria-label="Language">
           {LANGS.map((code) => (
             <button
@@ -191,6 +220,13 @@ function Screen() {
             }}
           />
         </section>
+      )}
+
+      {demo === "on" && <p class="demo-banner">{t("demoBanner")}</p>}
+      {demo === "failed" && (
+        <p class="failed" role="alert">
+          {t("demoFailed")}
+        </p>
       )}
 
       {route.view === "shop" && (

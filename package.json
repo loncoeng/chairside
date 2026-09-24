@@ -8,14 +8,15 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run check && vite build",
+    "build": "npm run check && node scripts/build-demo-db.ts && vite build",
     "check": "npm run types && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "test": "node --test \"src/**/*.test.ts\"",
     "deploy": "npm run build && wrangler deploy",
     "seed": "wrangler d1 execute chairside --remote --file seed/demo.sql && wrangler d1 execute chairside --remote --file seed/holidays.sql && wrangler d1 execute chairside --remote --file seed/demo-clear.sql && wrangler d1 execute chairside --remote --file seed/demo-customers.sql && wrangler d1 execute chairside --remote --file seed/demo-bookings.sql && wrangler d1 execute chairside --remote --file seed/demo-items.sql && wrangler d1 execute chairside --remote --file seed/demo-events.sql && wrangler d1 execute chairside --remote --file seed/demo-payments.sql",
     "types": "wrangler types",
     "demo:bookings": "node scripts/generate-demo-bookings.ts",
-    "holidays": "node scripts/import-holidays.ts"
+    "holidays": "node scripts/import-holidays.ts",
+    "demo:db": "node scripts/build-demo-db.ts"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",

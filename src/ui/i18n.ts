@@ -210,6 +210,17 @@ export const TEXT = {
     en: "Nobody is deleted. Removing somebody takes them out of bookings that already happened and stops per-stylist takings adding up; leaving is recorded as a date.",
   },
 
+  // The demo
+  demoOn: { ja: "デモ", zh: "示範", en: "Demo" },
+  demoLoading: { ja: "デモを読み込み中…", zh: "正在載入示範…", en: "Loading the demo…" },
+  demoFailed: { ja: "デモを読み込めませんでした。", zh: "無法載入示範。", en: "The demo did not load." },
+  demoBanner: {
+    ja: "デモです。データはこのブラウザの中だけにあり、何をしても他の人には見えません。リロードで元に戻ります。",
+    zh: "這是示範。資料只存在於這個瀏覽器中，任何操作都不會被別人看到，重新整理即會復原。",
+    en: "This is the demo. The data lives in this browser only — nothing you do is visible to anybody else, and a reload puts it back.",
+  },
+  demoLeave: { ja: "デモを終える", zh: "結束示範", en: "Leave the demo" },
+
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
   // as a fallback for anything not going through this screen.

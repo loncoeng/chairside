@@ -23,6 +23,15 @@ import { addRecord, getCustomer, listCustomers } from "./customer-api.ts";
 import { currencyList, paymentsFor, revenue, takePayment } from "./money-api.ts";
 import { setClosure, setHours, setStaff, shopSettings } from "./shop-api.ts";
 
+/**
+ * The API.
+ *
+ * **This is the only file that names D1.** Everything it calls takes a
+ * drizzle SQLite database and does not care which one — see ../db/database.ts
+ * — which is what makes the same code run on a shop PC and in the browser
+ * demo. src/db/portable.test.ts runs these very functions on sql.js so the
+ * claim cannot rot quietly.
+ */
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -38,7 +47,7 @@ export default {
       }
       // The endpoints that write.
       if (url.pathname === "/api/bookings" && request.method === "POST") {
-        return await createBooking(env, request);
+        return await createBooking(drizzle(env.DB), request);
       }
 
       // /api/bookings/123 — read one, or change it.
@@ -52,7 +61,7 @@ export default {
           return json({ ...found, payments: await paymentsFor(db, id) });
         }
         if (request.method === "PATCH") {
-          return await updateBooking(env, request, id);
+          return await updateBooking(drizzle(env.DB), request, id);
         }
         return json({ error: "method not allowed" }, 405);
       }
@@ -69,25 +78,25 @@ export default {
         return json(await listCustomers(drizzle(env.DB), url.searchParams.get("q") ?? ""));
       }
       if (url.pathname === "/api/records" && request.method === "POST") {
-        return await addRecord(env, request);
+        return await addRecord(drizzle(env.DB), request);
       }
       if (url.pathname === "/api/shop") {
         return json(await shopSettings(drizzle(env.DB), today()));
       }
       if (url.pathname === "/api/shop/hours" && request.method === "PUT") {
-        return await setHours(env, request);
+        return await setHours(drizzle(env.DB), request);
       }
       if (url.pathname === "/api/shop/closures" && request.method === "POST") {
-        return await setClosure(env, request);
+        return await setClosure(drizzle(env.DB), request);
       }
       if (url.pathname === "/api/shop/staff" && request.method === "POST") {
-        return await setStaff(env, request);
+        return await setStaff(drizzle(env.DB), request);
       }
       if (url.pathname === "/api/currencies") {
         return json(await currencyList(drizzle(env.DB)));
       }
       if (url.pathname === "/api/payments" && request.method === "POST") {
-        return await takePayment(env, request);
+        return await takePayment(drizzle(env.DB), request);
       }
       if (url.pathname === "/api/revenue") {
         const month = url.searchParams.get("month") ?? today().slice(0, 7);

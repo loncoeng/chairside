@@ -9,7 +9,6 @@
 // customer. A stored counter is a second copy of the truth, and the two drift
 // the first time a row is corrected.
 
-import { drizzle } from "drizzle-orm/d1";
 import { asc, desc, eq, inArray, like, or } from "drizzle-orm";
 
 import { standingOf } from "../db/standing.ts";
@@ -23,7 +22,7 @@ import {
   staff,
 } from "../db/schema.ts";
 
-type Db = ReturnType<typeof drizzle>;
+import type { Database as Db } from "../db/database.ts";
 
 /**
  * The list, with an optional search.
@@ -161,7 +160,7 @@ export async function getCustomer(db: Db, id: number) {
 }
 
 /** Add a record against a visit. */
-export async function addRecord(env: Env, request: Request): Promise<Response> {
+export async function addRecord(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     customerId?: unknown;
     bookingId?: unknown;
@@ -194,7 +193,6 @@ export async function addRecord(env: Env, request: Request): Promise<Response> {
     return json({ ok: false, error: "内容が空です。" }, 400);
   }
 
-  const db = drizzle(env.DB);
   const [exists] = await db
     .select({ id: customers.id })
     .from(customers)

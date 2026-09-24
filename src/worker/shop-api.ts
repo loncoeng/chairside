@@ -5,12 +5,11 @@
 // opening hour typed wrong does not throw anything — it just means bookings
 // stop being offered at six, and nobody notices for a week.
 
-import { drizzle } from "drizzle-orm/d1";
 import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 
 import { bookingItems, bookings, businessHours, closures, staff } from "../db/schema.ts";
 
-type Db = ReturnType<typeof drizzle>;
+import type { Database as Db } from "../db/database.ts";
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -57,7 +56,7 @@ export async function shopSettings(db: Db, from: string) {
  * "we open at ten except Sunday", and seven separate saves is seven chances
  * to leave it half changed.
  */
-export async function setHours(env: Env, request: Request): Promise<Response> {
+export async function setHours(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { hours?: unknown } | null;
   const rows = Array.isArray(body?.hours) ? body.hours : null;
   if (!rows || rows.length !== 7) return bad("7日ぶん送ってください。");
@@ -85,7 +84,6 @@ export async function setHours(env: Env, request: Request): Promise<Response> {
 
   if (new Set(parsed.map((p) => p.weekday)).size !== 7) return bad("曜日が重複しています。");
 
-  const db = drizzle(env.DB);
   for (const row of parsed) {
     await db
       .update(businessHours)
@@ -97,7 +95,7 @@ export async function setHours(env: Env, request: Request): Promise<Response> {
 }
 
 /** Close for a day, or open one back up. */
-export async function setClosure(env: Env, request: Request): Promise<Response> {
+export async function setClosure(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     date?: unknown;
     reason?: unknown;
@@ -107,7 +105,6 @@ export async function setClosure(env: Env, request: Request): Promise<Response> 
   const date = typeof body?.date === "string" ? body.date : "";
   if (!DATE.test(date)) return bad("日付は YYYY-MM-DD で送ってください。");
 
-  const db = drizzle(env.DB);
 
   if (body?.remove === true) {
     await db.delete(closures).where(eq(closures.date, date));
@@ -149,7 +146,7 @@ export async function setClosure(env: Env, request: Request): Promise<Response> 
  * already happened and stops per-stylist takings adding up. Leaving is a date
  * on the row, which is why `left_on` exists.
  */
-export async function setStaff(env: Env, request: Request): Promise<Response> {
+export async function setStaff(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     id?: unknown;
     name?: unknown;
@@ -169,7 +166,6 @@ export async function setStaff(env: Env, request: Request): Promise<Response> {
   const joinedOn = typeof body.joinedOn === "string" && DATE.test(body.joinedOn) ? body.joinedOn : null;
   const leftOn = typeof body.leftOn === "string" && DATE.test(body.leftOn) ? body.leftOn : null;
 
-  const db = drizzle(env.DB);
   const id = Number.isInteger(body.id) ? (body.id as number) : null;
 
   if (id === null) {

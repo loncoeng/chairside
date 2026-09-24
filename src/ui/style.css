@@ -797,3 +797,15 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 }
 
 .paid-method { color: var(--ink-faint); font-size: 0.8rem; }
+
+/* Which region a holiday belongs to. The three differ, and the difference is
+   who walks in — the mainland's Golden Week runs a week past Macau's. */
+ul.holiday-note { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; font-size: 0.85rem; }
+ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
+
+.region { font-size: 0.72rem; border-radius: 3px; padding: 0 0.35rem; border: 1px solid currentColor; }
+.region.is-MO { color: var(--accent); }
+.region.is-HK { color: var(--styling); }
+.region.is-CN { color: var(--shampoo); }
+
+.holiday-note.is-unknown { color: var(--ink-faint); font-size: 0.8rem; }

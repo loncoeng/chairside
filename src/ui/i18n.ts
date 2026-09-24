@@ -164,6 +164,16 @@ export const TEXT = {
   paid: { ja: "受取済み", zh: "已收款", en: "Paid" },
   listPrice: { ja: "定価 {n}", zh: "定價 {n}", en: "List {n}" },
 
+  // Holidays
+  "region.MO": { ja: "マカオ", zh: "澳門", en: "Macau" },
+  "region.HK": { ja: "香港", zh: "香港", en: "Hong Kong" },
+  "region.CN": { ja: "中国", zh: "內地", en: "Mainland" },
+  holidaysUnknown: {
+    ja: "{to} より先の祝日は取り込まれていません。",
+    zh: "尚未匯入 {to} 之後的公眾假期。",
+    en: "Holidays have not been imported past {to}.",
+  },
+
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
   // as a fallback for anything not going through this screen.

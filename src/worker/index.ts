@@ -156,7 +156,7 @@ async function day(env: Env, date: string) {
   const db = drizzle(env.DB);
   const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
 
-  const [lines, hours, closedFor, publicHolidays] = await Promise.all([
+  const [lines, hours, closedFor, publicHolidays, known] = await Promise.all([
     db
       .select({
         itemId: bookingItems.id,
@@ -201,6 +201,10 @@ async function day(env: Env, date: string) {
       .select({ region: holidays.region, name: holidays.name })
       .from(holidays)
       .where(eq(holidays.date, date)),
+    // How far the imported list reaches. A year past the end of it should
+    // say so rather than showing a clean calendar that means "no holidays"
+    // when it means "nobody has imported that year".
+    db.select({ to: max(holidays.date) }).from(holidays),
   ]);
 
   // Only when there is nothing to show. It is two aggregates over an indexed
@@ -214,6 +218,7 @@ async function day(env: Env, date: string) {
     hours: hours[0] ?? { opensAt: null, closesAt: null, closed: true },
     closure: closedFor[0] ?? null,
     holidays: publicHolidays,
+    holidaysKnownTo: known[0]?.to ?? null,
     lines,
     ...(span ? { bookedRange: span } : {}),
   };

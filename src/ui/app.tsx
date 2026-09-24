@@ -268,8 +268,25 @@ function Screen() {
         {day.status === "ready" && room.status === "ready" && (
           <>
             {day.value.holidays.length > 0 && (
-              <p class="holiday-note">
-                {day.value.holidays.map((h) => `${h.region}：${h.name}`).join("　")}
+              <ul class="holiday-note">
+                {day.value.holidays.map((h) => (
+                  <li key={h.region}>
+                    {/* Which region, because the three differ and the
+                        difference is who walks in. The mainland's Golden Week
+                        runs a week past Macau's two days. */}
+                    <span class={`region is-${h.region}`}>{t(`region.${h.region}`)}</span>
+                    {h.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* An empty holiday row means "none that day" only while the list
+                reaches that far. Past the end of it, it means nobody has
+                imported the year. */}
+            {day.value.holidaysKnownTo && date > day.value.holidaysKnownTo && (
+              <p class="holiday-note is-unknown">
+                {t("holidaysUnknown", { to: day.value.holidaysKnownTo })}
               </p>
             )}
 

@@ -9,6 +9,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { asc, eq, inArray } from "drizzle-orm";
 
 import {
+  bookingEvents,
   bookingItems,
   bookings,
   businessHours,
@@ -171,6 +172,13 @@ export async function createBooking(env: Env, request: Request): Promise<Respons
     })),
   );
 
+  await db.insert(bookingEvents).values({
+    bookingId: created.id,
+    kind: "created",
+    before: null,
+    after: `${date} ${first.startsAt}`,
+  });
+
   return json({ ok: true, bookingId: created.id, verdicts }, 201);
 }
 
@@ -295,7 +303,21 @@ export async function getBooking(db: Db, id: number) {
     .where(eq(bookingItems.bookingId, id))
     .orderBy(asc(bookingItems.sortOrder), asc(bookingItems.id));
 
-  return { ...booking, items };
+  // Oldest first: this is read as a story, and a story that starts at the end
+  // has to be read backwards.
+  const history = await db
+    .select({
+      id: bookingEvents.id,
+      at: bookingEvents.at,
+      kind: bookingEvents.kind,
+      before: bookingEvents.before,
+      after: bookingEvents.after,
+    })
+    .from(bookingEvents)
+    .where(eq(bookingEvents.bookingId, id))
+    .orderBy(asc(bookingEvents.at), asc(bookingEvents.id));
+
+  return { ...booking, items, history };
 }
 
 /**
@@ -338,6 +360,15 @@ export async function updateBooking(env: Env, request: Request, id: number): Pro
       .update(bookings)
       .set({ status: body.status as Status })
       .where(eq(bookings.id, id));
+
+    // Recorded even when it is the same state coming round again, because
+    // "cancelled, then put back, then cancelled" is the thing worth seeing.
+    await db.insert(bookingEvents).values({
+      bookingId: id,
+      kind: "status",
+      before: current.status,
+      after: body.status,
+    });
 
     return json({ ok: true, bookingId: id, status: body.status });
   }
@@ -455,6 +486,33 @@ export async function updateBooking(env: Env, request: Request, id: number): Pro
       sortOrder: index,
     })),
   );
+
+  // One row per thing that changed, rather than one row saying "edited".
+  // Counting how often a guest moves their appointment means counting moves,
+  // and a single catch-all kind would make that impossible to ask for.
+  const changes: { kind: "moved" | "restaffed"; before: string; after: string }[] = [];
+
+  if (date !== current.date || first.startsAt !== current.startsAt) {
+    changes.push({
+      kind: "moved",
+      before: `${current.date} ${current.startsAt}`,
+      after: `${date} ${first.startsAt}`,
+    });
+  }
+
+  const wasStaff = current.items[0]?.staffId ?? null;
+  const nowStaff = plan[0]?.staffId ?? null;
+  if (wasStaff !== nowStaff) {
+    changes.push({
+      kind: "restaffed",
+      before: String(wasStaff ?? ""),
+      after: String(nowStaff ?? ""),
+    });
+  }
+
+  if (changes.length > 0) {
+    await db.insert(bookingEvents).values(changes.map((c) => ({ bookingId: id, ...c })));
+  }
 
   return json({ ok: true, bookingId: id, verdicts });
 }

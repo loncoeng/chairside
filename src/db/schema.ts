@@ -267,3 +267,50 @@ export const holidays = sqliteTable(
     index("holidays_date_idx").on(t.date),
   ],
 );
+
+/**
+ * What happened to a booking after it was taken.
+ *
+ * One row per change, never updated and never deleted. The booking itself
+ * only ever shows its current state, and that state answers "when are they
+ * coming" but not "how many times has this moved".
+ *
+ * **The second question is the one with a person behind it.** A guest who
+ * reschedules three times a month, or cancels the morning of, is a pattern
+ * the shop can see from the desk but cannot prove — and cannot hand to
+ * whoever is covering for them. A booking that has been moved twice looks
+ * exactly like one that was booked correctly the first time.
+ *
+ * `at` is when the change was made, which together with the booking's own
+ * date and time says how much notice a cancellation gave. An hour before is
+ * a different thing from a week before, and the row has to be able to tell
+ * them apart later.
+ */
+export const bookingEvents = sqliteTable(
+  "booking_events",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    bookingId: integer("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    at: integer("at").notNull().default(now),
+    kind: text("kind", {
+      enum: ["created", "status", "moved", "restaffed", "edited"],
+    }).notNull(),
+    /** What it was. NULL where there was nothing before. */
+    before: text("before"),
+    /** What it became. */
+    after: text("after"),
+    /**
+     * Who made the change. NULL until there is a way to sign in — the column
+     * exists now so that adding logins later is a change to one query rather
+     * than a migration over a year of history.
+     */
+    byStaffId: integer("by_staff_id").references(() => staff.id),
+  },
+  (t) => [
+    index("booking_events_booking_idx").on(t.bookingId),
+    // Counting how often one guest moves their bookings reads this by time.
+    index("booking_events_at_idx").on(t.at),
+  ],
+);

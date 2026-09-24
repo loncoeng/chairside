@@ -22,6 +22,15 @@ type Verdict = {
   data?: Record<string, string | number>;
 };
 
+type Event = {
+  id: number;
+  /** Unix seconds. */
+  at: number;
+  kind: "created" | "status" | "moved" | "restaffed" | "edited";
+  before: string | null;
+  after: string | null;
+};
+
 type Detail = {
   id: number;
   date: string;
@@ -40,6 +49,7 @@ type Detail = {
     startsAt: string;
     endsAt: string;
   }[];
+  history: Event[];
 };
 
 /** The four a receptionist reaches for, plus the way back. */
@@ -255,6 +265,10 @@ export function BookingPanel({
         </>
       )}
 
+      {detail !== null && detail.history.length > 0 && (
+        <History events={detail.history} staff={staff} />
+      )}
+
       {failed && (
         <p class="failed" role="alert">
           {failed}
@@ -272,5 +286,57 @@ export function BookingPanel({
         </ul>
       )}
     </div>
+  );
+}
+
+/**
+ * What has happened to this booking.
+ *
+ * The count is said first. Reading five lines and working out that three of
+ * them are moves is the reader doing the arithmetic; "moved three times" is
+ * the thing they wanted to know, and it is what makes a guest who reschedules
+ * constantly visible to whoever is covering the desk today.
+ */
+function History({ events, staff }: { events: Event[]; staff: Person[] }) {
+  const { t, lang } = useText();
+  const moves = events.filter((e) => e.kind === "moved").length;
+  const nameOf = (id: string | null) =>
+    staff.find((p) => String(p.id) === id)?.name ?? id ?? "—";
+
+  const when = (at: number) =>
+    new Date(at * 1000).toLocaleString(lang === "zh" ? "zh-Hant" : lang, {
+      timeZone: "Asia/Macau",
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  return (
+    <details class="history">
+      <summary>
+        {t("history")}
+        {moves > 0 && <span class="history-count">{t("movedTimes", { n: moves })}</span>}
+      </summary>
+
+      <ol class="history-list">
+        {events.map((event) => (
+          <li key={event.id}>
+            <span class="history-when">{when(event.at)}</span>
+            <span class="history-what">
+              {event.kind === "restaffed"
+                ? t("event.restaffed", {
+                    before: nameOf(event.before),
+                    after: nameOf(event.after),
+                  })
+                : t(`event.${event.kind}`, {
+                    before: event.before ?? "—",
+                    after: event.after ?? "—",
+                  })}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }

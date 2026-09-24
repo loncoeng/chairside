@@ -15,6 +15,15 @@ import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
 import type { Service } from "./book.tsx";
 
+type Payment = {
+  id: number;
+  amount: number;
+  currency: string;
+  rateToBase: number;
+  method: string;
+  paidAt: number;
+};
+
 type Verdict = {
   level: "stop" | "warn";
   code: string;
@@ -50,6 +59,7 @@ type Detail = {
     endsAt: string;
   }[];
   history: Event[];
+  payments: Payment[];
 };
 
 /** The four a receptionist reaches for, plus the way back. */
@@ -80,6 +90,10 @@ export function BookingPanel({
   const [busy, setBusy] = useState(false);
 
   const [movingTo, setMovingTo] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("MOP");
+  const [payMethod, setPayMethod] = useState("cash");
+  const [currencyCodes, setCurrencyCodes] = useState<string[]>(["MOP"]);
   const [staffId, setStaffId] = useState<number | null>(null);
   const [verdicts, setVerdicts] = useState<Verdict[]>([]);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
@@ -99,13 +113,60 @@ export function BookingPanel({
         setDetail(found);
         setMovingTo(found.startsAt);
         setStaffId(found.items[0]?.staffId ?? null);
+
+        // The list price of what was booked, as a starting figure. It is the
+        // menu's number, not the bill: discounts and rounding happen, and
+        // what gets stored is what was handed over.
+        const listed = found.items.reduce(
+          (sum, item) => sum + (services.find((sv) => sv.id === item.serviceId)?.price ?? 0),
+          0,
+        );
+        if (listed > 0) setAmount(String(listed));
       })
       .catch((problem: unknown) => {
         if (!stop.signal.aborted) setFailed(String(problem));
       });
 
     return () => stop.abort();
-  }, [line.bookingId]);
+  }, [line.bookingId, services]);
+
+  useEffect(() => {
+    const stop = new AbortController();
+    fetch("/api/currencies", { signal: stop.signal })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list: { code: string }[]) => {
+        if (list.length > 0) setCurrencyCodes(list.map((c) => c.code));
+      })
+      .catch(() => undefined);
+    return () => stop.abort();
+  }, []);
+
+  async function pay() {
+    setBusy(true);
+    setFailed(null);
+    try {
+      const response = await fetch("/api/payments", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          bookingId: line.bookingId,
+          amount: Number(amount),
+          currency,
+          method: payMethod,
+        }),
+      });
+      const reply = (await response.json()) as { ok?: boolean; error?: string };
+      if (reply.ok) {
+        onChanged();
+        return;
+      }
+      setFailed(reply.error ?? `HTTP ${response.status}`);
+    } catch (problem: unknown) {
+      setFailed(String(problem));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function send(body: Record<string, unknown>) {
     setBusy(true);
@@ -194,6 +255,71 @@ export function BookingPanel({
               </button>
             ))}
           </div>
+
+          {/* Taking payment finishes the visit — there is no separate paid
+              state, which is what the shop asked for. */}
+          {detail.status !== "cancelled" && detail.status !== "no_show" && (
+            <div class="till">
+              {detail.payments.length > 0 ? (
+                <ul class="paid-lines">
+                  {detail.payments.map((p) => (
+                    <li key={p.id}>
+                      <span class="paid-tag">{t("paid")}</span>
+                      {p.currency} {p.amount.toLocaleString("en-US")}
+                      <span class="paid-method">{t(`method.${p.method}` as "method.cash")}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div class="field-row">
+                  <label class="field">
+                    <span>{t("amount")}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="10"
+                      value={amount}
+                      onInput={(e) => setAmount((e.target as HTMLInputElement).value)}
+                    />
+                  </label>
+                  <label class="field">
+                    <span>{t("currency")}</span>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency((e.target as HTMLSelectElement).value)}
+                    >
+                      {currencyCodes.map((code) => (
+                        <option key={code} value={code}>
+                          {code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>{t("method")}</span>
+                    <select
+                      value={payMethod}
+                      onChange={(e) => setPayMethod((e.target as HTMLSelectElement).value)}
+                    >
+                      {["cash", "card", "wechat", "alipay", "other"].map((m) => (
+                        <option key={m} value={m}>
+                          {t(`method.${m}` as "method.cash")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    class="primary"
+                    disabled={busy || Number(amount) <= 0}
+                    onClick={pay}
+                  >
+                    {t("takePayment")}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <details class="reschedule">
             <summary>{t("reschedule")}</summary>

@@ -20,6 +20,7 @@ import {
 } from "../db/schema.ts";
 import { createBooking, customerList, getBooking, menu, updateBooking } from "./booking-api.ts";
 import { addRecord, getCustomer, listCustomers } from "./customer-api.ts";
+import { currencyList, paymentsFor, revenue, takePayment } from "./money-api.ts";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -44,8 +45,10 @@ export default {
       if (booking) {
         const id = Number(booking[1]);
         if (request.method === "GET") {
-          const found = await getBooking(drizzle(env.DB), id);
-          return found ? json(found) : json({ error: "その予約は見つかりません。" }, 404);
+          const db = drizzle(env.DB);
+          const found = await getBooking(db, id);
+          if (!found) return json({ error: "その予約は見つかりません。" }, 404);
+          return json({ ...found, payments: await paymentsFor(db, id) });
         }
         if (request.method === "PATCH") {
           return await updateBooking(env, request, id);
@@ -66,6 +69,19 @@ export default {
       }
       if (url.pathname === "/api/records" && request.method === "POST") {
         return await addRecord(env, request);
+      }
+      if (url.pathname === "/api/currencies") {
+        return json(await currencyList(drizzle(env.DB)));
+      }
+      if (url.pathname === "/api/payments" && request.method === "POST") {
+        return await takePayment(env, request);
+      }
+      if (url.pathname === "/api/revenue") {
+        const month = url.searchParams.get("month") ?? today().slice(0, 7);
+        if (!/^\d{4}-\d{2}$/.test(month)) {
+          return json({ error: "month must be YYYY-MM" }, 400);
+        }
+        return json(await revenue(drizzle(env.DB), month));
       }
 
       const person = /^\/api\/people\/(\d+)$/.exec(url.pathname);

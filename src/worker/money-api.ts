@@ -11,7 +11,6 @@
 // The shop asked for one button rather than two, and a status that only ever
 // follows another status is a status nobody sets on purpose.
 
-import { drizzle } from "drizzle-orm/d1";
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 
 import {
@@ -25,7 +24,7 @@ import {
 } from "../db/schema.ts";
 import { creditedStaff } from "../db/credit.ts";
 
-type Db = ReturnType<typeof drizzle>;
+import type { Database as Db } from "../db/database.ts";
 
 const METHODS = ["cash", "card", "wechat", "alipay", "other"] as const;
 type Method = (typeof METHODS)[number];
@@ -61,7 +60,7 @@ export async function paymentsFor(db: Db, bookingId: number) {
  * The rate is read from the shop's settings here and written onto the row, so
  * what is stored is what was true at the till.
  */
-export async function takePayment(env: Env, request: Request): Promise<Response> {
+export async function takePayment(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     bookingId?: unknown;
     amount?: unknown;
@@ -87,7 +86,6 @@ export async function takePayment(env: Env, request: Request): Promise<Response>
   }
 
   const code = typeof body.currency === "string" ? body.currency : "";
-  const db = drizzle(env.DB);
 
   const [currency] = await db
     .select({ code: currencies.code, rateToBase: currencies.rateToBase })

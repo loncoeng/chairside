@@ -5,7 +5,6 @@
 // trip, but a check that only happens in the browser is decoration — anything
 // that reaches this endpoint has to be judged again.
 
-import { drizzle } from "drizzle-orm/d1";
 import { asc, eq, inArray } from "drizzle-orm";
 
 import {
@@ -22,7 +21,7 @@ import {
 import { blocked, check } from "../db/booking-rules.ts";
 import type { Draft, Existing } from "../db/booking-rules.ts";
 
-type Db = ReturnType<typeof drizzle>;
+import type { Database as Db } from "../db/database.ts";
 
 /** The menu, for the booking form. */
 export async function menu(db: Db) {
@@ -68,7 +67,7 @@ type Proposal = {
   serviceIds?: unknown;
 };
 
-export async function createBooking(env: Env, request: Request): Promise<Response> {
+export async function createBooking(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Proposal | null;
   if (!body || typeof body !== "object") return bad("本文が読み取れません。");
 
@@ -87,7 +86,6 @@ export async function createBooking(env: Env, request: Request): Promise<Respons
   if (serviceIds.length === 0) return bad("施術を1つ以上選んでください。");
   if (serviceIds.length > 8) return bad("1件の予約に入れられる施術は8つまでです。");
 
-  const db = drizzle(env.DB);
 
   const chosen = await db
     .select({ id: services.id, durationMin: services.durationMin, seatKind: services.seatKind })
@@ -337,11 +335,10 @@ export async function getBooking(db: Db, id: number) {
  * the day: a slot was held and then freed, and a shop looking back at a quiet
  * Tuesday needs to be able to tell that from a Tuesday nobody called.
  */
-export async function updateBooking(env: Env, request: Request, id: number): Promise<Response> {
+export async function updateBooking(db: Db, request: Request, id: number): Promise<Response> {
   const body = (await request.json().catch(() => null)) as (Proposal & { status?: unknown }) | null;
   if (!body || typeof body !== "object") return bad("本文が読み取れません。");
 
-  const db = drizzle(env.DB);
   const current = await getBooking(db, id);
   if (!current) return json({ ok: false, error: "その予約は見つかりません。" }, 404);
 

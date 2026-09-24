@@ -75,7 +75,7 @@ the end leaves nothing standing when a step goes wrong partway.
 - [x] **3c — Changing a booking.** Status, time and stylist; nothing is deleted
 - [x] **4 — Customers and treatment records.** Who they are, and what their bookings add up to
 - [x] **5 — Payments and revenue.** One button, and a month at a time
-- [ ] 6 — Holidays, opening hours, staff
+- [x] **6 — Holidays, opening hours, staff.** The settings, and the three regions' holidays
 - [ ] 7 — The public demo
 
 ## Running it

@@ -21,6 +21,7 @@ import {
 import { createBooking, customerList, getBooking, menu, updateBooking } from "./booking-api.ts";
 import { addRecord, getCustomer, listCustomers } from "./customer-api.ts";
 import { currencyList, paymentsFor, revenue, takePayment } from "./money-api.ts";
+import { setClosure, setHours, setStaff, shopSettings } from "./shop-api.ts";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -69,6 +70,18 @@ export default {
       }
       if (url.pathname === "/api/records" && request.method === "POST") {
         return await addRecord(env, request);
+      }
+      if (url.pathname === "/api/shop") {
+        return json(await shopSettings(drizzle(env.DB), today()));
+      }
+      if (url.pathname === "/api/shop/hours" && request.method === "PUT") {
+        return await setHours(env, request);
+      }
+      if (url.pathname === "/api/shop/closures" && request.method === "POST") {
+        return await setClosure(env, request);
+      }
+      if (url.pathname === "/api/shop/staff" && request.method === "POST") {
+        return await setStaff(env, request);
       }
       if (url.pathname === "/api/currencies") {
         return json(await currencyList(drizzle(env.DB)));

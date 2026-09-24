@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run check && node scripts/build-demo-db.ts && vite build",
+    "build": "npm run check && node scripts/build-demo-db.ts && vite build && node scripts/check-demo-assets.ts",
     "check": "npm run types && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "test": "node --test \"src/**/*.test.ts\"",
     "deploy": "npm run build && wrangler deploy",

@@ -24,4 +24,4 @@ worker-configuration.d.ts
 # files the live instance uses. Committing it would be a second copy of the
 # sample to keep in step — and 640KB of binary in every diff.
 public/demo.sqlite.gz
-public/sql-wasm.wasm
+public/sql-wasm*.wasm

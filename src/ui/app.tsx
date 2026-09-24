@@ -84,6 +84,10 @@ function Screen() {
   const { t, lang, setLang, weekday } = useText();
   const [route, setRoute] = useState(readHash);
   const [demo, setDemo] = useState<"off" | "loading" | "on" | "failed">("off");
+  // Kept and shown. "The demo did not load" with nothing after it sends
+  // whoever is looking to the developer tools, and this failed on a missing
+  // file whose name was in the error all along.
+  const [demoWhy, setDemoWhy] = useState<string | null>(null);
   const [date, setDate] = useState(todayInShop);
   const [room, setRoom] = useState<Load<Room>>({ status: "loading" });
   const [day, setDay] = useState<Load<Day>>({ status: "loading" });
@@ -184,7 +188,8 @@ function Screen() {
               await startDemo();
               setDemo("on");
               setRevision((n) => n + 1);
-            } catch {
+            } catch (problem: unknown) {
+              setDemoWhy(String(problem));
               setDemo("failed");
             }
           }}
@@ -225,7 +230,7 @@ function Screen() {
       {demo === "on" && <p class="demo-banner">{t("demoBanner")}</p>}
       {demo === "failed" && (
         <p class="failed" role="alert">
-          {t("demoFailed")}
+          {t("demoFailed")} {demoWhy && <span class="reason">{demoWhy}</span>}
         </p>
       )}
 

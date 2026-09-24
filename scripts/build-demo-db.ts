@@ -101,14 +101,28 @@ rmSync(WORK, { force: true });
 // third party, and it still works where that CDN is blocked — which, for a
 // page aimed partly at readers in the mainland, is not hypothetical.
 //
-// Copied at build time rather than committed. It is a file from
-// node_modules; keeping a second copy in the repository means the two can
-// disagree about which version is being shipped.
-const wasm = new URL("../node_modules/sql.js/dist/sql-wasm.wasm", import.meta.url);
-writeFileSync(new URL("../public/sql-wasm.wasm", import.meta.url), readFileSync(wasm));
+// **Both names.** The bundler picks sql.js's browser build, and that build
+// asks for `sql-wasm-browser.wasm` — not `sql-wasm.wasm`, which is what the
+// Node build wants and what this script used to copy. The demo failed with
+// nothing to show for it because the file it asked for was not there.
+//
+// Copied at build time rather than committed. They are files from
+// node_modules; a second copy in the repository is a second version to
+// disagree about.
+// Only the browser one. scripts/check-demo-assets.ts reads the built bundle
+// and fails if the name it asks for is not here, so this list cannot drift
+// out of step again without the build saying so.
+const wasmFiles = ["sql-wasm-browser.wasm"];
+let wasmBytes = 0;
+
+for (const name of wasmFiles) {
+  const from = new URL(`../node_modules/sql.js/dist/${name}`, import.meta.url);
+  writeFileSync(new URL(`../public/${name}`, import.meta.url), readFileSync(from));
+  wasmBytes += statSync(from).size;
+}
 
 console.log(
   `public/demo.sqlite.gz: ${after.n} bookings (from ${before.n}), ${people.n} guests, ` +
     `${(bytes / 1024).toFixed(0)}KB → ${(packed.length / 1024).toFixed(0)}KB, ${FROM} to ${TO}` +
-    ` (+ sql-wasm.wasm, ${(statSync(wasm).size / 1024).toFixed(0)}KB)`,
+    ` (+ ${wasmFiles.length} wasm, ${(wasmBytes / 1024).toFixed(0)}KB)`,
 );

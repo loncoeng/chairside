@@ -174,6 +174,42 @@ export const TEXT = {
     en: "Holidays have not been imported past {to}.",
   },
 
+  // The shop's settings
+  navShop: { ja: "設定", zh: "設定", en: "Settings" },
+  openingHours: { ja: "営業時間", zh: "營業時間", en: "Opening hours" },
+  saveHours: { ja: "営業時間を保存", zh: "儲存營業時間", en: "Save hours" },
+  hoursSaved: { ja: "営業時間を保存しました。", zh: "已儲存營業時間。", en: "Hours saved." },
+  closures: { ja: "臨時休業", zh: "臨時休息", en: "One-off closures" },
+  date: { ja: "日付", zh: "日期", en: "Date" },
+  reason: { ja: "理由", zh: "原因", en: "Reason" },
+  addClosure: { ja: "休みにする", zh: "設為休息", en: "Close that day" },
+  reopen: { ja: "戻す", zh: "取消", en: "Open it again" },
+  noClosures: { ja: "先の臨時休業はありません。", zh: "之後沒有臨時休息。", en: "Nothing closed ahead." },
+  closedSaved: { ja: "休業にしました。", zh: "已設為休息。", en: "Closed." },
+  closedWithBookings: {
+    ja: "休業にしました。その日には予約が {n} 件残っています。予約は消していません。",
+    zh: "已設為休息。當天仍有 {n} 個預約，預約沒有被刪除。",
+    en: "Closed. {n} bookings still stand that day — they have not been removed.",
+  },
+  theTeam: { ja: "スタッフ", zh: "員工", en: "The team" },
+  addPerson: { ja: "名前を追加", zh: "新增員工", en: "Add somebody" },
+  role: { ja: "役割", zh: "職位", en: "Role" },
+  add: { ja: "追加", zh: "新增", en: "Add" },
+  markLeft: { ja: "退職にする", zh: "設為離職", en: "Mark as left" },
+  bringBack: { ja: "在籍に戻す", zh: "恢復在職", en: "Bring back" },
+  leftOn: { ja: "{date} 退職", zh: "{date} 離職", en: "left {date}" },
+  staffSaved: { ja: "保存しました。", zh: "已儲存。", en: "Saved." },
+  leftWithBookings: {
+    ja: "退職にしました。この先の予約が {n} 件残っています。引き継ぎ先は予約画面で変えてください。",
+    zh: "已設為離職。之後仍有 {n} 個預約，請在預約畫面更改負責人。",
+    en: "Marked as left. {n} bookings still stand — change who takes them on the booking screen.",
+  },
+  nobodyDeleted: {
+    ja: "スタッフは削除できません。消すと過去の予約から担当者がいなくなり、担当者別の売上が合わなくなります。退職は日付として記録します。",
+    zh: "員工不能刪除。刪除後過去的預約會失去負責人，髮型師別的營業額也會對不上。離職以日期記錄。",
+    en: "Nobody is deleted. Removing somebody takes them out of bookings that already happened and stops per-stylist takings adding up; leaving is recorded as a date.",
+  },
+
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
   // as a fallback for anything not going through this screen.

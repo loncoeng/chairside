@@ -7,6 +7,7 @@ import { BookingForm } from "./book.tsx";
 import { BookingPanel } from "./booking-panel.tsx";
 import { Customers } from "./customers.tsx";
 import { Money } from "./money.tsx";
+import { Shop } from "./shop.tsx";
 import type { Customer, Service } from "./book.tsx";
 import type { Day, Line, Room } from "./types.ts";
 import { shiftDate, todayInShop } from "./types.ts";
@@ -62,7 +63,13 @@ export function App() {
  * rather than a path, because the static assets are served by filename and a
  * real route would need the server to know about every screen.
  */
-function readHash(): { view: "day" | "people" | "money"; id: number | null; month: string | null } {
+function readHash(): {
+  view: "day" | "people" | "money" | "shop";
+  id: number | null;
+  month: string | null;
+} {
+  if (/^#\/shop/.test(window.location.hash)) return { view: "shop", id: null, month: null };
+
   const people = /^#\/people(?:\/(\d+))?/.exec(window.location.hash);
   if (people) return { view: "people", id: people[1] ? Number(people[1]) : null, month: null };
 
@@ -151,6 +158,9 @@ function Screen() {
           <a href="#/money" class={route.view === "money" ? "is-on" : undefined}>
             {t("navMoney")}
           </a>
+          <a href="#/shop" class={route.view === "shop" ? "is-on" : undefined}>
+            {t("navShop")}
+          </a>
         </nav>
 
         <div class="langs" role="group" aria-label="Language">
@@ -180,6 +190,15 @@ function Screen() {
               window.location.hash = id === null ? "#/people" : `#/people/${id}`;
             }}
           />
+        </section>
+      )}
+
+      {route.view === "shop" && (
+        <section aria-labelledby="shop">
+          <h2 id="shop" class="sr-only">
+            {t("navShop")}
+          </h2>
+          <Shop />
         </section>
       )}
 

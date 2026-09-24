@@ -809,3 +809,64 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
 .region.is-CN { color: var(--shampoo); }
 
 .holiday-note.is-unknown { color: var(--ink-faint); font-size: 0.8rem; }
+
+/* --- The shop's settings -------------------------------------------------- */
+
+.shop { display: flex; flex-direction: column; gap: 2rem; max-width: 46rem; }
+.shop h3 { margin: 0 0 0.7rem; font-size: 1rem; }
+
+.said {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  margin: 0;
+  font-size: 0.88rem;
+  max-width: 44em;
+}
+
+.hours { list-style: none; margin: 0 0 0.8rem; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+
+.hours li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+
+.hours-day { width: 2.5em; color: var(--ink-soft); }
+.hours-closed { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--ink-soft); }
+.hours-dash { color: var(--ink-faint); }
+
+.hours input[type="time"] {
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: var(--ground);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0.15rem 0.4rem;
+}
+
+.hours input[type="time"]:disabled { opacity: 0.4; }
+
+.closure-why { color: var(--ink-soft); }
+
+.team { list-style: none; margin: 0 0 1rem; padding: 0; }
+
+.team li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+
+.team-name { min-width: 6em; }
+.team .role { margin-left: 0; }
+.team-left { color: var(--ink-faint); font-size: 0.8rem; margin-left: auto; }
+.team li button.link { margin-left: auto; }
+.team li.is-gone .team-name { color: var(--ink-faint); }
+.team li.is-gone button.link { margin-left: 0.5rem; }

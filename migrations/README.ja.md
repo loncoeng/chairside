@@ -1,17 +1,18 @@
 # migrations
 
-[`../src/db/schema.ts`](../src/db/schema.ts) から `drizzle-kit` が起こした SQL
-で、生成物ごとコミットしています。Cloudflare には
-`wrangler d1 migrations apply` で当てます。
+[`../src/db/schema.ts`](../src/db/schema.ts) から `drizzle-kit` で生成した
+SQL です。生成物ごとコミットしています。Cloudflare へは
+`wrangler d1 migrations apply` で適用します。
 
 ```sh
-npx drizzle-kit generate   # スキーマを変えたあとに
+npx drizzle-kit generate   # スキーマを変更したら実行する
 ```
 
-`.sql` が3つの環境すべての原本です。D1、ローカルの SQLite ファイル、ブラウザ
-のデモが同じものを読みます。`meta/` は drizzle 自身の控えで、次回の生成を
-差分だけに留めるために必要なので、これもコミットします。
+この `.sql` が3環境すべての大元です。D1、ローカルの SQLite ファイル、
+ブラウザのデモが同じものを読みます。`meta/` は drizzle が差分を計算する
+ために使う控えなので、これもコミットしています。
 
-**ファイル名は手で直します。** drizzle は `0000_colossal_zuras` のような
-でたらめな名前を付けるので、何の変更なのかが分かりません。名前を変えたら
-`meta/_journal.json` の tag も揃えます。揃えないと次回の生成が追跡を失います。
+**ファイル名は手で付け直してください。** drizzle は
+`0000_colossal_zuras` のようなランダムな名前を付けるので、何の変更なのか
+分かりません。リネームしたら `meta/_journal.json` の `tag` も合わせます。
+ここがずれると、次回の生成で差分を追えなくなります。

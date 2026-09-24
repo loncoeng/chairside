@@ -121,7 +121,7 @@ export async function createBooking(db: Db, request: Request): Promise<Response>
 
   // A booking that runs past midnight is not a long appointment, it is a
   // typo. Refusing here keeps the day's arithmetic from wrapping.
-  if (cursor >= 24 * 60) return bad("その開始時刻では日付をまたぎます。");
+  if (cursor >= 24 * 60) return bad("その開始時刻だと日付をまたぎます。");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
   const verdicts = check(drafts, existing, room);
@@ -440,7 +440,7 @@ export async function updateBooking(db: Db, request: Request, id: number): Promi
     cursor = to;
   }
 
-  if (cursor >= 24 * 60) return bad("その開始時刻では日付をまたぎます。");
+  if (cursor >= 24 * 60) return bad("その開始時刻だと日付をまたぎます。");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
   // Its own rows are left out, or moving a booking reads as a clash with the

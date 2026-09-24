@@ -23,5 +23,5 @@ worker-configuration.d.ts
 # Built by scripts/build-demo-db.ts during `npm run build`, from the same seed
 # files the live instance uses. Committing it would be a second copy of the
 # sample to keep in step — and 640KB of binary in every diff.
-public/demo.sqlite
+public/demo.sqlite.gz
 public/sql-wasm.wasm

@@ -6,6 +6,7 @@ import { Calendar, Peak } from "./calendar.tsx";
 import { BookingForm } from "./book.tsx";
 import { BookingPanel } from "./booking-panel.tsx";
 import { Customers } from "./customers.tsx";
+import { Money } from "./money.tsx";
 import type { Customer, Service } from "./book.tsx";
 import type { Day, Line, Room } from "./types.ts";
 import { shiftDate, todayInShop } from "./types.ts";
@@ -61,10 +62,14 @@ export function App() {
  * rather than a path, because the static assets are served by filename and a
  * real route would need the server to know about every screen.
  */
-function readHash(): { view: "day" | "people"; id: number | null } {
-  const m = /^#\/people(?:\/(\d+))?/.exec(window.location.hash);
-  if (m) return { view: "people", id: m[1] ? Number(m[1]) : null };
-  return { view: "day", id: null };
+function readHash(): { view: "day" | "people" | "money"; id: number | null; month: string | null } {
+  const people = /^#\/people(?:\/(\d+))?/.exec(window.location.hash);
+  if (people) return { view: "people", id: people[1] ? Number(people[1]) : null, month: null };
+
+  const money = /^#\/money(?:\/(\d{4}-\d{2}))?/.exec(window.location.hash);
+  if (money) return { view: "money", id: null, month: money[1] ?? null };
+
+  return { view: "day", id: null, month: null };
 }
 
 function Screen() {
@@ -143,6 +148,9 @@ function Screen() {
           <a href="#/people" class={route.view === "people" ? "is-on" : undefined}>
             {t("navPeople")}
           </a>
+          <a href="#/money" class={route.view === "money" ? "is-on" : undefined}>
+            {t("navMoney")}
+          </a>
         </nav>
 
         <div class="langs" role="group" aria-label="Language">
@@ -170,6 +178,20 @@ function Screen() {
             openId={route.id}
             onOpen={(id) => {
               window.location.hash = id === null ? "#/people" : `#/people/${id}`;
+            }}
+          />
+        </section>
+      )}
+
+      {route.view === "money" && (
+        <section aria-labelledby="money">
+          <h2 id="money" class="sr-only">
+            {t("navMoney")}
+          </h2>
+          <Money
+            month={route.month ?? todayInShop().slice(0, 7)}
+            onMonth={(month) => {
+              window.location.hash = `#/money/${month}`;
             }}
           />
         </section>

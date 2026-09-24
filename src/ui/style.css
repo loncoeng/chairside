@@ -736,3 +736,64 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 .visit-status.is-done { border-color: transparent; }
 .visit-status.is-cancelled, .visit-status.is-no_show { border-color: var(--accent); color: var(--accent); }
 .visit.is-cancelled .visit-what, .visit.is-no_show .visit-what { text-decoration: line-through; opacity: 0.6; }
+
+/* --- Takings ------------------------------------------------------------- */
+
+.money { display: flex; flex-direction: column; gap: 1.25rem; }
+.money .day-bar h2 { font-variant-numeric: tabular-nums; }
+.stat dd.big { font-size: 1.6rem; font-weight: 600; }
+
+.money-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1.5rem;
+}
+
+/* Bars rather than a chart library. Twenty-six numbers of the same kind need
+   a shape, not axes and a legend — and nothing here is worth 90KB of
+   JavaScript to a shop on a five-year-old PC. */
+.bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.bars li {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr 4.5rem;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+.bar-label { color: var(--ink-faint); font-variant-numeric: tabular-nums; text-align: right; }
+.bar-track { background: var(--rule); border-radius: 2px; height: 0.7rem; overflow: hidden; }
+.bar-fill { display: block; height: 100%; background: var(--accent); }
+.bar-value { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+.rows { list-style: none; margin: 0; padding: 0; }
+
+.rows li {
+  display: grid;
+  grid-template-columns: 1fr 2.5rem 5rem;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--rule);
+  font-size: 0.85rem;
+}
+
+.rows-n { text-align: right; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.rows-value { text-align: right; font-variant-numeric: tabular-nums; }
+.money-note { font-size: 0.8rem; max-width: 44em; }
+
+/* The till, inside a booking. */
+.till { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+.paid-lines { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
+.paid-lines li { display: flex; gap: 0.6rem; align-items: baseline; font-variant-numeric: tabular-nums; }
+
+.paid-tag {
+  font-size: 0.72rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 0 0.35rem;
+}
+
+.paid-method { color: var(--ink-faint); font-size: 0.8rem; }

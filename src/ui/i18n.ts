@@ -131,6 +131,39 @@ export const TEXT = {
   pastVisits: { ja: "来店履歴", zh: "到店紀錄", en: "Past visits" },
   noVisitsYet: { ja: "まだ来店がありません。", zh: "尚未到店。", en: "No visits yet." },
 
+  // Money
+  navMoney: { ja: "売上", zh: "營業額", en: "Takings" },
+  prevMonth: { ja: "前の月", zh: "上個月", en: "Previous month" },
+  nextMonth: { ja: "次の月", zh: "下個月", en: "Next month" },
+  takings: { ja: "売上 (MOP)", zh: "營業額 (MOP)", en: "Takings (MOP)" },
+  bills: { ja: "会計", zh: "單數", en: "Bills" },
+  perBill: { ja: "客単価", zh: "平均單價", en: "Per bill" },
+  nominatedShare: { ja: "指名率", zh: "指定比例", en: "Requested" },
+  byDay: { ja: "日別", zh: "每日", en: "By day" },
+  byStylist: { ja: "担当者別", zh: "髮型師別", en: "By stylist" },
+  byCurrency: { ja: "通貨別（受取額）", zh: "貨幣別（收取金額）", en: "By currency (as taken)" },
+  byMethod: { ja: "支払方法", zh: "付款方式", en: "By method" },
+  byService: { ja: "メニュー別（件数）", zh: "服務別（次數）", en: "By service (count)" },
+  noTakings: { ja: "この月の会計はまだありません。", zh: "這個月還沒有帳單。", en: "Nothing taken this month yet." },
+  takingsNote: {
+    ja: "会計は担当したスタイリストに付きます。シャンプーだけの来店は、担当したアシスタントに付きます。1件の会計を施術ごとに分けることはしていません。",
+    zh: "帳單歸於負責的髮型師；只洗頭的客人歸於負責的助理。一張帳單不會按服務拆分。",
+    en: "A bill belongs to the stylist who did the treatment; a wash on its own belongs to whoever did it. One bill is not split between its treatments.",
+  },
+  "method.cash": { ja: "現金", zh: "現金", en: "Cash" },
+  "method.card": { ja: "カード", zh: "信用卡", en: "Card" },
+  "method.wechat": { ja: "WeChat", zh: "微信支付", en: "WeChat" },
+  "method.alipay": { ja: "Alipay", zh: "支付寶", en: "Alipay" },
+  "method.other": { ja: "その他", zh: "其他", en: "Other" },
+
+  // Taking payment
+  takePayment: { ja: "会計する", zh: "結帳", en: "Take payment" },
+  amount: { ja: "金額", zh: "金額", en: "Amount" },
+  currency: { ja: "通貨", zh: "貨幣", en: "Currency" },
+  method: { ja: "支払方法", zh: "付款方式", en: "Method" },
+  paid: { ja: "受取済み", zh: "已收款", en: "Paid" },
+  listPrice: { ja: "定価 {n}", zh: "定價 {n}", en: "List {n}" },
+
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
   // as a fallback for anything not going through this screen.

@@ -85,7 +85,11 @@ jobs:
           # One file per table, applied in turn. All of it in a single call
           # reset the database's Durable Object outright — the limit is on
           # how much one call carries, not on any one statement.
-          for part in demo-customers demo-clear demo-bookings demo-items demo-events demo-payments; do
+          # The clear goes first. bookings.customer_id has no cascade on it —
+          # on purpose, so that removing a customer cannot silently take their
+          # history with them — which means the bookings have to be gone
+          # before the guests they point at can be.
+          for part in demo-clear demo-customers demo-bookings demo-items demo-events demo-payments; do
             echo "applying ${part}"
             npx wrangler d1 execute chairside --remote --file "seed/${part}.sql"
           done

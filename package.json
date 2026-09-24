@@ -12,7 +12,7 @@
     "check": "npm run types && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "test": "node --test \"src/**/*.test.ts\"",
     "deploy": "npm run build && wrangler deploy",
-    "seed": "wrangler d1 execute chairside --remote --file seed/demo.sql && wrangler d1 execute chairside --remote --file seed/demo-bookings.sql",
+    "seed": "wrangler d1 execute chairside --remote --file seed/demo.sql && wrangler d1 execute chairside --remote --file seed/demo-customers.sql && wrangler d1 execute chairside --remote --file seed/demo-bookings.sql",
     "types": "wrangler types",
     "demo:bookings": "node scripts/generate-demo-bookings.ts"
   },

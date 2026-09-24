@@ -907,3 +907,12 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
   font-size: 0.85rem;
   max-width: 52em;
 }
+
+/* The counts sit on one line. They are short in all three languages, and the
+   reading-width limit that suits prose was breaking them in half. */
+.person .lede,
+section[aria-labelledby="room"] .lede { max-width: none; }
+
+footer p { margin: 0; font-size: 0.85rem; }
+footer a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule); }
+footer a:hover { color: var(--accent); border-color: var(--accent); }

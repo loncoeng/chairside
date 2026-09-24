@@ -487,7 +487,9 @@ for (let date = FROM; date <= TO; date = addDays(date, 1)) {
       if (!booking) continue;
 
       const takenOn = addDays(booking.date, -(1 + Math.floor(random() * 10)));
-      const history = [
+      // Typed, or `before: null` narrows the whole array to null and the
+      // later pushes stop compiling.
+      const history: { at: number; kind: string; before: string | null; after: string | null }[] = [
         {
           at: stamp(takenOn, "11:00"),
           kind: "created",

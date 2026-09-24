@@ -53,10 +53,14 @@ export const TEXT = {
   unassigned: { ja: "未定", zh: "未定", en: "Unassigned" },
   busiestAt: { ja: "{at} が最も混む", zh: "{at} 最繁忙", en: "busiest at {at}" },
   full: { ja: "満席", zh: "已滿", en: "Full" },
+  // The counts, and nothing else. Why the two kinds of seat are counted
+  // apart is an argument, and an argument belongs in DESIGN.md — the screen
+  // repeating it wrapped onto three lines and said nothing the numbers had
+  // not already said.
   roomSummary: {
-    ja: "セット面 {styling} 台、シャンプー台 {shampoo} 台、在籍 {staff} 名。上限になるものが種類ごとに違うので、ひとまとめの「席」にはしていません。",
-    zh: "剪髮位 {styling} 個、洗頭位 {shampoo} 個、在職 {staff} 人。兩者的上限不同，所以沒有合併成同一種「座位」。",
-    en: "{styling} styling chairs, {shampoo} shampoo stations, {staff} on the team. The ceilings differ by kind, which is why they are not one undifferentiated seat.",
+    ja: "セット面 {styling} 台、シャンプー台 {shampoo} 台、在籍 {staff} 名",
+    zh: "剪髮位 {styling} 個、洗頭位 {shampoo} 個、在職 {staff} 人",
+    en: "{styling} styling chairs, {shampoo} shampoo stations, {staff} on the team",
   },
   roomFailed: {
     ja: "データベースが応答しませんでした。",
@@ -113,6 +117,13 @@ export const TEXT = {
   "event.moved": { ja: "{before} → {after} へ移動", zh: "由 {before} 改為 {after}", en: "Moved from {before} to {after}" },
   "event.restaffed": { ja: "担当を {before} → {after} に変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
   "event.edited": { ja: "内容を変更", zh: "內容已更改", en: "Edited" },
+
+  // The line at the bottom
+  designLink: {
+    ja: "設計と、作らなかったものの理由は DESIGN.md に書いてあります。",
+    zh: "設計與刻意未實作的部分，寫在 DESIGN.md。",
+    en: "The design, and what was left out on purpose, are in DESIGN.md.",
+  },
 
   // Customers
   navDay: { ja: "予約", zh: "預約", en: "Bookings" },

@@ -396,10 +396,16 @@ function Screen() {
       )}
 
       <footer>
+        {/* One line, in the reader's language, and it links to the document
+            rather than paraphrasing it. The old one was three lines of
+            English that still said "stage three". */}
         <p>
-          Stage three. The grid is one column per seat and one row per quarter
-          hour, reading from D1. Why the room is counted this way is in{" "}
-          <code>DESIGN.md</code>.
+          <a
+            href={`https://github.com/loncoeng/chairside/blob/main/DESIGN${lang === "ja" ? ".ja" : ""}.md`}
+            rel="noreferrer"
+          >
+            {t("designLink")}
+          </a>
         </p>
       </footer>
     </main>

@@ -66,13 +66,17 @@ jobs:
       # rows. Re-applying that on every push spends a sixth of a day's free
       # writes to change nothing, so it only runs when the count on file and
       # the count in the database disagree.
+      # Three months of bookings is about a megabyte and sixteen thousand
+      # rows. Re-applying that on every push spends a sixth of a day's free
+      # writes to change nothing, so it only runs when the count on file and
+      # the count in the database disagree.
       - name: Put the sample months in, if they are not there
         run: |
           want=$(cat seed/demo-bookings.count)
-          have=$(npx wrangler d1 execute chairside --remote --json                    --command "SELECT count(*) AS n FROM bookings"                  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
-                     try { console.log(JSON.parse(s)[0].results[0].n) } catch { console.log(-1) } })')
+          npx wrangler d1 execute chairside --remote --json --command "SELECT count(*) AS n FROM bookings" > /tmp/count.json
+          have=$(grep -o '"n":[[:space:]]*[0-9]*' /tmp/count.json | grep -o '[0-9]*$' | head -1)
+          echo "on file: ${want}, in the database: ${have:-unknown}"
 
-          echo "on file: $want, in the database: $have"
           if [ "$want" = "$have" ]; then
             echo "already there"
             exit 0
@@ -80,9 +84,6 @@ jobs:
 
           npx wrangler d1 execute chairside --remote --file seed/demo-customers.sql
           npx wrangler d1 execute chairside --remote --file seed/demo-bookings.sql
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

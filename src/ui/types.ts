@@ -38,6 +38,8 @@ export type Day = {
   hours: { opensAt: string | null; closesAt: string | null; closed: boolean };
   closure: { reason: string | null } | null;
   holidays: { region: "MO" | "HK" | "CN"; name: string }[];
+  /** The last date the imported holiday list reaches, or null if empty. */
+  holidaysKnownTo?: string | null;
   lines: Line[];
   /** Only present when the requested day has nothing on it. */
   bookedRange?: { from: string | null; to: string | null };

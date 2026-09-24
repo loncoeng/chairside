@@ -82,8 +82,13 @@ jobs:
             exit 0
           fi
 
-          npx wrangler d1 execute chairside --remote --file seed/demo-customers.sql
-          npx wrangler d1 execute chairside --remote --file seed/demo-bookings.sql
+          # One file per table, applied in turn. All of it in a single call
+          # reset the database's Durable Object outright — the limit is on
+          # how much one call carries, not on any one statement.
+          for part in demo-customers demo-clear demo-bookings demo-items demo-events demo-payments; do
+            echo "applying ${part}"
+            npx wrangler d1 execute chairside --remote --file "seed/${part}.sql"
+          done
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

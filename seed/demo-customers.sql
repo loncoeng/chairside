@@ -109,7 +109,9 @@ INSERT INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
   (197, '葉 文健', 'man kin', '6642 2919', NULL, '2018-01-02'),
   (198, '張 嘉欣', 'ka yan', '6643 7383', NULL, '2025-06-04'),
   (199, '何 少聰', 'siu chung', '6617 1568', NULL, '2023-08-13'),
-  (200, '鈴木 花', 'suzuki hana', '6664 2770', NULL, '2025-06-01'),
+  (200, '鈴木 花', 'suzuki hana', '6664 2770', NULL, '2025-06-01');
+
+INSERT INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
   (201, '黃 詩華', 'sze wah', '6668 6963', NULL, '2023-07-27'),
   (202, '羅 建華', 'kin wah', '6632 7492', NULL, '2024-06-03'),
   (203, '葉 少聰', 'siu chung', '6622 8223', NULL, '2022-09-08'),

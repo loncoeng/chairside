@@ -14,6 +14,11 @@
 
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, readFileSync, writeFileSync, statSync, rmSync } from "node:fs";
+// A file URL's pathname is not a path. On Windows it is "/C:/Users/..." and
+// stripping the leading slash happens to work; on Linux the same trick turns
+// "/home/runner/..." into a relative path that does not exist. This has a
+// function, and the function knows the difference.
+import { fileURLToPath } from "node:url";
 
 const FROM = "2026-08-24";
 const TO = "2026-09-30";
@@ -24,7 +29,7 @@ const WORK = new URL("../public/.demo-build.sqlite", import.meta.url);
 mkdirSync(new URL("../public/", import.meta.url), { recursive: true });
 rmSync(WORK, { force: true });
 
-const db = new DatabaseSync(WORK.pathname.replace(/^\//, ""));
+const db = new DatabaseSync(fileURLToPath(WORK));
 db.exec("PRAGMA foreign_keys = ON");
 
 for (const file of ["migrations/0000_initial_schema.sql", "migrations/0001_booking_events.sql"]) {
@@ -79,7 +84,7 @@ const people = db.prepare("SELECT count(*) AS n FROM customers").get() as { n: n
 db.exec("VACUUM");
 db.close();
 
-const bytes = statSync(WORK.pathname.replace(/^\//, "")).size;
+const bytes = statSync(fileURLToPath(WORK)).size;
 writeFileSync(OUT, readFileSync(WORK));
 rmSync(WORK, { force: true });
 

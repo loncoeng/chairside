@@ -4,8 +4,9 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { Calendar, Peak } from "./calendar.tsx";
 import { BookingForm } from "./book.tsx";
+import { BookingPanel } from "./booking-panel.tsx";
 import type { Customer, Service } from "./book.tsx";
-import type { Day, Room } from "./types.ts";
+import type { Day, Line, Room } from "./types.ts";
 import { shiftDate, todayInShop } from "./types.ts";
 import { LANGS, LANG_LABEL } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
@@ -59,6 +60,7 @@ function Screen() {
   const [services, setServices] = useState<Service[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [booking, setBooking] = useState(false);
+  const [picked, setPicked] = useState<Line | null>(null);
   // Bumped after a booking goes in, to pull the day again.
   const [revision, setRevision] = useState(0);
 
@@ -149,7 +151,10 @@ function Screen() {
             <button
               type="button"
               class="primary"
-              onClick={() => setBooking(true)}
+              onClick={() => {
+                setPicked(null);
+                setBooking(true);
+              }}
               disabled={services.length === 0}
             >
               {t("takeBooking")}
@@ -171,6 +176,19 @@ function Screen() {
           />
         )}
 
+        {picked !== null && room.status === "ready" && (
+          <BookingPanel
+            line={picked}
+            staff={room.value.staff}
+            services={services}
+            onChanged={() => {
+              setPicked(null);
+              setRevision((n) => n + 1);
+            }}
+            onClose={() => setPicked(null)}
+          />
+        )}
+
         {day.status === "loading" && <p class="lede">{t("loading")}</p>}
 
         {day.status === "failed" && (
@@ -188,7 +206,18 @@ function Screen() {
             )}
 
             <Peak day={day.value} seats={room.value.seats} />
-            <Calendar day={day.value} seats={room.value.seats} services={services} />
+            <Calendar
+              day={day.value}
+              seats={room.value.seats}
+              services={services}
+              onPick={(line) => {
+                // Only one panel at a time. Taking a booking and editing a
+                // different one at once is two answers to the same question.
+                setBooking(false);
+                setPicked(line);
+              }}
+              picked={picked?.bookingId ?? null}
+            />
 
             {/* Sample data sits on a fixed week, so a visitor arriving later
                 lands on an empty day. Saying where the data is beats showing

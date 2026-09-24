@@ -18,7 +18,7 @@ import {
   services,
   staff,
 } from "../db/schema.ts";
-import { createBooking, customerList, menu } from "./booking-api.ts";
+import { createBooking, customerList, getBooking, menu, updateBooking } from "./booking-api.ts";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -33,9 +33,23 @@ export default {
       if (url.pathname === "/api/room") {
         return json(await room(env));
       }
-      // The one endpoint that writes.
+      // The endpoints that write.
       if (url.pathname === "/api/bookings" && request.method === "POST") {
         return await createBooking(env, request);
+      }
+
+      // /api/bookings/123 — read one, or change it.
+      const booking = /^\/api\/bookings\/(\d+)$/.exec(url.pathname);
+      if (booking) {
+        const id = Number(booking[1]);
+        if (request.method === "GET") {
+          const found = await getBooking(drizzle(env.DB), id);
+          return found ? json(found) : json({ error: "その予約は見つかりません。" }, 404);
+        }
+        if (request.method === "PATCH") {
+          return await updateBooking(env, request, id);
+        }
+        return json({ error: "method not allowed" }, 405);
       }
       if (url.pathname === "/api/services") {
         return json(await menu(drizzle(env.DB)));

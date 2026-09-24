@@ -97,3 +97,19 @@ INSERT OR REPLACE INTO customers (id, name, search_key, phone, note, first_visit
   (10, 'Ana Ferreira','ferreira ana',    '6612 3410', NULL,                          '2025-06-03'),
   (11, '田中 美咲',   'tanaka misaki',   '6612 3411', NULL,                          '2021-06-12'),
   (12, '渡辺 さくら', 'watanabe sakura', '6612 3412', NULL,                          '2022-02-03');
+
+-- A few treatment records, so the customers screen has something to show.
+--
+-- Invented, like everything else here. The formulas are the shape a stylist
+-- actually writes — a mix, a developer, a processing time — rather than prose
+-- about hair, because that is what gets read before the next colour.
+--
+-- `caution` is deliberately not on the customer row. It belongs to a visit
+-- ("her scalp reacted to this") and reads on the person's page as a standing
+-- warning; putting it on the customer would lose when it was noticed.
+INSERT OR REPLACE INTO records (id, customer_id, booking_id, formula, note, caution, recorded_on) VALUES
+  (1, 1, NULL, '8NB : 8MT = 1:1 / OX 6% / 25min', '根元は明るめ、毛先は落ち着いた色', NULL,                          '2026-07-12'),
+  (2, 1, NULL, '8NB : 8MT = 1:1 / OX 4.5% / 30min', '前回より1トーン暗く',           '頭皮が敏感。薬剤は根元から5mm空ける', '2026-08-23'),
+  (3, 3, NULL, NULL,                                 'いつもどおり肩上。前髪は眉下', NULL,                          '2026-08-30'),
+  (4, 5, NULL, 'ストレート剤 弱酸性 / 20min',        '既矯正部は避ける',             '過去に他店で強い薬剤。毛先が弱い', '2026-06-15'),
+  (5, 9, NULL, NULL,                                 'English only. Prefers short.', NULL,                          '2026-09-06');

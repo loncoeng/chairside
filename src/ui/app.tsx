@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { Calendar, Peak } from "./calendar.tsx";
 import { BookingForm } from "./book.tsx";
 import { BookingPanel } from "./booking-panel.tsx";
+import { Customers } from "./customers.tsx";
 import type { Customer, Service } from "./book.tsx";
 import type { Day, Line, Room } from "./types.ts";
 import { shiftDate, todayInShop } from "./types.ts";
@@ -52,8 +53,23 @@ export function App() {
   );
 }
 
+/**
+ * Which screen, kept in the address bar.
+ *
+ * "#/people/3" rather than component state, so that reloading stays where you
+ * were and the browser's back button does what it looks like it does. A hash
+ * rather than a path, because the static assets are served by filename and a
+ * real route would need the server to know about every screen.
+ */
+function readHash(): { view: "day" | "people"; id: number | null } {
+  const m = /^#\/people(?:\/(\d+))?/.exec(window.location.hash);
+  if (m) return { view: "people", id: m[1] ? Number(m[1]) : null };
+  return { view: "day", id: null };
+}
+
 function Screen() {
   const { t, lang, setLang, weekday } = useText();
+  const [route, setRoute] = useState(readHash);
   const [date, setDate] = useState(todayInShop);
   const [room, setRoom] = useState<Load<Room>>({ status: "loading" });
   const [day, setDay] = useState<Load<Day>>({ status: "loading" });
@@ -101,6 +117,12 @@ function Screen() {
     return () => stop.abort();
   }, [date, revision]);
 
+  useEffect(() => {
+    const onHash = () => setRoute(readHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
   const go = useCallback((days: number) => setDate((d) => shiftDate(d, days)), []);
 
   return (
@@ -114,6 +136,15 @@ function Screen() {
         {/* Three buttons rather than a dropdown. There are only three, they
             are short, and a guest at the desk can see which one is on without
             opening anything. */}
+        <nav class="views" aria-label="View">
+          <a href="#/" class={route.view === "day" ? "is-on" : undefined}>
+            {t("navDay")}
+          </a>
+          <a href="#/people" class={route.view === "people" ? "is-on" : undefined}>
+            {t("navPeople")}
+          </a>
+        </nav>
+
         <div class="langs" role="group" aria-label="Language">
           {LANGS.map((code) => (
             <button
@@ -130,6 +161,21 @@ function Screen() {
         </div>
       </header>
 
+      {route.view === "people" && (
+        <section aria-labelledby="people">
+          <h2 id="people" class="sr-only">
+            {t("navPeople")}
+          </h2>
+          <Customers
+            openId={route.id}
+            onOpen={(id) => {
+              window.location.hash = id === null ? "#/people" : `#/people/${id}`;
+            }}
+          />
+        </section>
+      )}
+
+      {route.view === "day" && (
       <section aria-labelledby="day">
         <div class="day-bar">
           <h2 id="day">
@@ -236,7 +282,9 @@ function Screen() {
           </>
         )}
       </section>
+      )}
 
+      {route.view === "day" && (
       <section aria-labelledby="room">
         <h2 id="room">{t("room")}</h2>
         {room.status === "ready" && <RoomSummary room={room.value} />}
@@ -246,6 +294,7 @@ function Screen() {
           </p>
         )}
       </section>
+      )}
 
       <footer>
         <p>

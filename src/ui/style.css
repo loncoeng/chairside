@@ -624,3 +624,115 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 .history-list li { display: flex; gap: 0.75rem; align-items: baseline; }
 .history-when { color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .history-what { color: var(--ink-soft); }
+
+/* --- Customers ----------------------------------------------------------- */
+
+.views { display: flex; gap: 0.15rem; margin-left: auto; margin-right: 0.75rem; }
+
+.views a {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 0.15rem 0.7rem;
+}
+
+.views a:hover { color: var(--accent); }
+.views a.is-on { color: var(--ink); border-color: var(--rule); background: var(--surface); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The list beside the person, because looking one up and reading them is one
+   job. On a phone the list stacks above. */
+.people { display: grid; grid-template-columns: minmax(12rem, 18rem) 1fr; gap: 1.5rem; }
+
+@media (max-width: 48rem) {
+  .people { grid-template-columns: 1fr; }
+}
+
+.people-list ul { list-style: none; margin: 0.8rem 0 0; padding: 0; }
+
+.people-list li button {
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.4rem 0.2rem;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.people-list li button:hover { color: var(--accent); }
+.people-list li button.is-on { background: var(--accent-soft); color: var(--accent); }
+.people-key { color: var(--ink-faint); font-size: 0.75rem; }
+
+.person { display: flex; flex-direction: column; gap: 1.1rem; }
+.person-head { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; }
+.person-head h3 { margin: 0; font-size: 1.15rem; }
+.person-phone { color: var(--ink-soft); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.person h4 { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--ink-soft); font-weight: 600; }
+
+/* Anything that belongs to the person rather than a visit. Loud on purpose —
+   a tender scalp read three screens down is a tender scalp nobody read. */
+.cautions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+
+.cautions li {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.standing { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; margin: 0; }
+.stat { display: flex; flex-direction: column; gap: 0.1rem; }
+.stat dt { font-size: 0.75rem; color: var(--ink-faint); }
+.stat dd { margin: 0; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.stat.is-warn dd { color: var(--accent); }
+
+.records, .visits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.records li {
+  display: flex;
+  gap: 0.9rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--rule);
+  font-size: 0.88rem;
+}
+
+.record-on { color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.record-body { display: flex; flex-direction: column; gap: 0.15rem; }
+.record-body p { margin: 0; }
+.record-formula { font-family: var(--mono); font-size: 0.82rem; color: var(--ink-soft); }
+
+.visits li {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--rule);
+  font-size: 0.85rem;
+}
+
+.visit-when { color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.visit-what { flex: 1; }
+.visit-who { color: var(--ink-faint); }
+
+.visit-status { font-size: 0.72rem; border: 1px solid var(--rule); border-radius: 3px; padding: 0 0.35rem; color: var(--ink-faint); }
+.visit-status.is-done { border-color: transparent; }
+.visit-status.is-cancelled, .visit-status.is-no_show { border-color: var(--accent); color: var(--accent); }
+.visit.is-cancelled .visit-what, .visit.is-no_show .visit-what { text-decoration: line-through; opacity: 0.6; }

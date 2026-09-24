@@ -94,6 +94,17 @@ export const TEXT = {
   tagStop: { ja: "不可", zh: "不可", en: "No" },
   tagWarn: { ja: "確認", zh: "請確認", en: "Check" },
 
+  // An existing booking
+  bookingDetail: { ja: "予約の内容", zh: "預約內容", en: "This booking" },
+  status: { ja: "状態", zh: "狀態", en: "Status" },
+  markBooked: { ja: "予約済み", zh: "已預約", en: "Booked" },
+  markArrived: { ja: "来店", zh: "已到店", en: "Arrived" },
+  markDone: { ja: "完了", zh: "已完成", en: "Done" },
+  markCancelled: { ja: "キャンセル", zh: "已取消", en: "Cancelled" },
+  markNoShow: { ja: "無断キャンセル", zh: "爽約", en: "No-show" },
+  reschedule: { ja: "時間・担当を変える", zh: "更改時間或髮型師", en: "Change the time or stylist" },
+  applyChange: { ja: "変更する", zh: "套用變更", en: "Apply" },
+
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
   // as a fallback for anything not going through this screen.

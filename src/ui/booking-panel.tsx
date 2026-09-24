@@ -1,0 +1,276 @@
+// One booking, opened by clicking it on the grid.
+//
+// What the desk does with an existing booking is almost always one of four
+// things — they arrived, they are finished, they cancelled, they never came —
+// so those are buttons rather than a menu. Moving the time is the rarer case
+// and sits below.
+//
+// Nothing here deletes. A booking that was cancelled is a fact about the day:
+// a slot was held and then freed, and a shop looking back at a quiet Tuesday
+// needs to tell that apart from a Tuesday nobody called.
+
+import { useEffect, useState } from "preact/hooks";
+import type { Line, Person, Status } from "./types.ts";
+import { useText } from "./lang-context.ts";
+import { serviceName } from "./i18n.ts";
+import type { Service } from "./book.tsx";
+
+type Verdict = {
+  level: "stop" | "warn";
+  code: string;
+  message: string;
+  data?: Record<string, string | number>;
+};
+
+type Detail = {
+  id: number;
+  date: string;
+  startsAt: string;
+  endsAt: string;
+  status: Status;
+  nominated: boolean;
+  note: string | null;
+  customerId: number | null;
+  customerName: string | null;
+  items: {
+    id: number;
+    serviceId: number | null;
+    staffId: number | null;
+    seatId: number | null;
+    startsAt: string;
+    endsAt: string;
+  }[];
+};
+
+/** The four a receptionist reaches for, plus the way back. */
+const MOVES: { status: Status; key: "markArrived" | "markDone" | "markCancelled" | "markNoShow" | "markBooked" }[] = [
+  { status: "booked", key: "markBooked" },
+  { status: "arrived", key: "markArrived" },
+  { status: "done", key: "markDone" },
+  { status: "cancelled", key: "markCancelled" },
+  { status: "no_show", key: "markNoShow" },
+];
+
+export function BookingPanel({
+  line,
+  staff,
+  services,
+  onChanged,
+  onClose,
+}: {
+  line: Line;
+  staff: Person[];
+  services: Service[];
+  onChanged: () => void;
+  onClose: () => void;
+}) {
+  const { t, lang, verdict: sayVerdict } = useText();
+  const [detail, setDetail] = useState<Detail | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const [movingTo, setMovingTo] = useState("");
+  const [staffId, setStaffId] = useState<number | null>(null);
+  const [verdicts, setVerdicts] = useState<Verdict[]>([]);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+
+  useEffect(() => {
+    const stop = new AbortController();
+    setDetail(null);
+    setVerdicts([]);
+    setNeedsConfirmation(false);
+
+    fetch(`/api/bookings/${line.bookingId}`, { signal: stop.signal })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return (await r.json()) as Detail;
+      })
+      .then((found) => {
+        setDetail(found);
+        setMovingTo(found.startsAt);
+        setStaffId(found.items[0]?.staffId ?? null);
+      })
+      .catch((problem: unknown) => {
+        if (!stop.signal.aborted) setFailed(String(problem));
+      });
+
+    return () => stop.abort();
+  }, [line.bookingId]);
+
+  async function send(body: Record<string, unknown>) {
+    setBusy(true);
+    setFailed(null);
+
+    try {
+      const response = await fetch(`/api/bookings/${line.bookingId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const reply = (await response.json()) as {
+        ok?: boolean;
+        verdicts?: Verdict[];
+        needsConfirmation?: boolean;
+        error?: string;
+      };
+
+      if (reply.ok) {
+        onChanged();
+        return;
+      }
+
+      setVerdicts(reply.verdicts ?? []);
+      setNeedsConfirmation(reply.needsConfirmation === true);
+      if (reply.error) setFailed(reply.error);
+    } catch (problem: unknown) {
+      setFailed(String(problem));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const stopped = verdicts.some((v) => v.level === "stop");
+  // Only what actually changed is sent, so that the server can keep each
+  // line's own stylist when the stylist was not the thing being changed.
+  const moved = detail !== null && movingTo !== detail.startsAt;
+  const restaffed = detail !== null && staffId !== (detail.items[0]?.staffId ?? null);
+
+  return (
+    <div class="sheet" role="dialog" aria-label={t("bookingDetail")}>
+      <div class="sheet-head">
+        <h3>
+          {line.customerName ?? "—"}
+          <span class="sheet-when">
+            {line.startsAt}–{line.endsAt}
+          </span>
+        </h3>
+        <button type="button" class="sheet-close" onClick={onClose} aria-label={t("close")}>
+          ×
+        </button>
+      </div>
+
+      {detail === null && failed === null && <p class="lede">{t("loading")}</p>}
+
+      {detail !== null && (
+        <>
+          <ul class="detail-lines">
+            {detail.items.map((item) => {
+              const service = services.find((s) => s.id === item.serviceId);
+              const who = staff.find((p) => p.id === item.staffId);
+              return (
+                <li key={item.id}>
+                  <span class="detail-time">
+                    {item.startsAt}–{item.endsAt}
+                  </span>
+                  <span class="detail-what">{service ? serviceName(lang, service) : "—"}</span>
+                  <span class="detail-who">{who?.name ?? "—"}</span>
+                </li>
+              );
+            })}
+          </ul>
+
+          {detail.note && <p class="detail-note">{detail.note}</p>}
+
+          <div class="moves" role="group" aria-label={t("status")}>
+            {MOVES.map((move) => (
+              <button
+                type="button"
+                key={move.status}
+                class={`move is-${move.status}${detail.status === move.status ? " is-on" : ""}`}
+                disabled={busy || detail.status === move.status}
+                onClick={() => send({ status: move.status })}
+              >
+                {t(move.key)}
+              </button>
+            ))}
+          </div>
+
+          <details class="reschedule">
+            <summary>{t("reschedule")}</summary>
+
+            <div class="field-row">
+              <label class="field">
+                <span>{t("startsAt")}</span>
+                <input
+                  type="time"
+                  step={900}
+                  value={movingTo}
+                  onInput={(e) => setMovingTo((e.target as HTMLInputElement).value)}
+                />
+              </label>
+
+              <label class="field">
+                <span>{t("withWhom")}</span>
+                <select
+                  value={staffId ?? ""}
+                  onChange={(e) =>
+                    setStaffId(Number((e.target as HTMLSelectElement).value) || null)
+                  }
+                >
+                  {staff.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {/* Sent only when changed. A booking whose shampoo is done by an
+                assistant keeps that, as long as the stylist is not what is
+                being edited. */}
+            <div class="sheet-actions">
+              {needsConfirmation && !stopped ? (
+                <button
+                  type="button"
+                  class="primary"
+                  disabled={busy}
+                  onClick={() =>
+                    send({
+                      ...(moved ? { startsAt: movingTo } : {}),
+                      ...(restaffed ? { staffId } : {}),
+                      acceptWarnings: true,
+                    })
+                  }
+                >
+                  {t("submitAnyway")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  class="primary"
+                  disabled={busy || (!moved && !restaffed)}
+                  onClick={() =>
+                    send({
+                      ...(moved ? { startsAt: movingTo } : {}),
+                      ...(restaffed ? { staffId } : {}),
+                    })
+                  }
+                >
+                  {busy ? t("sending") : t("applyChange")}
+                </button>
+              )}
+            </div>
+          </details>
+        </>
+      )}
+
+      {failed && (
+        <p class="failed" role="alert">
+          {failed}
+        </p>
+      )}
+
+      {verdicts.length > 0 && (
+        <ul class="verdicts">
+          {verdicts.map((v) => (
+            <li key={v.code + v.message} class={`verdict is-${v.level}`}>
+              <span class="verdict-tag">{v.level === "stop" ? t("tagStop") : t("tagWarn")}</span>
+              {sayVerdict(v)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

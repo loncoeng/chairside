@@ -18,10 +18,14 @@ export function Calendar({
   day,
   seats,
   services,
+  onPick,
+  picked,
 }: {
   day: Day;
   seats: Seat[];
   services: Service[];
+  onPick: (line: Line) => void;
+  picked: number | null;
 }) {
   const { t, lang } = useText();
   const { open, close } = gridSpan(day);
@@ -112,6 +116,8 @@ export function Calendar({
                 line={line}
                 what={service ? serviceName(lang, service) : (line.serviceJa ?? "")}
                 lines={linesFor(cell.span)}
+                onPick={onPick}
+                picked={picked === line.bookingId}
                 style={{ gridColumn: col, gridRow: `${cell.row} / span ${cell.span}` }}
               />
             );
@@ -126,17 +132,26 @@ function Block({
   line,
   what,
   lines,
+  onPick,
+  picked,
   style,
 }: {
   line: Line;
   what: string;
   lines: 1 | 2 | 3;
+  onPick: (line: Line) => void;
+  picked: boolean;
   style: Record<string, string | number>;
 }) {
+  // A button, not a div with a click handler: the grid has to be usable from
+  // the keyboard, and a booking screen that only works with a mouse is one
+  // more thing the desk has to reach for.
   return (
-    <div
-      class={`cal-block is-${line.status} rows-${lines}`}
+    <button
+      type="button"
+      class={`cal-block is-${line.status} rows-${lines}${picked ? " is-picked" : ""}`}
       style={{ ...style, borderLeftColor: line.staffColor ?? "var(--ink-faint)" }}
+      onClick={() => onPick(line)}
       title={`${line.startsAt}–${line.endsAt}　${line.customerName ?? "—"}　${what}　${line.staffName ?? ""}`}
     >
       <span class="cal-who">
@@ -149,7 +164,7 @@ function Block({
       </span>
       {lines >= 2 && <span class="cal-what">{what}</span>}
       {lines >= 3 && <span class="cal-by">{line.staffName}</span>}
-    </div>
+    </button>
   );
 }
 

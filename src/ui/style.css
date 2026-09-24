@@ -513,3 +513,81 @@ header {
   background: var(--accent-soft);
   font-weight: 600;
 }
+
+/* --- One booking --------------------------------------------------------- */
+
+/* The grid's blocks are buttons now, so the browser's own button styling has
+   to be undone rather than worked around. */
+button.cal-block {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+
+button.cal-block:hover { border-color: var(--accent); }
+button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cal-block.is-picked { box-shadow: 0 0 0 2px var(--accent); opacity: 1; }
+
+.sheet-when {
+  font-weight: 400;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin-left: 0.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+
+.detail-lines li {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  align-items: baseline;
+}
+
+.detail-time { font-variant-numeric: tabular-nums; color: var(--ink-soft); min-width: 7.5em; }
+.detail-what { flex: 1; }
+.detail-who { color: var(--ink-faint); }
+
+.detail-note {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  border-left: 2px solid var(--rule);
+  padding-left: 0.6rem;
+}
+
+/* The four things the desk actually does, as buttons rather than a menu. */
+.moves { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.moves .move {
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.2rem 0.8rem;
+  cursor: pointer;
+}
+
+.moves .move:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+/* The one it is already on is shown, not hidden — otherwise the row of
+   buttons gives no clue which state the booking is in. */
+.moves .move.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  cursor: default;
+}
+
+.moves .move:disabled:not(.is-on) { opacity: 0.4; cursor: default; }
+
+/* Folded away. Moving a booking is the rarer job, and an open form of time
+   pickers above the four buttons puts the common case second. */
+.reschedule { border-top: 1px solid var(--rule); padding-top: 0.6rem; }
+.reschedule summary { font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; }
+.reschedule summary:hover { color: var(--accent); }
+.reschedule > .field-row { margin-top: 0.7rem; }

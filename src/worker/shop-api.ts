@@ -59,7 +59,7 @@ export async function shopSettings(db: Db, from: string) {
 export async function setHours(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { hours?: unknown } | null;
   const rows = Array.isArray(body?.hours) ? body.hours : null;
-  if (!rows || rows.length !== 7) return bad("7日ぶん送ってください。");
+  if (!rows || rows.length !== 7) return bad("7日分をまとめて送ってください。");
 
   const parsed: { weekday: number; opensAt: string | null; closesAt: string | null; closed: boolean }[] = [];
 

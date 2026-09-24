@@ -98,7 +98,7 @@ export function check(
       verdicts.push({
         level: "stop",
         code: "backwards",
-        message: `終わりが始まりより前になっています（${draft.startsAt}→${draft.endsAt}）。`,
+        message: `終了時刻が開始時刻より前です（${draft.startsAt}→${draft.endsAt}）。`,
         data: { from: draft.startsAt, to: draft.endsAt },
       });
     }
@@ -168,7 +168,7 @@ export function check(
       verdicts.push({
         level: "warn",
         code: "outside-hours",
-        message: `営業時間（${opensAt}–${closesAt}）の外にかかります。`,
+        message: `営業時間外にかかります（${opensAt}–${closesAt}）。`,
         data: { opensAt, closesAt },
       });
     }

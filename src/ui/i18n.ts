@@ -26,7 +26,7 @@ type Dict = Record<Lang, string>;
  */
 export const TEXT = {
   tagline: {
-    ja: "美容室1軒のための、予約と顧客の管理",
+    ja: "美容室の予約・顧客管理",
     zh: "為一間髮型屋而設的預約與客戶管理",
     en: "Booking and customer records for one hair salon",
   },
@@ -43,15 +43,15 @@ export const TEXT = {
     en: "Could not load this day.",
   },
   nothingBooked: { ja: "この日に予約はありません。", zh: "這天沒有預約。", en: "Nothing booked on this day." },
-  sampleIs: { ja: "サンプルは {from} 〜 {to} に入っています。", zh: "範例資料在 {from} 至 {to}。", en: "The sample week runs {from} to {to}." },
-  noSchedule: { ja: "この日の予定はありません。", zh: "這天沒有安排。", en: "Nothing on this day." },
+  sampleIs: { ja: "サンプルデータは {from} 〜 {to} の期間です。", zh: "範例資料在 {from} 至 {to}。", en: "The sample week runs {from} to {to}." },
+  noSchedule: { ja: "この日は予定がありません。", zh: "這天沒有安排。", en: "Nothing on this day." },
 
   // The room
   room: { ja: "店内", zh: "店內", en: "The room" },
   styling: { ja: "セット面", zh: "剪髮位", en: "Styling chairs" },
   shampoo: { ja: "シャンプー台", zh: "洗頭位", en: "Shampoo stations" },
   unassigned: { ja: "未定", zh: "未定", en: "Unassigned" },
-  busiestAt: { ja: "{at} が最も混む", zh: "{at} 最繁忙", en: "busiest at {at}" },
+  busiestAt: { ja: "ピークは {at}", zh: "{at} 最繁忙", en: "busiest at {at}" },
   full: { ja: "満席", zh: "已滿", en: "Full" },
   // The counts, and nothing else. Why the two kinds of seat are counted
   // apart is an argument, and an argument belongs in DESIGN.md — the screen
@@ -111,11 +111,11 @@ export const TEXT = {
 
   // What happened to this booking
   history: { ja: "変更の記録", zh: "更改記錄", en: "What has happened" },
-  movedTimes: { ja: "この予約は {n} 回動いています", zh: "這個預約已更改 {n} 次", en: "Moved {n} times" },
+  movedTimes: { ja: "この予約は {n} 回変更されています", zh: "這個預約已更改 {n} 次", en: "Moved {n} times" },
   "event.created": { ja: "予約を取った", zh: "建立預約", en: "Booked" },
   "event.status": { ja: "{before} → {after}", zh: "{before} → {after}", en: "{before} → {after}" },
-  "event.moved": { ja: "{before} → {after} へ移動", zh: "由 {before} 改為 {after}", en: "Moved from {before} to {after}" },
-  "event.restaffed": { ja: "担当を {before} → {after} に変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
+  "event.moved": { ja: "{before} から {after} へ変更", zh: "由 {before} 改為 {after}", en: "Moved from {before} to {after}" },
+  "event.restaffed": { ja: "担当を {before} から {after} へ変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
   "event.edited": { ja: "内容を変更", zh: "內容已更改", en: "Edited" },
 
   // The line at the bottom
@@ -195,10 +195,10 @@ export const TEXT = {
   reason: { ja: "理由", zh: "原因", en: "Reason" },
   addClosure: { ja: "休みにする", zh: "設為休息", en: "Close that day" },
   reopen: { ja: "戻す", zh: "取消", en: "Open it again" },
-  noClosures: { ja: "先の臨時休業はありません。", zh: "之後沒有臨時休息。", en: "Nothing closed ahead." },
+  noClosures: { ja: "今後の臨時休業はありません。", zh: "之後沒有臨時休息。", en: "Nothing closed ahead." },
   closedSaved: { ja: "休業にしました。", zh: "已設為休息。", en: "Closed." },
   closedWithBookings: {
-    ja: "休業にしました。その日には予約が {n} 件残っています。予約は消していません。",
+    ja: "臨時休業として登録しました。当日の予約 {n} 件はそのまま残っています。",
     zh: "已設為休息。當天仍有 {n} 個預約，預約沒有被刪除。",
     en: "Closed. {n} bookings still stand that day — they have not been removed.",
   },
@@ -211,12 +211,12 @@ export const TEXT = {
   leftOn: { ja: "{date} 退職", zh: "{date} 離職", en: "left {date}" },
   staffSaved: { ja: "保存しました。", zh: "已儲存。", en: "Saved." },
   leftWithBookings: {
-    ja: "退職にしました。この先の予約が {n} 件残っています。引き継ぎ先は予約画面で変えてください。",
+    ja: "退職として登録しました。この先の予約が {n} 件残っています。担当者の変更は予約画面から行ってください。",
     zh: "已設為離職。之後仍有 {n} 個預約，請在預約畫面更改負責人。",
     en: "Marked as left. {n} bookings still stand — change who takes them on the booking screen.",
   },
   nobodyDeleted: {
-    ja: "スタッフは削除できません。消すと過去の予約から担当者がいなくなり、担当者別の売上が合わなくなります。退職は日付として記録します。",
+    ja: "スタッフは削除できません。削除すると過去の予約から担当者が消え、スタイリスト別の売上が合わなくなるためです。退職は日付で記録します。",
     zh: "員工不能刪除。刪除後過去的預約會失去負責人，髮型師別的營業額也會對不上。離職以日期記錄。",
     en: "Nobody is deleted. Removing somebody takes them out of bookings that already happened and stops per-stylist takings adding up; leaving is recorded as a date.",
   },
@@ -226,11 +226,11 @@ export const TEXT = {
   demoLoading: { ja: "デモを読み込み中…", zh: "正在載入示範…", en: "Loading the demo…" },
   demoFailed: { ja: "デモを読み込めませんでした。", zh: "無法載入示範。", en: "The demo did not load." },
   demoBanner: {
-    ja: "デモです。データはこのブラウザの中だけにあり、何をしても他の人には見えません。リロードで元に戻ります。",
+    ja: "デモ表示中です。データはこのブラウザ内だけに保持され、操作内容が他の人に見えることはありません。再読み込みすると元に戻ります。",
     zh: "這是示範。資料只存在於這個瀏覽器中，任何操作都不會被別人看到，重新整理即會復原。",
     en: "This is the demo. The data lives in this browser only — nothing you do is visible to anybody else, and a reload puts it back.",
   },
-  demoLeave: { ja: "デモを終える", zh: "結束示範", en: "Leave the demo" },
+  demoLeave: { ja: "デモを終了", zh: "結束示範", en: "Leave the demo" },
 
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
@@ -251,7 +251,7 @@ export const TEXT = {
     en: "Two treatments in this booking overlap.",
   },
   "verdict.backwards": {
-    ja: "終わりが始まりより前になっています（{from}→{to}）。",
+    ja: "終了時刻が開始時刻より前です（{from}→{to}）。",
     zh: "結束時間早於開始時間（{from}→{to}）。",
     en: "It ends before it starts ({from}→{to}).",
   },
@@ -271,7 +271,7 @@ export const TEXT = {
     en: "The shop is closed that day.",
   },
   "verdict.outside-hours": {
-    ja: "営業時間（{opensAt}–{closesAt}）の外にかかります。",
+    ja: "営業時間外にかかります（{opensAt}–{closesAt}）。",
     zh: "超出營業時間（{opensAt}–{closesAt}）。",
     en: "This falls outside opening hours ({opensAt}–{closesAt}).",
   },

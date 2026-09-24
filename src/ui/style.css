@@ -870,3 +870,40 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
 .team li button.link { margin-left: auto; }
 .team li.is-gone .team-name { color: var(--ink-faint); }
 .team li.is-gone button.link { margin-left: 0.5rem; }
+
+/* --- The demo ------------------------------------------------------------ */
+
+.demo-toggle {
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px dashed var(--rule);
+  border-radius: 5px;
+  padding: 0.15rem 0.7rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.demo-toggle:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+.demo-toggle:disabled { opacity: 0.6; cursor: default; }
+
+.demo-toggle.is-on {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Said once, at the top, and it stays there. Somebody who books an
+   appointment in the demo should never wonder whether a real shop is now
+   expecting them. */
+.demo-banner {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.55rem 0.9rem;
+  margin: 0;
+  font-size: 0.85rem;
+  max-width: 52em;
+}

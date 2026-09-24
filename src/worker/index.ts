@@ -19,6 +19,7 @@ import {
   staff,
 } from "../db/schema.ts";
 import { createBooking, customerList, getBooking, menu, updateBooking } from "./booking-api.ts";
+import { addRecord, getCustomer, listCustomers } from "./customer-api.ts";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -54,8 +55,23 @@ export default {
       if (url.pathname === "/api/services") {
         return json(await menu(drizzle(env.DB)));
       }
+      // The picker on the booking form wants every name; the customers
+      // screen wants a search. Two shapes, two paths — one endpoint that
+      // changed behaviour by query string would be worse to read.
       if (url.pathname === "/api/customers") {
         return json(await customerList(drizzle(env.DB)));
+      }
+      if (url.pathname === "/api/people") {
+        return json(await listCustomers(drizzle(env.DB), url.searchParams.get("q") ?? ""));
+      }
+      if (url.pathname === "/api/records" && request.method === "POST") {
+        return await addRecord(env, request);
+      }
+
+      const person = /^\/api\/people\/(\d+)$/.exec(url.pathname);
+      if (person) {
+        const found = await getCustomer(drizzle(env.DB), Number(person[1]));
+        return found ? json(found) : json({ error: "そのお客様は見つかりません。" }, 404);
       }
       if (url.pathname === "/api/day") {
         const date = url.searchParams.get("date") ?? today();

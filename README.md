@@ -73,7 +73,7 @@ the end leaves nothing standing when a step goes wrong partway.
 - [x] **3a — The calendar.** A day as a grid, one column per seat
 - [x] **3b — Taking a booking.** Refuse the impossible, say the rest out loud
 - [x] **3c — Changing a booking.** Status, time and stylist; nothing is deleted
-- [ ] 4 — Customers and treatment records
+- [x] **4 — Customers and treatment records.** Who they are, and what their bookings add up to
 - [ ] 5 — Payments and revenue
 - [ ] 6 — Holidays, opening hours, staff
 - [ ] 7 — The public demo

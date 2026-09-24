@@ -114,6 +114,23 @@ export const TEXT = {
   "event.restaffed": { ja: "担当を {before} → {after} に変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
   "event.edited": { ja: "内容を変更", zh: "內容已更改", en: "Edited" },
 
+  // Customers
+  navDay: { ja: "予約", zh: "預約", en: "Bookings" },
+  navPeople: { ja: "お客様", zh: "客戶", en: "Customers" },
+  search: { ja: "検索", zh: "搜尋", en: "Search" },
+  searchHint: { ja: "名前・読み・電話番号", zh: "姓名、拼音或電話", en: "Name, spelling or phone" },
+  noneFound: { ja: "見つかりません。", zh: "沒有符合的客戶。", en: "Nobody found." },
+  pickSomeone: { ja: "左から選んでください。", zh: "請從左側選擇。", en: "Pick somebody from the list." },
+  visits: { ja: "来店", zh: "到店次數", en: "Visits" },
+  lastVisit: { ja: "最終来店", zh: "最近到店", en: "Last visit" },
+  moves: { ja: "変更", zh: "更改次數", en: "Reschedules" },
+  cancelledCount: { ja: "キャンセル", zh: "取消次數", en: "Cancellations" },
+  shortNotice: { ja: "直前キャンセル", zh: "臨時取消", en: "At short notice" },
+  noShowCount: { ja: "無断キャンセル", zh: "爽約次數", en: "No-shows" },
+  records: { ja: "カルテ", zh: "服務紀錄", en: "Treatment records" },
+  pastVisits: { ja: "来店履歴", zh: "到店紀錄", en: "Past visits" },
+  noVisitsYet: { ja: "まだ来店がありません。", zh: "尚未到店。", en: "No visits yet." },
+
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
   // as a fallback for anything not going through this screen.

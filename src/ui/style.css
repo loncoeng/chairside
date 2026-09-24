@@ -591,3 +591,36 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 .reschedule summary { font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; }
 .reschedule summary:hover { color: var(--accent); }
 .reschedule > .field-row { margin-top: 0.7rem; }
+
+/* --- What has happened to a booking -------------------------------------- */
+
+.history { border-top: 1px solid var(--rule); padding-top: 0.6rem; }
+.history summary { font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; }
+.history summary:hover { color: var(--accent); }
+
+/* Said on the summary line, so it is visible without opening anything. A
+   guest who reschedules constantly should be obvious to whoever is covering
+   the desk today, not only to somebody who went looking. */
+.history-count {
+  margin-left: 0.6rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0 0 0 0.75rem;
+  border-left: 2px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+}
+
+.history-list li { display: flex; gap: 0.75rem; align-items: baseline; }
+.history-when { color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.history-what { color: var(--ink-soft); }

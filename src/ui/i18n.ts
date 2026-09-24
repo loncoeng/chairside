@@ -105,6 +105,15 @@ export const TEXT = {
   reschedule: { ja: "時間・担当を変える", zh: "更改時間或髮型師", en: "Change the time or stylist" },
   applyChange: { ja: "変更する", zh: "套用變更", en: "Apply" },
 
+  // What happened to this booking
+  history: { ja: "変更の記録", zh: "更改記錄", en: "What has happened" },
+  movedTimes: { ja: "この予約は {n} 回動いています", zh: "這個預約已更改 {n} 次", en: "Moved {n} times" },
+  "event.created": { ja: "予約を取った", zh: "建立預約", en: "Booked" },
+  "event.status": { ja: "{before} → {after}", zh: "{before} → {after}", en: "{before} → {after}" },
+  "event.moved": { ja: "{before} → {after} へ移動", zh: "由 {before} 改為 {after}", en: "Moved from {before} to {after}" },
+  "event.restaffed": { ja: "担当を {before} → {after} に変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
+  "event.edited": { ja: "内容を変更", zh: "內容已更改", en: "Edited" },
+
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence
   // as a fallback for anything not going through this screen.

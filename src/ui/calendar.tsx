@@ -150,6 +150,7 @@ export function Calendar({
                 what={service ? serviceName(lang, service) : (line.serviceJa ?? "")}
                 lines={linesFor(cell.span)}
                 noGuest={t("noGuest")}
+                nominatedLabel={t("nominated")}
                 onPick={onPick}
                 picked={picked === line.bookingId}
                 style={{ gridColumn: col, gridRow: `${cell.row} / span ${cell.span}` }}
@@ -167,6 +168,7 @@ function Block({
   what,
   lines,
   noGuest,
+  nominatedLabel,
   onPick,
   picked,
   style,
@@ -176,6 +178,8 @@ function Block({
   lines: 1 | 2 | 3;
   /** What to show when the booking has nobody on file against it. */
   noGuest: string;
+  /** What the star means, for a reader and for a screen reader. */
+  nominatedLabel: string;
   onPick: (line: Line) => void;
   picked: boolean;
   style: Record<string, string | number>;
@@ -193,7 +197,7 @@ function Block({
     >
       <span class="cal-who">
         {line.nominated && (
-          <span class="cal-nom">
+          <span class="cal-nom" aria-label={nominatedLabel} title={nominatedLabel}>
             ★
           </span>
         )}
@@ -242,6 +246,13 @@ export function Peak({ day, seats }: { day: Day; seats: Seat[] }) {
 
   return (
     <ul class="peak">
+      {/* What the star on a block means. A mark nobody can decode is a mark
+          that is not there — and on a phone there is no hover to explain it. */}
+      <li class="peak-key">
+        <span class="cal-nom">★</span>
+        {t("nominated")}
+      </li>
+
       {counts.map((u) => (
         <li key={u.kind} class={u.full ? "is-full" : undefined}>
           <span class={`peak-dot peak-${u.kind}`} aria-hidden="true" />

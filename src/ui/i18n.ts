@@ -89,7 +89,10 @@ export const TEXT = {
   menu: { ja: "メニュー", zh: "服務", en: "Menu" },
   totalMinutes: { ja: "合計 {n} 分", zh: "共 {n} 分鐘", en: "{n} min total" },
   minutes: { ja: "{n}分", zh: "{n}分", en: "{n}m" },
-  nominated: { ja: "指名", zh: "指定", en: "Requested" },
+  // A guest who asked for that stylist by name. It is on the calendar as a
+  // star, in the takings as a share, and in a real salon it decides
+  // commission — so it is worth a word rather than a symbol.
+  nominated: { ja: "指名", zh: "指定髮型師", en: "Requested by name" },
   note: { ja: "メモ", zh: "備註", en: "Note" },
   cancel: { ja: "やめる", zh: "取消", en: "Cancel" },
   submit: { ja: "予約を入れる", zh: "確認預約", en: "Book it" },

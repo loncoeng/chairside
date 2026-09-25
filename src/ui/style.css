@@ -1036,3 +1036,14 @@ footer a:hover { color: var(--accent); border-color: var(--accent); }
 /* A booking with nobody on file against it. Said, rather than left as a
    dash — a hyphen with no explanation reads as a bug, and did. */
 .cal-anon { color: var(--ink-faint); font-weight: 400; }
+
+/* The legend for the star. A mark nobody can decode is a mark that is not
+   there, and on a phone there is no hover to explain it. */
+.peak-key {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ink-faint);
+}
+
+.peak-key .cal-nom { font-size: 0.9em; }

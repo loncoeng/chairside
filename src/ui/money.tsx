@@ -28,6 +28,33 @@ type Revenue = {
 
 const mop = (value: number) => Math.round(value).toLocaleString("en-US");
 
+/**
+ * Every day of the month, whether it took anything or not.
+ *
+ * The API only returns days with takings. Drawing just those puts a closed
+ * Monday next to a Tuesday with no gap between them, and a month with one bad
+ * week looks identical to a month that was busy throughout.
+ */
+function everyDay(month: string, taken: { date: string; total: number; n: number }[]) {
+  const found = new Map(taken.map((d) => [d.date, d]));
+  const [y, m] = month.split("-").map(Number) as [number, number];
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+  const out: { date: string; day: number; weekday: number; total: number; n: number }[] = [];
+  for (let day = 1; day <= days; day++) {
+    const date = `${month}-${String(day).padStart(2, "0")}`;
+    const row = found.get(date);
+    out.push({
+      date,
+      day,
+      weekday: new Date(`${date}T00:00:00Z`).getUTCDay(),
+      total: row?.total ?? 0,
+      n: row?.n ?? 0,
+    });
+  }
+  return out;
+}
+
 function shiftMonth(month: string, by: number): string {
   const [y, m] = month.split("-").map(Number) as [number, number];
   const d = new Date(Date.UTC(y, m - 1 + by, 1));
@@ -35,7 +62,7 @@ function shiftMonth(month: string, by: number): string {
 }
 
 export function Money({ month, onMonth }: { month: string; onMonth: (month: string) => void }) {
-  const { t, lang } = useText();
+  const { t, lang, weekday } = useText();
   const [data, setData] = useState<Revenue | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
 
@@ -57,7 +84,12 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
     return () => stop.abort();
   }, [month]);
 
-  const busiest = data ? Math.max(1, ...data.byDay.map((d) => d.total)) : 1;
+  const days = data ? everyDay(month, data.byDay) : [];
+  const busiest = Math.max(1, ...days.map((d) => d.total));
+  // Averaged over the days that took something. Dividing by the whole month
+  // would drag the line down by every Monday the shop was shut.
+  const open = days.filter((d) => d.n > 0);
+  const average = open.length === 0 ? 0 : open.reduce((sum, d) => sum + d.total, 0) / open.length;
 
   return (
     <div class="money">
@@ -103,21 +135,49 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
             </div>
           </dl>
 
-          {/* Bars rather than a chart library. Twenty-six numbers of the same
-              kind need a shape, not axes and a legend. */}
+          {/* Columns rather than a chart library. Thirty numbers of the
+              same kind need a shape, not axes and a legend — and nothing
+              here is worth 90KB of JavaScript to a shop on a five-year-old
+              PC.
+
+              Vertical, because a month is read left to right and twenty-six
+              horizontal bars are a list you scroll rather than a shape you
+              see. */}
           <section>
             <h4>{t("byDay")}</h4>
-            <ul class="bars">
-              {data.byDay.map((d) => (
-                <li key={d.date}>
-                  <span class="bar-label">{d.date.slice(8)}</span>
-                  <span class="bar-track">
-                    <span class="bar-fill" style={{ width: `${(d.total / busiest) * 100}%` }} />
-                  </span>
-                  <span class="bar-value">{mop(d.total)}</span>
-                </li>
-              ))}
-            </ul>
+            <div class="chart">
+              {average > 0 && (
+                <div
+                  class="chart-mean"
+                  style={{ bottom: `${(average / busiest) * 100}%` }}
+                  title={`${t("average")} ${mop(average)}`}
+                >
+                  <span>{t("average")}</span>
+                </div>
+              )}
+
+              <ul class="chart-days">
+                {days.map((d) => (
+                  <li
+                    key={d.date}
+                    class={`chart-day${d.n === 0 ? " is-shut" : ""}${d.weekday === 0 || d.weekday === 6 ? " is-weekend" : ""}`}
+                    title={
+                      d.n === 0
+                        ? `${d.date}（${weekday(d.weekday)}）${t("noTakingsThatDay")}`
+                        : `${d.date}（${weekday(d.weekday)}）${mop(d.total)} / ${d.n}`
+                    }
+                  >
+                    <span class="chart-stack">
+                      <span class="chart-fill" style={{ height: `${(d.total / busiest) * 100}%` }} />
+                    </span>
+                    <span class="chart-label">
+                      {String(d.day).padStart(2, "0")}
+                      <em>{weekday(d.weekday)}</em>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </section>
 
           <div class="money-cols">

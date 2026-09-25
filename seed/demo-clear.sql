@@ -2,8 +2,8 @@
 --
 -- Clears the sample before it is written again.
 --
--- 2026-07-01 to 2026-09-30: 3296 bookings, 6279 treatments,
--- 6593 history rows, 2841 payments. Mondays are
+-- 2026-07-01 to 2026-09-30: 3253 bookings, 6286 treatments,
+-- 6480 history rows, 2825 payments. Mondays are
 -- missing because the shop is closed.
 --
 -- Every treatment sits on a seat and a stylist that were free at the time, so

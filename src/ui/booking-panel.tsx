@@ -214,7 +214,7 @@ export function BookingPanel({
     <div class="sheet" role="dialog" aria-label={t("bookingDetail")}>
       <div class="sheet-head">
         <h3>
-          {line.customerName ?? "—"}
+          {line.customerName ?? t("noGuest")}
           <span class="sheet-when">
             {line.startsAt}–{line.endsAt}
           </span>

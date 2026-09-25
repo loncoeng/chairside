@@ -626,10 +626,14 @@ for (let date = FROM; date <= TO; date = addDays(date, 1)) {
     for (let attempt = 0; attempt < 3; attempt++) {
       if (random() > demandAt(Math.floor(at / 60)) * 0.5) continue;
 
-      // Most of the book belongs to somebody on file. A salon does take
-      // walk-ins, so a fifth of them stay nameless rather than pretending
-      // every guest was registered.
-      const who = chance(0.8) ? pick(extras).id : null;
+      // Everybody has a name here.
+      //
+      // A real salon does take walk-ins, and a booking with no customer
+      // against it is a case the screen has to handle — so it still says
+      // 「未登録」 rather than nothing. But a fifth of the demo arriving
+      // nameless made the calendar look broken rather than realistic, which
+      // is the wrong thing for a demo to show.
+      const who = pick(extras).id;
       const booking = place(date, weightedMenu(), null, at, who, chance(0.45));
       if (!booking) continue;
 

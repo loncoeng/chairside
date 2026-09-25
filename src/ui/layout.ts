@@ -9,6 +9,16 @@ import { minutesOf } from "./types.ts";
 export const STEP = 15;
 
 /**
+ * Rows above the treatments: the kind of seat, then the seat itself.
+ *
+ * "A1" and "S1" are made up. A salon does not have industry-standard seat
+ * names — one numbers its mirrors, another calls them by position — so the
+ * grid says which group a column belongs to rather than relying on the letter
+ * to carry it.
+ */
+export const HEADER_ROWS = 2;
+
+/**
  * When the grid starts and ends.
  *
  * Opening hours where there are any, widened to cover anything booked outside
@@ -37,9 +47,15 @@ export function span(day: Day): { open: number; close: number } {
 /**
  * Where a treatment sits in the grid.
  *
- * Row 1 is the header, so the first quarter hour of the day is row 2.
- * Anything running past closing is clipped rather than pushed outside the
- * grid, where CSS would silently stretch the last row to hold it.
+ * The header takes the first rows, so the first quarter hour is the one after
+ * them. Anything running past closing is clipped rather than pushed outside
+ * the grid, where CSS would silently stretch the last row to hold it.
+ *
+ * The height rounds **up**. A twenty-minute shampoo drawn as fifteen is a
+ * block that ends before the guest does, and it left the name with nowhere to
+ * sit — two lines of text in one row's worth of space, sliced through the
+ * middle. Overstating by five minutes is the safe direction on a calendar
+ * anyway: nobody is double-booked by a block that looks too long.
  */
 export function place(
   line: Pick<Line, "startsAt" | "endsAt">,
@@ -49,8 +65,8 @@ export function place(
   const from = Math.max(minutesOf(line.startsAt), open);
   const to = Math.min(minutesOf(line.endsAt), close);
   return {
-    row: Math.round((from - open) / STEP) + 2,
-    span: Math.max(1, Math.round((to - from) / STEP)),
+    row: Math.round((from - open) / STEP) + HEADER_ROWS + 1,
+    span: Math.max(1, Math.ceil((to - from) / STEP)),
   };
 }
 

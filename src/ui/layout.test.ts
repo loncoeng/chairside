@@ -35,23 +35,31 @@ function day(lines: Line[], hours: Day["hours"] = { opensAt: "10:00", closesAt: 
   return { date: "2026-09-23", weekday: 3, hours, closure: null, holidays: [], lines };
 }
 
-test("the first quarter hour is row 2, under the header", () => {
-  deepStrictEqual(place({ startsAt: "10:00", endsAt: "10:15" }, 600, 1200), { row: 2, span: 1 });
+test("the first quarter hour sits under the header rows", () => {
+  deepStrictEqual(place({ startsAt: "10:00", endsAt: "10:15" }, 600, 1200), { row: 3, span: 1 });
 });
 
 test("a 45 minute treatment spans three rows", () => {
-  deepStrictEqual(place({ startsAt: "11:00", endsAt: "11:45" }, 600, 1200), { row: 6, span: 3 });
+  deepStrictEqual(place({ startsAt: "11:00", endsAt: "11:45" }, 600, 1200), { row: 7, span: 3 });
 });
 
 test("something running past closing is clipped, not pushed off the grid", () => {
   // 19:30 to 21:00 against a 20:00 close: six rows would stretch the grid
   // and put the block outside the room.
-  deepStrictEqual(place({ startsAt: "19:30", endsAt: "21:00" }, 600, 1200), { row: 40, span: 2 });
+  deepStrictEqual(place({ startsAt: "19:30", endsAt: "21:00" }, 600, 1200), { row: 41, span: 2 });
 });
 
 test("something shorter than a row still gets one", () => {
   const { span } = place({ startsAt: "10:00", endsAt: "10:05" }, 600, 1200);
   strictEqual(span, 1);
+});
+
+test("a twenty-minute treatment gets two rows, not one", () => {
+  // Rounded down it was drawn as fifteen minutes: a block that ends before
+  // the guest does, with two lines of text in one row's worth of space. The
+  // names came out sliced through the middle.
+  const { span } = place({ startsAt: "10:00", endsAt: "10:20" }, 600, 1200);
+  strictEqual(span, 2);
 });
 
 test("a quarter-hour block holds one line, and says so", () => {

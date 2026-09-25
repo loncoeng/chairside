@@ -15,6 +15,7 @@ type Person = {
   id: number;
   name: string;
   role: string;
+  grade?: string;
   color: string | null;
   joinedOn: string | null;
   leftOn: string | null;
@@ -295,7 +296,9 @@ function TeamRow({
     <li class={gone ? "is-gone" : undefined}>
       <span class="dot" style={{ background: person.color ?? "#888" }} aria-hidden="true" />
       <span class="team-name">{person.name}</span>
+      {/* What they may do, and what they charge — two different things. */}
       <span class="role">{t(person.role as "stylist")}</span>
+      <span class="grade">{t(`grade.${person.grade ?? "stylist2"}` as "grade.owner")}</span>
 
       {gone ? (
         <>

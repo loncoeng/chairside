@@ -13,7 +13,7 @@
 //   node scripts/build-demo-db.ts
 
 import { DatabaseSync } from "node:sqlite";
-import { mkdirSync, readFileSync, writeFileSync, statSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync, statSync, rmSync } from "node:fs";
 // A file URL's pathname is not a path. On Windows it is "/C:/Users/..." and
 // stripping the leading slash happens to work; on Linux the same trick turns
 // "/home/runner/..." into a relative path that does not exist. This has a
@@ -33,8 +33,16 @@ rmSync(WORK, { force: true });
 const db = new DatabaseSync(fileURLToPath(WORK));
 db.exec("PRAGMA foreign_keys = ON");
 
-for (const file of ["migrations/0000_initial_schema.sql", "migrations/0001_booking_events.sql"]) {
-  for (const statement of readFileSync(file, "utf8").split("--> statement-breakpoint")) {
+// Every migration there is, in order. Naming them one by one meant this
+// script silently built last month's schema the first time a migration was
+// added, and the failure came out as "table staff has no column named grade"
+// two steps later.
+const migrations = readdirSync("migrations")
+  .filter((name) => name.endsWith(".sql"))
+  .sort();
+
+for (const name of migrations) {
+  for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
     if (statement.trim() !== "") db.exec(statement);
   }
 }

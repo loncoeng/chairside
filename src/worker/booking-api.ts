@@ -17,27 +17,52 @@ import {
   seats,
   services,
   staff,
+  servicePrices,
 } from "../db/schema.ts";
 import { blocked, check } from "../db/booking-rules.ts";
 import type { Draft, Existing } from "../db/booking-rules.ts";
 
 import type { Database as Db } from "../db/database.ts";
 
-/** The menu, for the booking form. */
+/**
+ * The menu, for the booking form.
+ *
+ * Each treatment carries what it costs with each grade of stylist, where that
+ * differs. A cut is 750 with the owner and 300 with a junior, and the screen
+ * cannot show the guest a price without knowing who is doing it.
+ */
 export async function menu(db: Db) {
-  return await db
-    .select({
-      id: services.id,
-      nameJa: services.nameJa,
-      nameZh: services.nameZh,
-      nameEn: services.nameEn,
-      durationMin: services.durationMin,
-      seatKind: services.seatKind,
-      price: services.price,
-    })
-    .from(services)
-    .where(eq(services.active, true))
-    .orderBy(asc(services.sortOrder), asc(services.id));
+  const [rows, graded] = await Promise.all([
+    db
+      .select({
+        id: services.id,
+        nameJa: services.nameJa,
+        nameZh: services.nameZh,
+        nameEn: services.nameEn,
+        durationMin: services.durationMin,
+        seatKind: services.seatKind,
+        price: services.price,
+      })
+      .from(services)
+      .where(eq(services.active, true))
+      .orderBy(asc(services.sortOrder), asc(services.id)),
+    db
+      .select({
+        serviceId: servicePrices.serviceId,
+        grade: servicePrices.grade,
+        price: servicePrices.price,
+      })
+      .from(servicePrices),
+  ]);
+
+  const byService = new Map<number, Record<string, number>>();
+  for (const row of graded) {
+    const found = byService.get(row.serviceId) ?? {};
+    found[row.grade] = row.price;
+    byService.set(row.serviceId, found);
+  }
+
+  return rows.map((row) => ({ ...row, byGrade: byService.get(row.id) ?? null }));
 }
 
 /** The customer list, for picking one on the booking form. */

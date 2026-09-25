@@ -17,8 +17,23 @@ export type Service = {
   nameEn: string | null;
   durationMin: number;
   seatKind: "styling" | "shampoo" | null;
+  /** What it costs when the stylist makes no difference. */
   price: number | null;
+  /** What it costs with each grade, where it does. */
+  byGrade: Record<string, number> | null;
 };
+
+/**
+ * What this treatment costs with this person.
+ *
+ * A cut is 750 with the owner and 300 with a junior. Showing the menu price
+ * regardless would put a number on the screen that is wrong for most of the
+ * people who could do the work.
+ */
+export function priceFor(service: Service, grade: string | null | undefined): number | null {
+  if (grade && service.byGrade && grade in service.byGrade) return service.byGrade[grade]!;
+  return service.price;
+}
 
 export type Customer = { id: number; name: string; searchKey: string | null };
 
@@ -68,6 +83,14 @@ export function BookingForm({
 
   const byId = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
   const minutes = chosen.reduce((sum, id) => sum + (byId.get(id)?.durationMin ?? 0), 0);
+
+  // Priced for whoever is selected. The same cut is 750 or 300 depending on
+  // it, and the guest is told the figure on the phone.
+  const grade = staff.find((p) => p.id === staffId)?.grade ?? null;
+  const total = chosen.reduce((sum, id) => {
+    const service = byId.get(id);
+    return sum + (service ? (priceFor(service, grade) ?? 0) : 0);
+  }, 0);
 
   // Any edit invalidates the answer the server gave about the previous
   // version. Leaving the warnings on screen would let somebody confirm a
@@ -178,7 +201,10 @@ export function BookingForm({
         <legend>
           {t("menu")}
           {minutes > 0 && (
-            <span class="menu-total">{t("totalMinutes", { n: minutes })}</span>
+            <span class="menu-total">
+              {t("totalMinutes", { n: minutes })}
+              {total > 0 && <b> {total.toLocaleString("en-US")}</b>}
+            </span>
           )}
         </legend>
         <div class="menu-grid">
@@ -197,6 +223,9 @@ export function BookingForm({
                 {order >= 0 && <span class="menu-order">{order + 1}</span>}
                 <span class="menu-name">{serviceName(lang, service)}</span>
                 <span class="menu-min">{t("minutes", { n: service.durationMin })}</span>
+                {/* The price for the stylist chosen above, not the menu's
+                    nominal one. */}
+                <span class="menu-price">{priceFor(service, grade)?.toLocaleString("en-US")}</span>
               </button>
             );
           })}

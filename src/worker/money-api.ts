@@ -26,7 +26,14 @@ import { creditedStaff } from "../db/credit.ts";
 
 import type { Database as Db } from "../db/database.ts";
 
-const METHODS = ["cash", "card", "wechat", "alipay", "other"] as const;
+/**
+ * What the shop takes.
+ *
+ * MPay and BOC Pay are the two local wallets and between them cover most of
+ * Macau; WeChat and Alipay come over the border with the guests who use them.
+ * A till that only knew cash and cards would be a till nobody could use here.
+ */
+const METHODS = ["cash", "card", "mpay", "boc", "wechat", "alipay"] as const;
 type Method = (typeof METHODS)[number];
 
 /** What the shop takes, and at what rate. */

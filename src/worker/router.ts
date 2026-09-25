@@ -153,7 +153,13 @@ async function room(db: Db) {
       .where(eq(seats.active, true))
       .orderBy(asc(seats.sortOrder), asc(seats.id)),
     db
-      .select({ id: staff.id, name: staff.name, role: staff.role, color: staff.color })
+      .select({
+        id: staff.id,
+        name: staff.name,
+        role: staff.role,
+        grade: staff.grade,
+        color: staff.color,
+      })
       .from(staff)
       .where(isNull(staff.leftOn))
       .orderBy(asc(staff.id)),

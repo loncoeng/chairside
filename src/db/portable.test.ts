@@ -9,7 +9,7 @@
 // this test says so.
 
 import { strictEqual, ok } from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 
 import initSqlJs from "sql.js";
@@ -26,8 +26,10 @@ const SQL = await initSqlJs();
 function database() {
   const raw = new SQL.Database();
 
-  for (const file of ["migrations/0000_initial_schema.sql", "migrations/0001_booking_events.sql"]) {
-    for (const statement of readFileSync(file, "utf8").split("--> statement-breakpoint")) {
+  // Every migration, not a list to keep up to date. A list gets out of step
+  // and the test then checks last month's schema.
+  for (const name of readdirSync("migrations").filter((n) => n.endsWith(".sql")).sort()) {
+    for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
       if (statement.trim() !== "") raw.run(statement);
     }
   }
@@ -36,12 +38,16 @@ function database() {
     INSERT INTO seats (id, name, kind, active, sort_order) VALUES
       (1, 'A1', 'styling', 1, 1), (10, 'S1', 'shampoo', 1, 10);
 
-    INSERT INTO staff (id, name, role, color) VALUES
-      (1, 'Aoi', 'owner', '#B4553F'), (8, 'Hana', 'assistant', '#6B7A45');
+    INSERT INTO staff (id, name, role, grade, color) VALUES
+      (1, 'Aoi', 'owner', 'owner', '#B4553F'),
+      (8, 'Hana', 'assistant', 'assistant', '#6B7A45');
 
     INSERT INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price, active, sort_order)
       VALUES (1, 'カット', '剪髮', 'Cut', 45, 'styling', 280, 1, 1),
-             (4, 'シャンプー', '洗髮', 'Shampoo', 20, 'shampoo', 120, 1, 4);
+             (4, 'シャンプー', '洗髮', 'Shampoo', 20, 'shampoo', 180, 1, 4);
+
+    INSERT INTO service_prices (id, service_id, grade, price) VALUES
+      (1, 1, 'owner', 750), (2, 1, 'stylist1', 450), (3, 1, 'stylist2', 300);
 
     INSERT INTO currencies (code, rate_to_base, active, sort_order) VALUES ('MOP', 1, 1, 1);
 
@@ -69,10 +75,19 @@ function database() {
   return drizzle(raw);
 }
 
-test("the menu reads on sql.js", async () => {
+test("the menu reads on sql.js, prices and all", async () => {
   const rows = await menu(database());
   strictEqual(rows.length, 2);
   strictEqual(rows[0]?.nameJa, "カット");
+
+  // A cut costs 750 with the owner and 300 with a junior. The menu carries
+  // both, because the screen cannot price a booking without knowing who is
+  // doing it.
+  strictEqual(rows[0]?.byGrade?.owner, 750);
+  strictEqual(rows[0]?.byGrade?.stylist2, 300);
+  // A shampoo is a shampoo — no rows, and the flat price stands.
+  strictEqual(rows[1]?.byGrade, null);
+  strictEqual(rows[1]?.price, 180);
 });
 
 test("a booking reads, joins and all", async () => {

@@ -3,7 +3,14 @@
 // in one of them is how the two drift apart.
 
 export type Seat = { id: number; name: string; kind: "styling" | "shampoo" };
-export type Person = { id: number; name: string; role: string; color: string | null };
+export type Person = {
+  id: number;
+  name: string;
+  role: string;
+  /** What they charge. Separate from `role`, which is what they may do. */
+  grade?: string;
+  color: string | null;
+};
 export type Room = { seats: Seat[]; staff: Person[] };
 
 export type Status = "booked" | "arrived" | "done" | "cancelled" | "no_show";

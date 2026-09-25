@@ -125,6 +125,14 @@ export const TEXT = {
     en: "The design, and what was left out on purpose, are in DESIGN.md.",
   },
 
+  // What a stylist charges. Not the same as what they do — somebody can be
+  // promoted without their permissions changing.
+  "grade.owner": { ja: "オーナー", zh: "店主", en: "Owner" },
+  "grade.stylist1": { ja: "スタイリスト①", zh: "髮型師 I", en: "Stylist I" },
+  "grade.stylist2": { ja: "スタイリスト②", zh: "髮型師 II", en: "Stylist II" },
+  "grade.assistant": { ja: "アシスタント", zh: "助理", en: "Assistant" },
+  from: { ja: "{n} 〜", zh: "{n} 起", en: "from {n}" },
+
   // Customers
   navDay: { ja: "予約", zh: "預約", en: "Bookings" },
   navPeople: { ja: "お客様", zh: "客戶", en: "Customers" },
@@ -168,7 +176,8 @@ export const TEXT = {
   "method.card": { ja: "カード", zh: "信用卡", en: "Card" },
   "method.wechat": { ja: "WeChat", zh: "微信支付", en: "WeChat" },
   "method.alipay": { ja: "Alipay", zh: "支付寶", en: "Alipay" },
-  "method.other": { ja: "その他", zh: "其他", en: "Other" },
+  "method.mpay": { ja: "MPay", zh: "澳門通", en: "MPay" },
+  "method.boc": { ja: "BOC Pay", zh: "中銀", en: "BOC Pay" },
 
   // Taking payment
   takePayment: { ja: "会計する", zh: "結帳", en: "Take payment" },

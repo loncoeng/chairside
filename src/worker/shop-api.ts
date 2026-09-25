@@ -38,6 +38,7 @@ export async function shopSettings(db: Db, from: string) {
         id: staff.id,
         name: staff.name,
         role: staff.role,
+        grade: staff.grade,
         color: staff.color,
         joinedOn: staff.joinedOn,
         leftOn: staff.leftOn,

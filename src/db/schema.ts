@@ -28,6 +28,18 @@ export const staff = sqliteTable(
     name: text("name").notNull(),
     /** An owner sees settings and revenue; a stylist sees their own day. */
     role: text("role", { enum: ["owner", "stylist", "assistant"] }).notNull().default("stylist"),
+    /**
+     * What they charge, which is not the same as what they do.
+     *
+     * A cut costs 750 with the owner, 450 with a senior stylist and 300 with
+     * a junior one. Guests choose partly on that, so it belongs on the person
+     * rather than being folded into the menu — and it is separate from
+     * `role`, because a stylist can be promoted without their permissions
+     * changing.
+     */
+    grade: text("grade", { enum: ["owner", "stylist1", "stylist2", "assistant"] })
+      .notNull()
+      .default("stylist2"),
     /** Colour on the calendar. */
     color: text("color"),
     joinedOn: text("joined_on"),
@@ -87,7 +99,13 @@ export const services = sqliteTable("services", {
   durationMin: integer("duration_min").notNull().default(30),
   /** Which kind of seat this occupies. NULL takes no seat at all. */
   seatKind: text("seat_kind", { enum: ["styling", "shampoo"] }),
-  /** The list price. What was actually taken lives in `payments`. */
+  /**
+   * The list price when nobody's grade applies — a shampoo costs the same
+   * whoever does it. Where it does depend on the person, `service_prices`
+   * has a row per grade and this is the fallback.
+   *
+   * What was actually handed over lives in `payments`.
+   */
   price: real("price"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
@@ -186,7 +204,14 @@ export const payments = sqliteTable(
     currency: text("currency").notNull(),
     /** A copy of the configured rate as it stood at the time. */
     rateToBase: real("rate_to_base").notNull(),
-    method: text("method", { enum: ["cash", "card", "wechat", "alipay", "other"] })
+    /**
+     * Macau takes more than cash and cards. MPay and BOC Pay are the two
+     * local wallets; WeChat and Alipay come over the border with the guests
+     * who use them.
+     */
+    method: text("method", {
+      enum: ["cash", "card", "mpay", "boc", "wechat", "alipay"],
+    })
       .notNull()
       .default("cash"),
     paidAt: integer("paid_at").notNull().default(now),
@@ -313,4 +338,28 @@ export const bookingEvents = sqliteTable(
     // Counting how often one guest moves their bookings reads this by time.
     index("booking_events_at_idx").on(t.at),
   ],
+);
+
+/**
+ * What a treatment costs with each grade of stylist.
+ *
+ * Only where it varies. A shampoo is a shampoo; a cut is 750 with the owner
+ * and 300 with a junior, and the guest is choosing between those two things
+ * when they book.
+ *
+ * Kept apart from `services` rather than adding four price columns to it:
+ * the grades are the shop's to rename, and a table takes a new one without a
+ * migration.
+ */
+export const servicePrices = sqliteTable(
+  "service_prices",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    serviceId: integer("service_id")
+      .notNull()
+      .references(() => services.id, { onDelete: "cascade" }),
+    grade: text("grade", { enum: ["owner", "stylist1", "stylist2", "assistant"] }).notNull(),
+    price: real("price").notNull(),
+  },
+  (t) => [uniqueIndex("service_prices_key").on(t.serviceId, t.grade)],
 );

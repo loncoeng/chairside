@@ -14,6 +14,7 @@ import type { Line, Person, Status } from "./types.ts";
 import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
 import type { Service } from "./book.tsx";
+import { priceFor } from "./book.tsx";
 
 type Payment = {
   id: number;
@@ -117,10 +118,13 @@ export function BookingPanel({
         // The list price of what was booked, as a starting figure. It is the
         // menu's number, not the bill: discounts and rounding happen, and
         // what gets stored is what was handed over.
-        const listed = found.items.reduce(
-          (sum, item) => sum + (services.find((sv) => sv.id === item.serviceId)?.price ?? 0),
-          0,
-        );
+        // Priced by whoever actually did each line, which is why the grade
+        // lives on the person rather than on the booking.
+        const listed = found.items.reduce((sum, item) => {
+          const service = services.find((sv) => sv.id === item.serviceId);
+          const grade = staff.find((p) => p.id === item.staffId)?.grade ?? null;
+          return sum + (service ? (priceFor(service, grade) ?? 0) : 0);
+        }, 0);
         if (listed > 0) setAmount(String(listed));
       })
       .catch((problem: unknown) => {
@@ -128,7 +132,7 @@ export function BookingPanel({
       });
 
     return () => stop.abort();
-  }, [line.bookingId, services]);
+  }, [line.bookingId, services, staff]);
 
   useEffect(() => {
     const stop = new AbortController();

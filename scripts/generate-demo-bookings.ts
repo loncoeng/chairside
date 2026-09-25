@@ -39,18 +39,50 @@ const STYLISTS = [1, 2, 3, 4, 5, 6, 7];
 const ASSISTANT = 8;
 
 type Service = { minutes: number; seat: "styling" | "shampoo"; price: number };
-/** Kept in step with seed/demo.sql. The price is the list price. */
+/** Kept in step with seed/demo.sql. `price` is the flat one. */
 const SERVICE: Record<number, Service> = {
-  1: { minutes: 45, seat: "styling", price: 280 },
-  2: { minutes: 30, seat: "styling", price: 220 },
-  3: { minutes: 15, seat: "styling", price: 80 },
-  4: { minutes: 20, seat: "shampoo", price: 120 },
-  5: { minutes: 25, seat: "styling", price: 180 },
-  6: { minutes: 90, seat: "styling", price: 680 },
-  7: { minutes: 120, seat: "styling", price: 880 },
-  8: { minutes: 180, seat: "styling", price: 1580 },
-  9: { minutes: 30, seat: "shampoo", price: 380 },
-  10: { minutes: 40, seat: "shampoo", price: 480 },
+  1: { minutes: 45, seat: "styling", price: 450 },
+  3: { minutes: 15, seat: "styling", price: 150 },
+  4: { minutes: 20, seat: "shampoo", price: 180 },
+  5: { minutes: 25, seat: "styling", price: 280 },
+  6: { minutes: 90, seat: "styling", price: 980 },
+  7: { minutes: 120, seat: "styling", price: 1280 },
+  8: { minutes: 180, seat: "styling", price: 2200 },
+  9: { minutes: 30, seat: "shampoo", price: 580 },
+  10: { minutes: 40, seat: "shampoo", price: 680 },
+};
+
+/**
+ * What each grade charges, where the person makes a difference.
+ *
+ * Same numbers as seed/demo.sql. A cut is 750 with the owner and 300 with a
+ * junior, and a month of takings that ignored that would make the per-stylist
+ * column meaningless — everybody would look the same but busier or quieter.
+ */
+const BY_GRADE: Record<number, Record<string, number>> = {
+  1: { owner: 750, stylist1: 450, stylist2: 300 },
+  5: { owner: 380, stylist1: 280, stylist2: 220 },
+  6: { owner: 1500, stylist1: 980, stylist2: 780 },
+  7: { owner: 1800, stylist1: 1280, stylist2: 980 },
+  8: { owner: 2800, stylist1: 2200, stylist2: 1800 },
+};
+
+/** Who is what. Kept in step with seed/demo.sql. */
+const GRADE: Record<number, string> = {
+  1: "owner",
+  2: "stylist1",
+  3: "stylist1",
+  4: "stylist2",
+  5: "stylist2",
+  6: "stylist2",
+  7: "stylist2",
+  8: "assistant",
+};
+
+const priceOf = (serviceId: number, staffId: number | null): number => {
+  const grade = staffId === null ? undefined : GRADE[staffId];
+  const byGrade = grade === undefined ? undefined : BY_GRADE[serviceId]?.[grade];
+  return byGrade ?? SERVICE[serviceId]?.price ?? 0;
 };
 
 /**
@@ -66,11 +98,12 @@ const CURRENCIES: { code: string; weight: number }[] = [
   { code: "CNY", weight: 5 },
 ];
 const METHODS: { name: string; weight: number }[] = [
-  { name: "cash", weight: 30 },
-  { name: "card", weight: 25 },
-  { name: "wechat", weight: 28 },
-  { name: "alipay", weight: 14 },
-  { name: "other", weight: 3 },
+  { name: "mpay", weight: 26 },
+  { name: "cash", weight: 22 },
+  { name: "wechat", weight: 18 },
+  { name: "card", weight: 15 },
+  { name: "boc", weight: 11 },
+  { name: "alipay", weight: 8 },
 ];
 
 function weighted<T extends { weight: number }>(list: T[]): T {
@@ -116,7 +149,7 @@ const GUESTS: {
   // Cancels, and nearly always on the day.
   { id: 6, every: 13, usual: 7, menu: [10, 1], moves: 0.2, cancels: 0.5, late: 0.9, noShow: 0 },
   { id: 7, every: 31, usual: 2, menu: [4, 1, 9], moves: 0.1, cancels: 0.04, late: 0.2, noShow: 0 },
-  { id: 8, every: 21, usual: 3, menu: [2], moves: 0.08, cancels: 0.03, late: 0.2, noShow: 0 },
+  { id: 8, every: 21, usual: 3, menu: [3], moves: 0.08, cancels: 0.03, late: 0.2, noShow: 0 },
   { id: 9, every: 44, usual: 1, menu: [4, 1], moves: 0.12, cancels: 0.06, late: 0.3, noShow: 0 },
   // Does not turn up. A different problem from cancelling, and counted apart.
   { id: 10, every: 14, usual: 6, menu: [4, 1], moves: 0.15, cancels: 0.08, late: 0.5, noShow: 0.4 },
@@ -176,8 +209,7 @@ const EXTRA_FROM = 101;
 
 /** What everybody else books. Bulk, to fill the room. */
 const WALK_IN_MENUS: { items: number[]; weight: number }[] = [
-  { items: [4, 1], weight: 30 },
-  { items: [2], weight: 16 },
+  { items: [4, 1], weight: 38 },
   { items: [4, 6], weight: 12 },
   { items: [3], weight: 8 },
   { items: [4, 5], weight: 8 },
@@ -450,7 +482,11 @@ function record(
   // nothing behind it, and a row saying 0 would be counted as a visit that
   // paid nothing rather than as a visit that did not happen.
   if (status === "done") {
-    const list = booking.items.reduce((sum, item) => sum + (SERVICE[item.serviceId]?.price ?? 0), 0);
+    // Priced by whoever did each line, which is the point of the grades.
+    const list = booking.items.reduce(
+      (sum, item) => sum + priceOf(item.serviceId, item.staffId),
+      0,
+    );
     // The list price is what the menu says. What was handed over is rounded,
     // occasionally discounted, and sometimes a little more.
     const roll = random();

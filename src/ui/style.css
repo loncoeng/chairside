@@ -1018,3 +1018,17 @@ footer a:hover { color: var(--accent); border-color: var(--accent); }
   .people-list ul { max-height: 62vh; overflow-y: auto; }
   .people-detail { position: sticky; top: 1rem; }
 }
+
+/* The price for the stylist chosen above, not the menu's nominal one. */
+.menu-price { color: var(--accent); font-variant-numeric: tabular-nums; }
+.menu-item.is-on .menu-price { font-weight: 600; }
+.menu-total b { color: var(--accent); margin-left: 0.5rem; font-variant-numeric: tabular-nums; }
+
+/* What they charge, beside what they may do. */
+.team .grade {
+  font-size: 0.72rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0 0.35rem;
+}

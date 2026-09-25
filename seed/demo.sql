@@ -25,32 +25,48 @@ INSERT OR IGNORE INTO seats (id, name, kind, active, sort_order) VALUES
   (11, 'S2', 'shampoo', 1, 11),
   (12, 'S3', 'shampoo', 1, 12);
 
-INSERT OR IGNORE INTO staff (id, name, role, color, joined_on, left_on) VALUES
-  (1, 'Aoi',  'owner',     '#B4553F', '2019-04-01', NULL),
-  (2, 'Ren',  'stylist',   '#4B6FA8', '2020-07-01', NULL),
-  (3, 'Mei',  'stylist',   '#4E7F5E', '2021-03-15', NULL),
-  (4, 'Kai',  'stylist',   '#8A6510', '2022-01-10', NULL),
-  (5, 'Sora', 'stylist',   '#7A5490', '2022-09-01', NULL),
-  (6, 'Yuna', 'stylist',   '#3F7F8A', '2023-05-08', NULL),
-  (7, 'Riku', 'stylist',   '#A04A6B', '2024-02-19', NULL),
-  (8, 'Hana', 'assistant', '#6B7A45', '2025-04-01', NULL);
+INSERT OR REPLACE INTO staff (id, name, role, grade, color, joined_on, left_on) VALUES
+  (1, 'Aoi',  'owner',     'owner',     '#B4553F', '2019-04-01', NULL),
+  (2, 'Ren',  'stylist',   'stylist1',  '#4B6FA8', '2020-07-01', NULL),
+  (3, 'Mei',  'stylist',   'stylist1',  '#4E7F5E', '2021-03-15', NULL),
+  (4, 'Kai',  'stylist',   'stylist2',  '#8A6510', '2022-01-10', NULL),
+  (5, 'Sora', 'stylist',   'stylist2',  '#7A5490', '2022-09-01', NULL),
+  (6, 'Yuna', 'stylist',   'stylist2',  '#3F7F8A', '2023-05-08', NULL),
+  (7, 'Riku', 'stylist',   'stylist2',  '#A04A6B', '2024-02-19', NULL),
+  (8, 'Hana', 'assistant', 'assistant', '#6B7A45', '2025-04-01', NULL);
 
 -- The menu. Names carry three languages because the shop types them in;
 -- interface strings live in code, these are data.
 --
 -- Durations are what the booking screen fills in, not a rule. A colour that
 -- runs long is normal and the screen lets it.
-INSERT OR IGNORE INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price, active, sort_order) VALUES
-  (1,  'カット',       '剪髮',     'Cut',                45, 'styling',  280, 1, 1),
-  (2,  'メンズカット', '男士剪髮', 'Men''s cut',         30, 'styling',  220, 1, 2),
-  (3,  '前髪カット',   '剪瀏海',   'Fringe trim',        15, 'styling',   80, 1, 3),
-  (4,  'シャンプー',   '洗髮',     'Shampoo',            20, 'shampoo',  120, 1, 4),
-  (5,  'ブロー',       '吹乾',     'Blow-dry',           25, 'styling',  180, 1, 5),
-  (6,  'カラー',       '染髮',     'Colour',             90, 'styling',  680, 1, 6),
-  (7,  'パーマ',       '電髮',     'Perm',              120, 'styling',  880, 1, 7),
-  (8,  '縮毛矯正',     '離子燙',   'Straightening',     180, 'styling', 1580, 1, 8),
-  (9,  'トリートメント','護髮',    'Treatment',          30, 'shampoo',  380, 1, 9),
-  (10, 'ヘッドスパ',   '頭皮護理', 'Head spa',           40, 'shampoo',  480, 1, 10);
+--
+-- `price` is what it costs when the stylist makes no difference — a shampoo
+-- is a shampoo. Where it does, service_prices has a row per grade and this
+-- column is the fallback.
+INSERT OR REPLACE INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price, active, sort_order) VALUES
+  (1,  'カット',        '剪髮',     'Cut',            45, 'styling',  450, 1, 1),
+  (3,  '前髪カット',    '剪瀏海',   'Fringe trim',    15, 'styling',  150, 1, 2),
+  (4,  'シャンプー',    '洗髮',     'Shampoo',        20, 'shampoo',  180, 1, 3),
+  (5,  'ブロー',        '吹乾',     'Blow-dry',       25, 'styling',  280, 1, 4),
+  (6,  'カラー',        '染髮',     'Colour',         90, 'styling',  980, 1, 5),
+  (7,  'パーマ',        '電髮',     'Perm',          120, 'styling', 1280, 1, 6),
+  (8,  '縮毛矯正',      '離子燙',   'Straightening', 180, 'styling', 2200, 1, 7),
+  (9,  'トリートメント','護髮',     'Treatment',      30, 'shampoo',  580, 1, 8),
+  (10, 'ヘッドスパ',    '頭皮護理', 'Head spa',       40, 'shampoo',  680, 1, 9);
+
+-- What each treatment costs with each grade.
+--
+-- Only the ones where the person matters. A cut is 750 with the owner and
+-- 300 with a junior stylist, and that difference is most of what a guest is
+-- choosing between when they book. A shampoo costs the same whoever does it,
+-- so it has no rows here and falls back to services.price.
+INSERT OR REPLACE INTO service_prices (id, service_id, grade, price) VALUES
+  (1,  1, 'owner',    750), (2,  1, 'stylist1', 450), (3,  1, 'stylist2', 300),
+  (4,  5, 'owner',    380), (5,  5, 'stylist1', 280), (6,  5, 'stylist2', 220),
+  (7,  6, 'owner',   1500), (8,  6, 'stylist1', 980), (9,  6, 'stylist2', 780),
+  (10, 7, 'owner',   1800), (11, 7, 'stylist1',1280), (12, 7, 'stylist2', 980),
+  (13, 8, 'owner',   2800), (14, 8, 'stylist1',2200), (15, 8, 'stylist2',1800);
 
 -- Opening hours, one row per weekday. 0 = Sunday.
 -- Closed on Mondays, which is ordinary for a salon here.

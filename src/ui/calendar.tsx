@@ -6,7 +6,7 @@
 // laying the room out this way puts that on screen instead of in a document.
 
 import type { Day, Line, Seat } from "./types.ts";
-import { STEP, clock, linesFor, place, span as gridSpan, usage } from "./layout.ts";
+import { HEADER_ROWS, STEP, clock, linesFor, place, span as gridSpan, usage } from "./layout.ts";
 import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
 import type { Service } from "./book.tsx";
@@ -53,6 +53,22 @@ export function Calendar({
 
   const column = new Map(columns.map((seat, index) => [seat.id, index + 2]));
 
+  // Runs of the same kind, for the band across the top.
+  const groups: { kind: string; label: string; from: number; count: number }[] = [];
+  for (const seat of columns) {
+    const last = groups[groups.length - 1];
+    if (last && last.kind === seat.kind) {
+      last.count++;
+      continue;
+    }
+    groups.push({
+      kind: seat.kind,
+      label: seat.kind === "unassigned" ? t("unassigned") : t(seat.kind as "styling"),
+      from: column.get(seat.id)!,
+      count: 1,
+    });
+  }
+
   // Every whole hour gets a label. Labelling every quarter turns the left
   // edge into noise at the width this has to work at.
   const hourMarks: number[] = [];
@@ -66,16 +82,30 @@ export function Calendar({
           class="cal"
           style={{
             gridTemplateColumns: `4rem repeat(${columns.length}, minmax(5.5rem, 1fr))`,
-            gridTemplateRows: `auto repeat(${rows}, 1.3rem)`,
+            gridTemplateRows: `auto auto repeat(${rows}, 1.45rem)`,
           }}
         >
-          <div class="cal-corner" />
+          <div class="cal-corner" style={{ gridRow: `1 / span ${HEADER_ROWS}` }} />
+
+          {/* Which group a column belongs to. "A1" and "S1" are made up —
+              a salon has no standard seat names, one numbers its mirrors and
+              another calls them by position — so the grid says it outright
+              instead of hoping the letter carries it. */}
+          {groups.map((group) => (
+            <div
+              key={group.kind}
+              class={`cal-group cal-head-${group.kind}`}
+              style={{ gridRow: 1, gridColumn: `${group.from} / span ${group.count}` }}
+            >
+              {group.label}
+            </div>
+          ))}
 
           {columns.map((seat) => (
             <div
               key={seat.id}
               class={`cal-head cal-head-${seat.kind}`}
-              style={{ gridColumn: column.get(seat.id) }}
+              style={{ gridRow: 2, gridColumn: column.get(seat.id) }}
             >
               {seat.name}
             </div>
@@ -85,7 +115,7 @@ export function Calendar({
             <div
               key={`t${at}`}
               class="cal-time"
-              style={{ gridRow: (at - open) / STEP + 2, gridColumn: 1 }}
+              style={{ gridRow: (at - open) / STEP + HEADER_ROWS + 1, gridColumn: 1 }}
             >
               {clock(at)}
             </div>
@@ -98,7 +128,10 @@ export function Calendar({
             <div
               key={`r${at}`}
               class="cal-rule"
-              style={{ gridRow: (at - open) / STEP + 2, gridColumn: `2 / span ${columns.length}` }}
+              style={{
+                gridRow: (at - open) / STEP + HEADER_ROWS + 1,
+                gridColumn: `2 / span ${columns.length}`,
+              }}
               aria-hidden="true"
             />
           ))}

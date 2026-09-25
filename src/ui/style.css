@@ -272,8 +272,23 @@ button.link {
 
 .cal-corner { grid-row: 1; grid-column: 1; }
 
+/* Which group the columns underneath belong to. */
+.cal-group {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0 0.15rem;
+  border-bottom: 1px solid var(--rule);
+  margin: 0 1px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 .cal-head {
-  grid-row: 1;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -281,10 +296,11 @@ button.link {
   text-align: center;
   font-size: 0.78rem;
   font-weight: 600;
-  padding: 0.5rem 0 0.35rem;
+  padding: 0.25rem 0 0.35rem;
   border-bottom: 1px solid var(--rule);
 }
 
+.cal-group { color: var(--ink-soft); }
 .cal-head-styling { color: var(--styling); }
 .cal-head-shampoo { color: var(--shampoo); }
 
@@ -315,7 +331,7 @@ button.link {
   z-index: 1;
 }
 
-.cal-who { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-who { font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-what { color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-by { color: var(--ink-faint); font-size: 0.68rem; margin-top: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-nom { color: var(--accent); margin-right: 1px; }

@@ -136,23 +136,37 @@ const GUESTS: {
  * given names combined, mostly Cantonese with some Portuguese and Japanese,
  * which is what a salon in Macau looks like. None of them is anybody.
  */
-const ZH_SURNAMES = "陳李黃張梁何吳劉蔡楊鄭謝許羅高林周葉朱馮".split("");
-const ZH_GIVEN = [
-  "嘉欣", "俊傑", "美玲", "志强", "詩華", "偉明", "曉晴", "family", "文健", "雅婷",
-  "家豪", "淑芬", "建華", "芷若", "少聰", "慧敏", "國強", "秀蘭", "子軒", "雨桐",
-].filter((n) => n !== "family");
-const ZH_ROMAN = [
-  "ka yan", "chun kit", "mei ling", "chi keung", "sze wah", "wai ming", "hiu ching",
-  "man kin", "nga ting", "ka ho", "suk fan", "kin wah", "tsz yeuk", "siu chung",
-  "wai man", "kwok keung", "sau lan", "tsz hin", "yu tung",
+const ZH_SURNAMES =
+  "陳李黃張梁何吳劉蔡楊鄭謝許羅高林周葉朱馮曾徐胡盧邱蘇余潘杜江".split("");
+const ZH_GIVEN: [string, string][] = [
+  ["嘉欣", "ka yan"], ["俊傑", "chun kit"], ["美玲", "mei ling"], ["志强", "chi keung"],
+  ["詩華", "sze wah"], ["偉明", "wai ming"], ["曉晴", "hiu ching"], ["文健", "man kin"],
+  ["雅婷", "nga ting"], ["家豪", "ka ho"], ["淑芬", "suk fan"], ["建華", "kin wah"],
+  ["芷若", "tsz yeuk"], ["少聰", "siu chung"], ["慧敏", "wai man"], ["國強", "kwok keung"],
+  ["秀蘭", "sau lan"], ["子軒", "tsz hin"], ["雨桐", "yu tung"], ["浩然", "ho yin"],
+  ["佩珊", "pui shan"], ["敏儀", "man yee"], ["志偉", "chi wai"], ["麗珍", "lai chun"],
+  ["家儀", "ka yee"], ["國榮", "kwok wing"], ["穎琳", "wing lam"], ["天佑", "tin yau"],
+  ["嘉輝", "ka fai"], ["月娥", "yuet ngo"],
 ];
-const PT_NAMES = [
-  ["Ana", "Silva"], ["João", "Pereira"], ["Rita", "Costa"], ["Carlos", "Lopes"],
-  ["Sofia", "Martins"], ["Miguel", "Ferreira"], ["Inês", "Rocha"], ["Paulo", "Dias"],
+
+const PT_FIRST = [
+  "Ana", "João", "Rita", "Carlos", "Sofia", "Miguel", "Inês", "Paulo",
+  "Marta", "Tiago", "Beatriz", "Rui", "Helena", "Nuno", "Catarina", "André",
 ];
-const JA_NAMES = [
-  ["佐藤", "健", "sato ken"], ["鈴木", "花", "suzuki hana"], ["高橋", "翔", "takahashi sho"],
-  ["伊藤", "凛", "ito rin"], ["中村", "葵", "nakamura aoi"], ["小林", "蓮", "kobayashi ren"],
+const PT_LAST = [
+  "Silva", "Pereira", "Costa", "Lopes", "Martins", "Ferreira", "Rocha", "Dias",
+  "Sousa", "Almeida", "Gomes", "Carvalho", "Teixeira", "Moreira", "Azevedo", "Barbosa",
+];
+
+const JA_SURNAMES: [string, string][] = [
+  ["佐藤", "sato"], ["鈴木", "suzuki"], ["高橋", "takahashi"], ["伊藤", "ito"],
+  ["中村", "nakamura"], ["小林", "kobayashi"], ["山田", "yamada"], ["松本", "matsumoto"],
+  ["井上", "inoue"], ["木村", "kimura"], ["清水", "shimizu"], ["森田", "morita"],
+];
+const JA_GIVEN: [string, string][] = [
+  ["健", "ken"], ["花", "hana"], ["翔", "sho"], ["凛", "rin"], ["葵", "aoi"],
+  ["蓮", "ren"], ["結衣", "yui"], ["大和", "yamato"], ["咲", "saki"], ["悠真", "yuma"],
+  ["美月", "mizuki"], ["陽向", "hinata"],
 ];
 
 /** How many invented guests the shop has on file, beyond the named twelve. */
@@ -202,32 +216,76 @@ const stamp = (date: string, hhmm: string) => Math.floor(Date.parse(`${date}T${h
 type Extra = { id: number; name: string; key: string; phone: string; since: string };
 
 const extras: Extra[] = [];
-for (let i = 0; i < EXTRA_GUESTS; i++) {
-  const id = EXTRA_FROM + i;
-  const roll = random();
-  let name: string;
-  let key: string;
 
-  if (roll < 0.72) {
-    const surname = pick(ZH_SURNAMES);
-    const at = Math.floor(random() * ZH_GIVEN.length);
-    name = `${surname} ${ZH_GIVEN[at]}`;
-    key = `${ZH_ROMAN[at % ZH_ROMAN.length]}`;
-  } else if (roll < 0.88) {
-    const [first, last] = pick(PT_NAMES);
-    name = `${first} ${last}`;
-    key = `${last!.toLowerCase()} ${first!.toLowerCase()}`;
-  } else {
-    const [surname, given, roman] = pick(JA_NAMES);
-    name = `${surname} ${given}`;
-    key = roman!;
+/**
+ * Invented names, and no two the same.
+ *
+ * The first version drew from twenty surnames and eight Portuguese pairs, and
+ * produced nine Miguel Ferreiras out of 240 guests — 129 of them shared a
+ * name with somebody else. A customer list where a name appears seven times
+ * is not a list anybody can use, and searching it says nothing.
+ *
+ * The pools are bigger now, and a name already taken is drawn again.
+ */
+const takenNames = new Set<string>();
+
+/**
+ * Which country the number belongs to.
+ *
+ * A salon in Macau has local guests, regulars over from Hong Kong, and
+ * visitors from the mainland — three different dialling codes, and a number
+ * with none of them on it cannot be rung from a phone.
+ */
+const DIALLING: { code: string; weight: number; make: () => string }[] = [
+  { code: "+853", weight: 72, make: () => `6${digits(3)} ${digits(4)}` },
+  { code: "+852", weight: 20, make: () => `${pick(["9", "6", "5"])}${digits(3)} ${digits(4)}` },
+  { code: "+86", weight: 8, make: () => `1${pick(["3", "5", "7", "8"])}${digits(1)} ${digits(4)} ${digits(4)}` },
+];
+
+function digits(n: number): string {
+  let out = "";
+  for (let i = 0; i < n; i++) out += String(Math.floor(random() * 10));
+  return out;
+}
+
+for (let i = 0; i < EXTRA_GUESTS; i++) {
+  let name = "";
+  let key = "";
+
+  // Ten attempts, then take whatever came out. With roughly 1,200 possible
+  // names against 240 guests, ten is more than enough; the cap is only there
+  // so a shrunken pool cannot hang the build.
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const roll = random();
+
+    if (roll < 0.72) {
+      const surname = pick(ZH_SURNAMES);
+      const [given, roman] = pick(ZH_GIVEN);
+      name = `${surname} ${given}`;
+      key = roman;
+    } else if (roll < 0.88) {
+      const first = pick(PT_FIRST);
+      const last = pick(PT_LAST);
+      name = `${first} ${last}`;
+      key = `${last.toLowerCase()} ${first.toLowerCase()}`;
+    } else {
+      const [surname, sroman] = pick(JA_SURNAMES);
+      const [given, groman] = pick(JA_GIVEN);
+      name = `${surname} ${given}`;
+      key = `${sroman} ${groman}`;
+    }
+
+    if (!takenNames.has(name)) break;
   }
 
+  takenNames.add(name);
+  const dialling = weighted(DIALLING);
+
   extras.push({
-    id,
+    id: EXTRA_FROM + i,
     name,
     key,
-    phone: `66${String(10 + Math.floor(random() * 80))} ${String(1000 + Math.floor(random() * 8999))}`,
+    phone: `${dialling.code} ${dialling.make()}`,
     since: addDays("2018-01-01", Math.floor(random() * 2900)),
   });
 }

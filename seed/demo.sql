@@ -81,22 +81,26 @@ INSERT OR IGNORE INTO currencies (code, rate_to_base, active, sort_order) VALUES
 -- Latin, and search has to cope with all of them. search_key holds a second
 -- spelling to find them by.
 --
+-- Numbers carry a dialling code. A salon here has local guests, regulars over
+-- from Hong Kong, and visitors from the mainland — three different codes, and
+-- a number without one cannot be rung.
+--
 -- REPLACE rather than IGNORE for this table: the public instance's sample
 -- identities belong to this file, so correcting one here corrects it there.
 -- A shop would never apply this file at all.
 INSERT OR REPLACE INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
-  (1,  '陳 嘉雯',     'chan ka man',     '6612 3401', '広東語。肩につく長さを維持', '2020-11-20'),
-  (2,  '李 偉強',     'lei wai keong',   '6612 3402', NULL,                          '2019-03-18'),
-  (3,  '黄 詩婷',     'wong sze ting',   '6612 3403', NULL,                          '2024-05-22'),
-  (4,  'Emily Wong',  'wong emily',      '6612 3404', '英語のみ',                    '2023-08-05'),
-  (5,  '張 曉彤',     'cheung hiu tung', '6612 3405', '前回より明るめ希望',          '2021-10-25'),
-  (6,  '林 家豪',     'lam ka ho',       '6612 3406', NULL,                          '2023-12-01'),
-  (7,  '何 俊傑',     'ho chun kit',     '6612 3407', '毎回カットのみ',              '2022-09-30'),
-  (8,  '吳 佩珊',     'ng pui shan',     '6612 3408', '頭皮が弱い。薬剤は弱めで',    '2024-01-09'),
-  (9,  'Sofia Lopes', 'lopes sofia',     '6612 3409', 'ポルトガル語／英語',          '2025-02-14'),
-  (10, 'Ana Ferreira','ferreira ana',    '6612 3410', NULL,                          '2025-06-03'),
-  (11, '田中 美咲',   'tanaka misaki',   '6612 3411', NULL,                          '2021-06-12'),
-  (12, '渡辺 さくら', 'watanabe sakura', '6612 3412', NULL,                          '2022-02-03');
+  (1,  '陳 嘉雯',     'chan ka man',     '+853 6612 3401', '広東語。肩につく長さを維持', '2020-11-20'),
+  (2,  '李 偉強',     'lei wai keong',   '+853 6612 3402', NULL,                          '2019-03-18'),
+  (3,  '黄 詩婷',     'wong sze ting',   '+853 6612 3403', NULL,                          '2024-05-22'),
+  (4,  'Emily Wong',  'wong emily',      '+852 9612 3404', '英語のみ',                    '2023-08-05'),
+  (5,  '張 曉彤',     'cheung hiu tung', '+853 6612 3405', '前回より明るめ希望',          '2021-10-25'),
+  (6,  '林 家豪',     'lam ka ho',       '+853 6612 3406', NULL,                          '2023-12-01'),
+  (7,  '何 俊傑',     'ho chun kit',     '+853 6612 3407', '毎回カットのみ',              '2022-09-30'),
+  (8,  '吳 佩珊',     'ng pui shan',     '+853 6612 3408', '頭皮が弱い。薬剤は弱めで',    '2024-01-09'),
+  (9,  'Sofia Lopes', 'lopes sofia',     '+853 6612 3409', 'ポルトガル語／英語',          '2025-02-14'),
+  (10, 'Ana Ferreira','ferreira ana',    '+853 6612 3410', NULL,                          '2025-06-03'),
+  (11, '田中 美咲',   'tanaka misaki',   '+853 6612 3411', NULL,                          '2021-06-12'),
+  (12, '渡辺 さくら', 'watanabe sakura', '+86 138 6612 3412', NULL,                          '2022-02-03');
 
 -- A few treatment records, so the customers screen has something to show.
 --

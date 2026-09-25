@@ -932,3 +932,27 @@ section[aria-labelledby="room"] .lede { max-width: none; }
 footer p { margin: 0; font-size: 0.85rem; }
 footer a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule); }
 footer a:hover { color: var(--accent); border-color: var(--accent); }
+
+/* A number on its own does not say what it is for. */
+.person-phone { display: inline-flex; align-items: baseline; gap: 0.4rem; }
+
+.person-phone-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+}
+
+.person-phone a { color: var(--ink-soft); text-decoration: none; }
+.person-phone a:hover { color: var(--accent); }
+
+/* The list scrolls on its own and the person stays put.
+   Choosing somebody near the bottom used to mean scrolling all the way back
+   up to read them. */
+@media (min-width: 48rem) {
+  .people { align-items: start; }
+  .people-list ul { max-height: 62vh; overflow-y: auto; }
+  .people-detail { position: sticky; top: 1rem; }
+}

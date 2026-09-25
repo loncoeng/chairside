@@ -132,6 +132,7 @@ export const TEXT = {
   searchHint: { ja: "名前・読み・電話番号", zh: "姓名、拼音或電話", en: "Name, spelling or phone" },
   noneFound: { ja: "見つかりません。", zh: "沒有符合的客戶。", en: "Nobody found." },
   pickSomeone: { ja: "左から選んでください。", zh: "請從左側選擇。", en: "Pick somebody from the list." },
+  phone: { ja: "TEL", zh: "電話", en: "Phone" },
   visits: { ja: "来店", zh: "到店次數", en: "Visits" },
   lastVisit: { ja: "最終来店", zh: "最近到店", en: "Last visit" },
   moves: { ja: "変更", zh: "更改次數", en: "Reschedules" },

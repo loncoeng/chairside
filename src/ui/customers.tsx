@@ -188,7 +188,14 @@ function PersonDetail({ id }: { id: number }) {
     <article class="person">
       <header class="person-head">
         <h3>{person.name}</h3>
-        {person.phone && <span class="person-phone">{person.phone}</span>}
+        {/* Labelled. A run of digits on its own is a number, and a number on
+            its own does not say what it is for. */}
+        {person.phone && (
+          <span class="person-phone">
+            <span class="person-phone-label">{t("phone")}</span>
+            <a href={`tel:${person.phone.replace(/\s+/g, "")}`}>{person.phone}</a>
+          </span>
+        )}
       </header>
 
       {/* Anything on the person rather than a single visit comes first, and

@@ -36,6 +36,10 @@
 * { box-sizing: border-box; }
 
 body {
+  /* 日本語は文節で折り返す。これが無いと「書いてありま / す。」のように
+     語の途中で切れる。対応していないブラウザでは従来どおりに折り返すだけ
+     なので、入れて損がない。 */
+  word-break: auto-phrase;
   margin: 0;
   background: var(--ground);
   color: var(--ink);
@@ -73,7 +77,9 @@ h2 {
    that, so 46ch wrapped at roughly 23 characters and the summary came out
    three short lines in a very wide column. `em` tracks the font size and
    measures the same for all three languages. */
-.lede { color: var(--ink-soft); margin: 0 0 1.25rem; max-width: 38em; }
+/* 読みやすさのための幅。日本語は1行45文字前後が目安で、`em` は文字サイズ
+   そのものなので3言語とも同じ文字数で折り返す。1文だけの通知には掛けない。 */
+.lede { color: var(--ink-soft); margin: 0 0 1.25rem; max-width: 45em; }
 
 .rows { display: flex; flex-direction: column; gap: 1.25rem; }
 
@@ -150,7 +156,9 @@ footer {
   font-size: 0.8125rem;
 }
 
-footer p { margin: 0; max-width: 52ch; }
+/* 幅の指定はしない。`ch` は「0」1文字の幅で、日本語では半分の文字数で
+   折り返す。ここは1文だけなので、そもそも制限が要らない。 */
+footer p { margin: 0; }
 code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }
 
 /* The database not answering is a state the screen has to show, not hide.
@@ -162,7 +170,6 @@ code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }
   border-radius: 6px;
   padding: 0.85rem 1rem;
   margin: 0 0 1.25rem;
-  max-width: 38em;
 }
 
 .failed .reason {
@@ -851,7 +858,9 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 
 .rows-n { text-align: right; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .rows-value { text-align: right; font-variant-numeric: tabular-nums; }
-.money-note { font-size: 0.8rem; max-width: 44em; }
+/* 数行の注記ではなく1文なので、読み幅の制限より「折り返さない」ほうが読みやすい。
+   狭い画面では素直に折り返す。 */
+.money-note { font-size: 0.8rem; max-width: none; }
 
 /* The till, inside a booking. */
 .till { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
@@ -893,7 +902,6 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
   padding: 0.5rem 0.8rem;
   margin: 0;
   font-size: 0.88rem;
-  max-width: 44em;
 }
 
 .hours { list-style: none; margin: 0 0 0.8rem; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
@@ -976,7 +984,6 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
   padding: 0.55rem 0.9rem;
   margin: 0;
   font-size: 0.85rem;
-  max-width: 52em;
 }
 
 /* The counts sit on one line. They are short in all three languages, and the

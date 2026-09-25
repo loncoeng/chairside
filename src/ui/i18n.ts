@@ -85,7 +85,7 @@ export const TEXT = {
   startsAt: { ja: "開始", zh: "開始", en: "Starts" },
   withWhom: { ja: "担当", zh: "髮型師", en: "Stylist" },
   guest: { ja: "お客様", zh: "客戶", en: "Guest" },
-  noGuest: { ja: "（未登録）", zh: "（未登記）", en: "(not registered)" },
+  noGuest: { ja: "未登録", zh: "未登記", en: "Not registered" },
   menu: { ja: "メニュー", zh: "服務", en: "Menu" },
   totalMinutes: { ja: "合計 {n} 分", zh: "共 {n} 分鐘", en: "{n} min total" },
   minutes: { ja: "{n}分", zh: "{n}分", en: "{n}m" },

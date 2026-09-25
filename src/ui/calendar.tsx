@@ -149,6 +149,7 @@ export function Calendar({
                 line={line}
                 what={service ? serviceName(lang, service) : (line.serviceJa ?? "")}
                 lines={linesFor(cell.span)}
+                noGuest={t("noGuest")}
                 onPick={onPick}
                 picked={picked === line.bookingId}
                 style={{ gridColumn: col, gridRow: `${cell.row} / span ${cell.span}` }}
@@ -165,6 +166,7 @@ function Block({
   line,
   what,
   lines,
+  noGuest,
   onPick,
   picked,
   style,
@@ -172,6 +174,8 @@ function Block({
   line: Line;
   what: string;
   lines: 1 | 2 | 3;
+  /** What to show when the booking has nobody on file against it. */
+  noGuest: string;
   onPick: (line: Line) => void;
   picked: boolean;
   style: Record<string, string | number>;
@@ -185,7 +189,7 @@ function Block({
       class={`cal-block is-${line.status} rows-${lines}${picked ? " is-picked" : ""}`}
       style={{ ...style, borderLeftColor: line.staffColor ?? "var(--ink-faint)" }}
       onClick={() => onPick(line)}
-      title={`${line.startsAt}–${line.endsAt}　${line.customerName ?? "—"}　${what}　${line.staffName ?? ""}`}
+      title={`${line.startsAt}–${line.endsAt}　${line.customerName ?? noGuest}　${what}　${line.staffName ?? ""}`}
     >
       <span class="cal-who">
         {line.nominated && (
@@ -193,7 +197,7 @@ function Block({
             ★
           </span>
         )}
-        {line.customerName ?? "—"}
+        {line.customerName ?? <span class="cal-anon">{noGuest}</span>}
       </span>
       {lines >= 2 && <span class="cal-what">{what}</span>}
       {lines >= 3 && <span class="cal-by">{line.staffName}</span>}

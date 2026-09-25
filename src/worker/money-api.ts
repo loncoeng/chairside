@@ -23,18 +23,12 @@ import {
   staff,
 } from "../db/schema.ts";
 import { creditedStaff } from "../db/credit.ts";
+import { isMethod } from "../db/payment-methods.ts";
+import type { Method } from "../db/payment-methods.ts";
 
 import type { Database as Db } from "../db/database.ts";
 
-/**
- * What the shop takes.
- *
- * MPay and BOC Pay are the two local wallets and between them cover most of
- * Macau; WeChat and Alipay come over the border with the guests who use them.
- * A till that only knew cash and cards would be a till nobody could use here.
- */
-const METHODS = ["cash", "card", "mpay", "boc", "wechat", "alipay"] as const;
-type Method = (typeof METHODS)[number];
+
 
 /** What the shop takes, and at what rate. */
 export async function currencyList(db: Db) {
@@ -87,8 +81,8 @@ export async function takePayment(db: Db, request: Request): Promise<Response> {
   if (!Number.isFinite(amount) || amount <= 0) return json({ ok: false, error: "金額が不正です。" }, 400);
   if (amount > 1_000_000) return json({ ok: false, error: "金額が大きすぎます。" }, 400);
 
-  const method = typeof body.method === "string" ? body.method : "cash";
-  if (!(METHODS as readonly string[]).includes(method)) {
+  const method = body.method === undefined ? "cash" : body.method;
+  if (!isMethod(method)) {
     return json({ ok: false, error: "その支払方法は使えません。" }, 400);
   }
 

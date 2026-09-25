@@ -15,6 +15,7 @@ import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
 import type { Service } from "./book.tsx";
 import { priceFor } from "./book.tsx";
+import { METHODS } from "../db/payment-methods.ts";
 
 type Payment = {
   id: number;
@@ -214,9 +215,13 @@ export function BookingPanel({
     <div class="sheet" role="dialog" aria-label={t("bookingDetail")}>
       <div class="sheet-head">
         <h3>
-          {line.customerName ?? t("noGuest")}
+          {/* Once it has loaded, the booking's own times. The block that was
+              clicked is one treatment out of several — its 17:15 is not when
+              the guest arrives, and showing it beside the full list read as
+              two different bookings. */}
+          {detail?.customerName ?? line.customerName ?? t("noGuest")}
           <span class="sheet-when">
-            {line.startsAt}–{line.endsAt}
+            {detail ? `${detail.startsAt}–${detail.endsAt}` : `${line.startsAt}–${line.endsAt}`}
           </span>
         </h3>
         <button type="button" class="sheet-close" onClick={onClose} aria-label={t("close")}>
@@ -305,7 +310,7 @@ export function BookingPanel({
                       value={payMethod}
                       onChange={(e) => setPayMethod((e.target as HTMLSelectElement).value)}
                     >
-                      {["cash", "card", "wechat", "alipay", "other"].map((m) => (
+                      {METHODS.map((m) => (
                         <option key={m} value={m}>
                           {t(`method.${m}` as "method.cash")}
                         </option>

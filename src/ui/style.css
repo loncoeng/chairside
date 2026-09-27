@@ -1055,3 +1055,10 @@ footer a:hover { color: var(--accent); border-color: var(--accent); }
 .person-address { margin: 0; color: var(--ink-soft); font-size: 0.85rem; white-space: pre-line; display: flex; gap: 0.4rem; align-items: baseline; }
 .field textarea { resize: vertical; min-height: 2.4rem; }
 .people-detail > .said { margin: 0 0 0.9rem; }
+.birthday-month {
+  font-size: 0.75rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0 0.5rem;
+}

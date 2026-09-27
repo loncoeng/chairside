@@ -62,6 +62,10 @@ jobs:
           # Public holidays for the three regions. Reference data rather than
           # sample data: a shop running this would apply it too.
           npx wrangler d1 execute chairside --remote --file seed/holidays.sql
+          # Addresses and birthdays for the sample guests. Fills only empty
+          # fields, so re-applying it changes nothing and keeps any edit made
+          # through the screen.
+          npx wrangler d1 execute chairside --remote --file seed/demo-customer-details.sql
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -93,7 +97,7 @@ jobs:
           # on purpose, so that removing a customer cannot silently take their
           # history with them — which means the bookings have to be gone
           # before the guests they point at can be.
-          for part in demo-clear demo-customers demo-bookings demo-items demo-events demo-payments; do
+          for part in demo-clear demo-customers demo-bookings demo-items demo-events demo-payments demo-customer-details; do
             echo "applying ${part}"
             npx wrangler d1 execute chairside --remote --file "seed/${part}.sql"
           done

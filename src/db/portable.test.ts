@@ -146,7 +146,7 @@ test("a guest is added, corrected, and a shared phone number is said", async () 
   deepStrictEqual(reply.samePhone.map((p) => p.id), [1]);
 
   // Only what is sent changes; the address survives an edit that does not mention it.
-  const edited = await saveCustomer(db, post({ phone: "6699 0000", note: "VIP" }), reply.customerId);
+  const edited = await saveCustomer(db, post({ phone: "6699 0000", note: "VIP", birthday: "1990-05-12" }), reply.customerId);
   strictEqual(edited.status, 200);
 
   const person = await getCustomer(db, reply.customerId);
@@ -154,6 +154,10 @@ test("a guest is added, corrected, and a shared phone number is said", async () 
   strictEqual(person?.phone, "6699 0000");
   strictEqual(person?.address, "Rua de Exemplo 1, 3樓");
   strictEqual(person?.note, "VIP");
+  strictEqual(person?.birthday, "1990-05-12");
+
+  const badDate = await saveCustomer(db, post({ birthday: "12/05/1990" }), reply.customerId);
+  strictEqual(badDate.status, 400);
 
   const missing = await saveCustomer(db, post({ name: "x" }), 999);
   strictEqual(missing.status, 404);

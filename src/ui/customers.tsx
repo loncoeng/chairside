@@ -7,6 +7,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
 import type { Lang } from "./i18n.ts";
+import { todayInShop } from "./types.ts";
 
 type Summary = {
   id: number;
@@ -53,6 +54,7 @@ type Record_ = {
 
 type Person = Summary & {
   address: string | null;
+  birthday: string | null;
   note: string | null;
   standing: Standing;
   bookings: Visit[];
@@ -75,11 +77,20 @@ type Details = {
   searchKey: string;
   phone: string;
   address: string;
+  birthday: string;
   note: string;
   firstVisitOn: string;
 };
 
-const BLANK: Details = { name: "", searchKey: "", phone: "", address: "", note: "", firstVisitOn: "" };
+const BLANK: Details = {
+  name: "",
+  searchKey: "",
+  phone: "",
+  address: "",
+  birthday: "",
+  note: "",
+  firstVisitOn: "",
+};
 
 type Saved = { customerId: number; samePhone: { id: number; name: string }[] };
 
@@ -274,6 +285,7 @@ function PersonDetail({
           searchKey: person.searchKey ?? "",
           phone: person.phone ?? "",
           address: person.address ?? "",
+          birthday: person.birthday ?? "",
           note: person.note ?? "",
           firstVisitOn: person.firstVisitOn ?? "",
         }}
@@ -304,6 +316,18 @@ function PersonDetail({
           {t("editCustomer")}
         </button>
       </header>
+
+      {person.birthday && (
+        <p class="person-address">
+          <span class="person-phone-label">{t("birthday")}</span>
+          {person.birthday}
+          {/* The month is what a salon acts on: a birthday offer, a word at
+              the desk. Said in words so it does not rely on colour alone. */}
+          {person.birthday.slice(5, 7) === todayInShop().slice(5, 7) && (
+            <span class="birthday-month">{t("birthdayThisMonth")}</span>
+          )}
+        </p>
+      )}
 
       {person.address && (
         <p class="person-address">
@@ -453,6 +477,10 @@ function CustomerForm({
         <label class="field grow">
           <span>{t("phone")}</span>
           <input type="tel" maxLength={40} value={form.phone} onInput={set("phone")} />
+        </label>
+        <label class="field">
+          <span>{t("birthday")}</span>
+          <input type="date" value={form.birthday} onInput={set("birthday")} />
         </label>
         <label class="field">
           <span>{t("firstVisit")}</span>

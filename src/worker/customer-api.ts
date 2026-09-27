@@ -72,6 +72,7 @@ export async function getCustomer(db: Db, id: number) {
       searchKey: customers.searchKey,
       phone: customers.phone,
       address: customers.address,
+      birthday: customers.birthday,
       note: customers.note,
       firstVisitOn: customers.firstVisitOn,
     })
@@ -192,8 +193,11 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
   const note = field("note", 2000);
 
   const firstVisitRaw = field("firstVisitOn", 10);
-  if (firstVisitRaw && !/^\d{4}-\d{2}-\d{2}$/.test(firstVisitRaw)) {
-    return json({ ok: false, error: "日付は YYYY-MM-DD で送ってください。" }, 400);
+  const birthday = field("birthday", 10);
+  for (const date of [firstVisitRaw, birthday]) {
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return json({ ok: false, error: "日付は YYYY-MM-DD で送ってください。" }, 400);
+    }
   }
 
   // A guest with no name cannot be found again, and every screen that lists
@@ -207,6 +211,7 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
     ...(searchKey !== undefined ? { searchKey } : {}),
     ...(phone !== undefined ? { phone } : {}),
     ...(address !== undefined ? { address } : {}),
+    ...(birthday !== undefined ? { birthday } : {}),
     ...(note !== undefined ? { note } : {}),
     ...(firstVisitRaw !== undefined ? { firstVisitOn: firstVisitRaw } : {}),
   };

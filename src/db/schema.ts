@@ -83,6 +83,8 @@ export const customers = sqliteTable(
      * into parts, the parts would be wrong more often than right.
      */
     address: text("address"),
+    /** YYYY-MM-DD. Optional; for a birthday-month offer, and for small talk. */
+    birthday: text("birthday"),
     note: text("note"),
     firstVisitOn: text("first_visit_on"),
     createdAt: integer("created_at").notNull().default(now),

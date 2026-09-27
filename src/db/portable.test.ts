@@ -8,7 +8,7 @@
 // browser demo uses, and not D1 by any stretch — and if that stops working
 // this test says so.
 
-import { strictEqual, ok } from "node:assert/strict";
+import { deepStrictEqual, strictEqual, ok } from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 
@@ -16,7 +16,7 @@ import initSqlJs from "sql.js";
 import { drizzle } from "drizzle-orm/sql-js";
 
 import { getBooking, menu } from "../worker/booking-api.ts";
-import { getCustomer, listCustomers } from "../worker/customer-api.ts";
+import { getCustomer, listCustomers, saveCustomer } from "../worker/customer-api.ts";
 import { revenue } from "../worker/money-api.ts";
 import { shopSettings } from "../worker/shop-api.ts";
 
@@ -125,4 +125,36 @@ test("the shop's settings read", async () => {
   strictEqual(shop.hours.length, 7);
   strictEqual(shop.hours[1]?.closed, true);
   strictEqual(shop.staff.length, 2);
+});
+
+test("a guest is added, corrected, and a shared phone number is said", async () => {
+  const db = database();
+  const post = (body: unknown) =>
+    new Request("http://x/api/people", { method: "POST", body: JSON.stringify(body) });
+
+  const refused = await saveCustomer(db, post({ name: "  " }), null);
+  strictEqual(refused.status, 400);
+
+  const added = await saveCustomer(
+    db,
+    post({ name: "黃 美玲", phone: "66123401", address: "Rua de Exemplo 1, 3樓" }),
+    null,
+  );
+  strictEqual(added.status, 201);
+  const reply = (await added.json()) as { customerId: number; samePhone: { id: number }[] };
+  // "6612 3401" is on file already, written with a space.
+  deepStrictEqual(reply.samePhone.map((p) => p.id), [1]);
+
+  // Only what is sent changes; the address survives an edit that does not mention it.
+  const edited = await saveCustomer(db, post({ phone: "6699 0000", note: "VIP" }), reply.customerId);
+  strictEqual(edited.status, 200);
+
+  const person = await getCustomer(db, reply.customerId);
+  strictEqual(person?.name, "黃 美玲");
+  strictEqual(person?.phone, "6699 0000");
+  strictEqual(person?.address, "Rua de Exemplo 1, 3樓");
+  strictEqual(person?.note, "VIP");
+
+  const missing = await saveCustomer(db, post({ name: "x" }), 999);
+  strictEqual(missing.status, 404);
 });

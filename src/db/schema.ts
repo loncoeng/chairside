@@ -77,6 +77,12 @@ export const customers = sqliteTable(
     /** A second spelling to search by — a reading, or Latin. Optional. */
     searchKey: text("search_key"),
     phone: text("phone"),
+    /**
+     * Free text, one field. Macau addresses mix Portuguese and Chinese street
+     * names and a building-and-floor line that fits no form's columns; split
+     * into parts, the parts would be wrong more often than right.
+     */
+    address: text("address"),
     note: text("note"),
     firstVisitOn: text("first_visit_on"),
     createdAt: integer("created_at").notNull().default(now),

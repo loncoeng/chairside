@@ -58,6 +58,7 @@ for (const file of [
   "seed/demo-items.sql",
   "seed/demo-events.sql",
   "seed/demo-payments.sql",
+  "seed/demo-customer-details.sql",
 ]) {
   db.exec(readFileSync(file, "utf8"));
 }

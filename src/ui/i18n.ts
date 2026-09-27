@@ -160,6 +160,8 @@ export const TEXT = {
   searchKeyHint: { ja: "検索用。漢字以外の書き方", zh: "用於搜尋", en: "For searching, e.g. a reading" },
   address: { ja: "住所", zh: "地址", en: "Address" },
   firstVisit: { ja: "初来店日", zh: "首次到店", en: "First visit" },
+  birthday: { ja: "誕生日", zh: "生日", en: "Birthday" },
+  birthdayThisMonth: { ja: "今月誕生日", zh: "本月生日", en: "Birthday this month" },
   saveCustomer: { ja: "保存", zh: "儲存", en: "Save" },
   customerSaved: { ja: "保存しました。", zh: "已儲存。", en: "Saved." },
   samePhone: {

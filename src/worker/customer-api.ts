@@ -9,7 +9,7 @@
 // customer. A stored counter is a second copy of the truth, and the two drift
 // the first time a row is corrected.
 
-import { asc, desc, eq, inArray, like, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, like, ne, or, sql } from "drizzle-orm";
 
 import { standingOf } from "../db/standing.ts";
 import {
@@ -71,6 +71,7 @@ export async function getCustomer(db: Db, id: number) {
       name: customers.name,
       searchKey: customers.searchKey,
       phone: customers.phone,
+      address: customers.address,
       note: customers.note,
       firstVisitOn: customers.firstVisitOn,
     })
@@ -157,6 +158,97 @@ export async function getCustomer(db: Db, id: number) {
     /** Anything on the person rather than a single visit, newest first. */
     cautions: theirRecords.filter((r) => r.caution && r.caution.trim() !== ""),
   };
+}
+
+/**
+ * Add somebody, or change who they are on file.
+ *
+ * `id` null is a new guest. Otherwise every field sent replaces what is there
+ * and a field left out stays as it was, so a screen that only knows the phone
+ * number cannot blank the address by not mentioning it.
+ *
+ * A phone number already on somebody else is **said, not refused**. Couples
+ * share one, and a mother books for her daughter from her own; but more often
+ * it is the same guest typed in twice, and the desk should see that before
+ * the history splits across two names.
+ */
+export async function saveCustomer(db: Db, request: Request, id: number | null): Promise<Response> {
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!body || typeof body !== "object") return json({ ok: false, error: "本文が読み取れません。" }, 400);
+
+  const field = (key: string, limit: number): string | null | undefined => {
+    if (!(key in body)) return undefined;
+    const value = body[key];
+    if (value === null) return null;
+    if (typeof value !== "string") return undefined;
+    const trimmed = value.trim();
+    return trimmed === "" ? null : trimmed.slice(0, limit);
+  };
+
+  const name = field("name", 100);
+  const searchKey = field("searchKey", 100);
+  const phone = field("phone", 40);
+  const address = field("address", 300);
+  const note = field("note", 2000);
+
+  const firstVisitRaw = field("firstVisitOn", 10);
+  if (firstVisitRaw && !/^\d{4}-\d{2}-\d{2}$/.test(firstVisitRaw)) {
+    return json({ ok: false, error: "日付は YYYY-MM-DD で送ってください。" }, 400);
+  }
+
+  // A guest with no name cannot be found again, and every screen that lists
+  // them would show a blank.
+  if (id === null ? !name : name === null) {
+    return json({ ok: false, error: "名前を入れてください。" }, 400);
+  }
+
+  const values = {
+    ...(name ? { name } : {}),
+    ...(searchKey !== undefined ? { searchKey } : {}),
+    ...(phone !== undefined ? { phone } : {}),
+    ...(address !== undefined ? { address } : {}),
+    ...(note !== undefined ? { note } : {}),
+    ...(firstVisitRaw !== undefined ? { firstVisitOn: firstVisitRaw } : {}),
+  };
+
+  let customerId: number;
+  if (id === null) {
+    const [created] = await db
+      .insert(customers)
+      .values({ name: name as string, ...values })
+      .returning({ id: customers.id });
+    if (!created) return json({ ok: false, error: "登録できませんでした。" }, 500);
+    customerId = created.id;
+  } else {
+    const [exists] = await db
+      .select({ id: customers.id })
+      .from(customers)
+      .where(eq(customers.id, id))
+      .limit(1);
+    if (!exists) return json({ ok: false, error: "そのお客様は見つかりません。" }, 404);
+    if (Object.keys(values).length > 0) {
+      await db.update(customers).set(values).where(eq(customers.id, id));
+    }
+    customerId = id;
+  }
+
+  // Compared without spaces: "6612 3401" and "66123401" are one number.
+  const digits = phone ? phone.replace(/\s+/g, "") : "";
+  const samePhone =
+    digits === ""
+      ? []
+      : await db
+          .select({ id: customers.id, name: customers.name })
+          .from(customers)
+          .where(
+            and(
+              ne(customers.id, customerId),
+              sql`replace(${customers.phone}, ' ', '') = ${digits}`,
+            ),
+          )
+          .limit(5);
+
+  return json({ ok: true, customerId, samePhone }, id === null ? 201 : 200);
 }
 
 /** Add a record against a visit. */

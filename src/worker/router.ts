@@ -19,7 +19,7 @@ import {
   staff,
 } from "../db/schema.ts";
 import { createBooking, customerList, getBooking, menu, updateBooking } from "./booking-api.ts";
-import { addRecord, getCustomer, listCustomers } from "./customer-api.ts";
+import { addRecord, getCustomer, listCustomers, saveCustomer } from "./customer-api.ts";
 import { currencyList, paymentsFor, revenue, takePayment } from "./money-api.ts";
 import { setClosure, setHours, setStaff, shopSettings } from "./shop-api.ts";
 
@@ -72,6 +72,9 @@ export async function route(db: Db, request: Request, build: string): Promise<Re
       if (url.pathname === "/api/customers") {
         return json(await customerList(db));
       }
+      if (url.pathname === "/api/people" && request.method === "POST") {
+        return await saveCustomer(db, request, null);
+      }
       if (url.pathname === "/api/people") {
         return json(await listCustomers(db, url.searchParams.get("q") ?? ""));
       }
@@ -106,6 +109,9 @@ export async function route(db: Db, request: Request, build: string): Promise<Re
 
       const person = /^\/api\/people\/(\d+)$/.exec(url.pathname);
       if (person) {
+        if (request.method === "PATCH") {
+          return await saveCustomer(db, request, Number(person[1]));
+        }
         const found = await getCustomer(db, Number(person[1]));
         return found ? json(found) : json({ error: "そのお客様は見つかりません。" }, 404);
       }

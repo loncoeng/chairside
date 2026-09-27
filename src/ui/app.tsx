@@ -93,6 +93,9 @@ function Screen() {
   const [day, setDay] = useState<Load<Day>>({ status: "loading" });
   const [services, setServices] = useState<Service[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  // Bumped when somebody is added or renamed on the customers screen, so the
+  // booking form's picker does not offer last hour's list.
+  const [peopleRevision, setPeopleRevision] = useState(0);
   const [booking, setBooking] = useState(false);
   const [picked, setPicked] = useState<Line | null>(null);
   // Bumped after a booking goes in, to pull the day again.
@@ -122,7 +125,7 @@ function Screen() {
       // should not take the calendar down with it.
       .catch(() => undefined);
     return () => stop.abort();
-  }, []);
+  }, [peopleRevision]);
 
   useEffect(() => {
     const stop = new AbortController();
@@ -223,6 +226,7 @@ function Screen() {
             onOpen={(id) => {
               window.location.hash = id === null ? "#/people" : `#/people/${id}`;
             }}
+            onChanged={() => setPeopleRevision((n) => n + 1)}
           />
         </section>
       )}

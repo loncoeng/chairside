@@ -22,6 +22,13 @@
       "when": 1790345385862,
       "tag": "0002_grades_and_prices",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790486347487,
+      "tag": "0003_customer_address",
+      "breakpoints": true
     }
   ]
 }

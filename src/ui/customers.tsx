@@ -52,6 +52,7 @@ type Record_ = {
 };
 
 type Person = Summary & {
+  address: string | null;
   note: string | null;
   standing: Standing;
   bookings: Visit[];
@@ -68,17 +69,46 @@ const nameIn = (
   return line.serviceJa ?? "—";
 };
 
+/** What the form edits. The same shape for a new guest and an old one. */
+type Details = {
+  name: string;
+  searchKey: string;
+  phone: string;
+  address: string;
+  note: string;
+  firstVisitOn: string;
+};
+
+const BLANK: Details = { name: "", searchKey: "", phone: "", address: "", note: "", firstVisitOn: "" };
+
+type Saved = { customerId: number; samePhone: { id: number; name: string }[] };
+
 export function Customers({
   openId,
   onOpen,
+  onChanged,
 }: {
   openId: number | null;
   onOpen: (id: number | null) => void;
+  /** Somebody was added or renamed; the booking form's picker is stale. */
+  onChanged?: () => void;
 }) {
   const { t } = useText();
   const [query, setQuery] = useState("");
   const [list, setList] = useState<Summary[]>([]);
   const [failed, setFailed] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  // Bumped after a save, so the list and the open person are read again.
+  const [revision, setRevision] = useState(0);
+  const [said, setSaid] = useState<Saved | null>(null);
+
+  const saved = (reply: Saved) => {
+    setAdding(false);
+    setSaid(reply);
+    setRevision((n) => n + 1);
+    onChanged?.();
+    if (reply.customerId !== openId) onOpen(reply.customerId);
+  };
 
   useEffect(() => {
     const stop = new AbortController();
@@ -100,11 +130,22 @@ export function Customers({
       clearTimeout(timer);
       stop.abort();
     };
-  }, [query]);
+  }, [query, revision]);
 
   return (
     <div class="people">
       <div class="people-list">
+        <button
+          type="button"
+          class="primary people-add"
+          onClick={() => {
+            setSaid(null);
+            setAdding(true);
+          }}
+        >
+          ＋ {t("newCustomer")}
+        </button>
+
         <label class="field grow">
           <span>{t("search")}</span>
           <input
@@ -127,7 +168,11 @@ export function Customers({
               <button
                 type="button"
                 class={person.id === openId ? "is-on" : undefined}
-                onClick={() => onOpen(person.id === openId ? null : person.id)}
+                onClick={() => {
+                  setAdding(false);
+                  setSaid(null);
+                  onOpen(person.id === openId ? null : person.id);
+                }}
               >
                 <span class="people-name">{person.name}</span>
                 {person.searchKey && <span class="people-key">{person.searchKey}</span>}
@@ -140,20 +185,57 @@ export function Customers({
       </div>
 
       <div class="people-detail">
-        {openId === null ? (
+        {said && (
+          <p class="said">
+            {t("customerSaved")}
+            {said.samePhone.length > 0 && (
+              <>
+                {" "}
+                {t("samePhone", { names: "" })}
+                {said.samePhone.map((other, i) => (
+                  <span key={other.id}>
+                    {i > 0 && "、"}
+                    <button type="button" class="link" onClick={() => onOpen(other.id)}>
+                      {other.name}
+                    </button>
+                  </span>
+                ))}
+              </>
+            )}
+          </p>
+        )}
+        {adding ? (
+          <CustomerForm
+            title={t("newCustomer")}
+            initial={BLANK}
+            onSaved={saved}
+            onCancel={() => setAdding(false)}
+          />
+        ) : openId === null ? (
           <p class="lede">{t("pickSomeone")}</p>
         ) : (
-          <PersonDetail id={openId} />
+          <PersonDetail id={openId} revision={revision} onSaved={saved} />
         )}
       </div>
     </div>
   );
 }
 
-function PersonDetail({ id }: { id: number }) {
+function PersonDetail({
+  id,
+  revision,
+  onSaved,
+}: {
+  id: number;
+  revision: number;
+  onSaved: (reply: Saved) => void;
+}) {
   const { t, lang } = useText();
   const [person, setPerson] = useState<Person | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => setEditing(false), [id]);
 
   useEffect(() => {
     const stop = new AbortController();
@@ -171,7 +253,7 @@ function PersonDetail({ id }: { id: number }) {
       });
 
     return () => stop.abort();
-  }, [id]);
+  }, [id, revision]);
 
   if (failed) {
     return (
@@ -181,6 +263,28 @@ function PersonDetail({ id }: { id: number }) {
     );
   }
   if (person === null) return <p class="lede">{t("loading")}</p>;
+
+  if (editing) {
+    return (
+      <CustomerForm
+        title={t("editCustomer")}
+        id={person.id}
+        initial={{
+          name: person.name,
+          searchKey: person.searchKey ?? "",
+          phone: person.phone ?? "",
+          address: person.address ?? "",
+          note: person.note ?? "",
+          firstVisitOn: person.firstVisitOn ?? "",
+        }}
+        onSaved={(reply) => {
+          setEditing(false);
+          onSaved(reply);
+        }}
+        onCancel={() => setEditing(false)}
+      />
+    );
+  }
 
   const s = person.standing;
 
@@ -196,7 +300,17 @@ function PersonDetail({ id }: { id: number }) {
             <a href={`tel:${person.phone.replace(/\s+/g, "")}`}>{person.phone}</a>
           </span>
         )}
+        <button type="button" class="link person-edit" onClick={() => setEditing(true)}>
+          {t("editCustomer")}
+        </button>
       </header>
+
+      {person.address && (
+        <p class="person-address">
+          <span class="person-phone-label">{t("address")}</span>
+          {person.address}
+        </p>
+      )}
 
       {/* Anything on the person rather than a single visit comes first, and
           stays visible. A tender scalp read three screens down is a tender
@@ -258,6 +372,119 @@ function PersonDetail({ id }: { id: number }) {
         {person.bookings.length === 0 && <p class="lede">{t("noVisitsYet")}</p>}
       </section>
     </article>
+  );
+}
+
+/**
+ * Adding a guest and correcting one are the same form.
+ *
+ * Only the name is required. The rest is often not known on the first call,
+ * and a form that insists on an address gets "-" typed into it.
+ */
+function CustomerForm({
+  title,
+  id,
+  initial,
+  onSaved,
+  onCancel,
+}: {
+  title: string;
+  /** Absent for a new guest. */
+  id?: number;
+  initial: Details;
+  onSaved: (reply: Saved) => void;
+  onCancel: () => void;
+}) {
+  const { t } = useText();
+  const [form, setForm] = useState<Details>(initial);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  const set = (key: keyof Details) => (e: Event) =>
+    setForm({ ...form, [key]: (e.target as HTMLInputElement | HTMLTextAreaElement).value });
+
+  async function submit(e: Event) {
+    e.preventDefault();
+    setBusy(true);
+    setFailed(null);
+    try {
+      const response = await fetch(id === undefined ? "/api/people" : `/api/people/${id}`, {
+        method: id === undefined ? "POST" : "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const reply = (await response.json()) as { ok?: boolean; error?: string } & Partial<Saved>;
+      if (reply.ok !== true || typeof reply.customerId !== "number") {
+        setFailed(reply.error ?? `HTTP ${response.status}`);
+        return;
+      }
+      onSaved({ customerId: reply.customerId, samePhone: reply.samePhone ?? [] });
+    } catch (problem: unknown) {
+      setFailed(String(problem));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form class="sheet person-form" onSubmit={submit}>
+      <div class="sheet-head">
+        <h3>{title}</h3>
+      </div>
+
+      <div class="field-row">
+        <label class="field grow">
+          <span>{t("customerName")} *</span>
+          <input type="text" required maxLength={100} value={form.name} onInput={set("name")} />
+        </label>
+        <label class="field grow">
+          <span>{t("searchKeyLabel")}</span>
+          <input
+            type="text"
+            maxLength={100}
+            value={form.searchKey}
+            placeholder={t("searchKeyHint")}
+            onInput={set("searchKey")}
+          />
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field grow">
+          <span>{t("phone")}</span>
+          <input type="tel" maxLength={40} value={form.phone} onInput={set("phone")} />
+        </label>
+        <label class="field">
+          <span>{t("firstVisit")}</span>
+          <input type="date" value={form.firstVisitOn} onInput={set("firstVisitOn")} />
+        </label>
+      </div>
+
+      <label class="field">
+        <span>{t("address")}</span>
+        <textarea rows={2} maxLength={300} value={form.address} onInput={set("address")} />
+      </label>
+
+      <label class="field">
+        <span>{t("note")}</span>
+        <textarea rows={3} maxLength={2000} value={form.note} onInput={set("note")} />
+      </label>
+
+      {failed && (
+        <p class="failed" role="alert">
+          {failed}
+        </p>
+      )}
+
+      <div class="field-row">
+        <button type="submit" class="primary" disabled={busy || form.name.trim() === ""}>
+          {busy ? t("sending") : t("saveCustomer")}
+        </button>
+        <button type="button" disabled={busy} onClick={onCancel}>
+          {t("cancel")}
+        </button>
+      </div>
+    </form>
   );
 }
 

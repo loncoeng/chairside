@@ -153,6 +153,20 @@ export const TEXT = {
   records: { ja: "カルテ", zh: "服務紀錄", en: "Treatment records" },
   pastVisits: { ja: "来店履歴", zh: "到店紀錄", en: "Past visits" },
   noVisitsYet: { ja: "まだ来店がありません。", zh: "尚未到店。", en: "No visits yet." },
+  newCustomer: { ja: "新規登録", zh: "新增客戶", en: "New customer" },
+  editCustomer: { ja: "編集", zh: "編輯", en: "Edit" },
+  customerName: { ja: "お名前", zh: "姓名", en: "Name" },
+  searchKeyLabel: { ja: "読み・ローマ字", zh: "拼音／英文名", en: "Other spelling" },
+  searchKeyHint: { ja: "検索用。漢字以外の書き方", zh: "用於搜尋", en: "For searching, e.g. a reading" },
+  address: { ja: "住所", zh: "地址", en: "Address" },
+  firstVisit: { ja: "初来店日", zh: "首次到店", en: "First visit" },
+  saveCustomer: { ja: "保存", zh: "儲存", en: "Save" },
+  customerSaved: { ja: "保存しました。", zh: "已儲存。", en: "Saved." },
+  samePhone: {
+    ja: "同じ電話番号のお客様がいます：{names}",
+    zh: "已有客戶使用相同電話：{names}",
+    en: "Somebody else has this phone number: {names}",
+  },
 
   // Money
   navMoney: { ja: "売上", zh: "營業額", en: "Takings" },

@@ -181,6 +181,20 @@ Service Account does expose an API — available to Macau-registered businesses
 without a mainland licence — but that starts with the shop deciding to move
 customers to a different address.
 
+**A screen for passwords.** Giving somebody a login, and changing your own,
+are done with `scripts/make-logins.ts` and a migration rather than from the
+interface. For eight people who were all hired in person this is a handful of
+minutes a year, and a password screen is a place to leak one — an old password
+field that echoes, a reset flow that mails a token, an account somebody forgot
+to close. It is the next thing to build if the shop grows, and the hashing it
+would need is already there (`src/db/session.ts`).
+
+**Locking an account out.** Somebody who leaves has `left_on` set, and
+sign-in refuses anybody with it — the same field the roster already used, so
+there is no second thing to remember. What is missing is forcing an existing
+session to end: theirs keeps working for up to twelve hours. Shorter than that
+and everybody signs in twice a day.
+
 **LINE integration.** Straightforward to build and of little use here; few
 customers in Macau are on it. Notification targets are kept abstract and
 nothing is wired up.

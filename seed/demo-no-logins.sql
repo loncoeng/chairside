@@ -1,0 +1,13 @@
+-- The public instance has no account anybody can sign into.
+--
+-- seed/logins.sql is applied to the browser demo's database instead, where the
+-- password can be printed on the screen: that database is invented and lives
+-- in the visitor's browser, so there is nothing there to protect.
+--
+-- This file takes away what an earlier deploy put here. The rows were in a
+-- public repository and the password was on this page, so anybody could have
+-- signed in and written into a database the next visitor reads.
+--
+-- A shop running this for real would not apply this file. It would run
+-- scripts/make-logins.ts with passwords of its own.
+UPDATE staff SET login_id = NULL, password_hash = NULL;

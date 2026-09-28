@@ -1,8 +1,17 @@
-// Signing in.
+// The first screen, and the only one anybody sees without a session.
 //
-// The demo shows this screen too, with the details filled in and said out
-// loud. Skipping it there would mean the thing on show is not the thing the
-// shop runs, and the login is the part a reader most wants to see is there.
+// It does two jobs, and which one is first matters. A visitor wants to look
+// at the thing: the demo is the large button, it runs in their own browser,
+// and one press is enough. Somebody who works in the shop wants to sign in:
+// that form is underneath, and it is empty.
+//
+// It used to be the other way round — the form first, and the demo behind a
+// button that only appeared once you were already signed in. Which meant the
+// demo was unreachable for the one person it was built for.
+//
+// The demo still goes through this same screen rather than around it. A demo
+// that skipped the login would be showing something the shop does not run,
+// and whether there is a login at all is what a reader most wants to check.
 
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
@@ -14,10 +23,17 @@ export type Signed = { id: number; name: string; role: string; grade?: string };
 export function SignIn({
   demo,
   onSignedIn,
+  onOpenDemo,
+  demoState,
+  demoWhy,
 }: {
-  /** Credentials to fill in and show, when this is the public demo. */
+  /** Credentials to fill in and show, once the demo is running. */
   demo: { loginId: string; password: string } | null;
   onSignedIn: (who: Signed) => void;
+  /** Load the demo and sign into it. Absent where there is no demo to open. */
+  onOpenDemo: (() => void) | null;
+  demoState: "off" | "loading" | "on" | "failed";
+  demoWhy: string | null;
 }) {
   const { t, lang, setLang } = useText();
   const [loginId, setLoginId] = useState(demo?.loginId ?? "");
@@ -76,6 +92,28 @@ export function SignIn({
       <h1>chairside</h1>
       <p class="tagline">{t("tagline")}</p>
 
+      {onOpenDemo && demoState !== "on" && (
+        <section class="sign-in-invite">
+          <p>{t("demoInvite")}</p>
+          <button
+            type="button"
+            class="primary big"
+            disabled={demoState === "loading"}
+            onClick={onOpenDemo}
+          >
+            {demoState === "loading" ? t("demoLoading") : t("demoOpen")}
+          </button>
+          <p class="said">{t("demoInBrowser")}</p>
+          {demoState === "failed" && (
+            <p class="failed" role="alert">
+              {t("demoFailed")}
+              {demoWhy && ` ${demoWhy}`}
+            </p>
+          )}
+        </section>
+      )}
+
+      <h2 class="sign-in-shop">{t("shopSignIn")}</h2>
       <form onSubmit={send}>
         <label class="field">
           <span>{t("loginId")}</span>
@@ -109,9 +147,16 @@ export function SignIn({
       </form>
 
       {/* The demo's password, in plain sight. There is nothing to protect —
-          the database is invented and lives in this browser — and hiding it
-          would only mean nobody could get in. */}
-      {demo && <p class="sign-in-demo">{t("demoCredentials", demo)}</p>}
+          that database is invented and lives in this browser — and hiding it
+          would only mean nobody could get in.
+
+          With the demo off there is no hint, because there is nothing to hint
+          at: the public instance has no account anybody can open. */}
+      {demo ? (
+        <p class="sign-in-demo">{t("demoCredentials", demo)}</p>
+      ) : (
+        <p class="said">{t("shopSignInNote")}</p>
+      )}
     </main>
   );
 }

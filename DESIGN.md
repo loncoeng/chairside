@@ -133,11 +133,25 @@ The role travels inside the signed token, so a demotion takes up to twelve
 hours to bite. For a shop of eight that is the right side of the trade; for
 eighty it would not be.
 
-The demo signs in for real. It shows the same screen, with the details filled
-in and printed underneath it, because a demo that skipped the login would be
-showing something the shop does not run — and whether the login exists at all
-is the thing a reader most wants to check. There is nothing to protect: that
-database is invented and lives in the visitor's browser.
+The demo signs in for real, through the same screen and the same
+`POST /api/session`. A demo that went round the login would be showing
+something the shop does not run, and whether the login exists at all is what a
+reader most wants to check. It simply knows the password, which is printed on
+the page: that database is invented and lives in the visitor's browser.
+
+**The accounts are not in the live database.** They are built into the demo's
+file (`seed/logins.sql`, applied by `scripts/build-demo-db.ts` and deliberately
+not by the deploy), so the published password opens the demo and nothing else.
+The first version did put them in D1, which meant anybody who read the README
+could sign in as the owner and write into a database every later visitor
+reads — including a shop being shown the thing. The check after each deploy
+now asserts that the published password comes back 401, and signs its own
+token with the key it already holds instead (`scripts/mint-session.ts`).
+
+**The demo is the front door.** It was behind a button in the header that only
+appeared once you were signed in, which made it unreachable for the one person
+it was built for. Now it is the large button on the first screen and the shop's
+own sign-in is underneath, empty.
 
 ## Free tier
 

@@ -280,7 +280,7 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
   if (customerId === null) return json({ ok: false, error: "お客様が指定されていません。" }, 400);
 
   const recordedOn = typeof body.recordedOn === "string" ? body.recordedOn : "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(recordedOn)) {
+  if (!isDate(recordedOn)) {
     return json({ ok: false, error: "日付は YYYY-MM-DD で送ってください。" }, 400);
   }
 

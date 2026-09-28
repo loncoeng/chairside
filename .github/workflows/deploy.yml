@@ -108,27 +108,36 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Ship it
-        run: npx wrangler deploy --var BUILD:${{ github.sha }}
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      # The signing key, if this repository has one on file.
+      # The signing key, if this repository has one on file. Before the
+      # deploy, not after: putting a secret on a Worker makes a new version
+      # of it, and two versions in a row leave the edge answering from both
+      # for a minute. The check below caught exactly that — /api/people came
+      # back 401 from the new code while /api/people/1 came back 200 from the
+      # old, one request apart.
       #
-      # Without it the Worker refuses every sign-in with a 503 rather than
-      # letting anybody in — see src/db/session.ts. Keeping it in the
-      # repository's secrets rather than only in the Cloudflare dashboard
-      # means a Worker rebuilt from scratch gets it back on the next push.
+      # Without a key the Worker refuses every sign-in with a 503 rather than
+      # letting anybody in — see src/db/session.ts. Keeping it here as well as
+      # on the Worker means a Worker rebuilt from scratch gets it back on the
+      # next push.
+      #
+      # On a Worker that does not exist yet this has nothing to attach to, so
+      # a failure here is reported and stepped over; the next push sets it.
       - name: Put the signing key in place
         run: |
           if [ -z "$SESSION_SECRET" ]; then
             echo "no SESSION_SECRET on file here — leaving whatever the Worker has"
             exit 0
           fi
-          printf '%s' "$SESSION_SECRET" | npx wrangler secret put SESSION_SECRET
+          printf '%s' "$SESSION_SECRET" | npx wrangler secret put SESSION_SECRET \
+            || echo "could not set it — is this the Worker's first deploy?"
         env:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Ship it
+        run: npx wrangler deploy --var BUILD:${{ github.sha }}
+        env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
@@ -142,9 +151,31 @@ jobs:
         run: |
           base=https://chairside.loncoeng.workers.dev
 
-          # The edge can still be serving the previous version for a few
-          # seconds after wrangler returns, so wait for this commit by name
-          # before believing anything below.
+          # Ask until the answer is the one expected, rather than asking once.
+          #
+          # A new version of a Worker reaches the edge over a few seconds, and
+          # not everywhere at the same moment. The first run of this step read
+          # 401 from /api/people and 200 from /api/people/1 one request apart:
+          # two adjacent requests, two versions of the code. A check that
+          # treats the first unexpected answer as a finding reports that as a
+          # hole in the gate, which it was not.
+          expect() {
+            want=$1; shift
+            for try in 1 2 3 4 5 6; do
+              got=$(curl -s -o /tmp/body -w '%{http_code}' --max-time 20 "$@" || true)
+              if [ "$got" = "$want" ]; then
+                echo "HTTP $got"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "HTTP $got — wanted $want"
+            head -c 200 /tmp/body; echo
+            return 1
+          }
+
+          # Wait for this commit by name, and then keep asking: one colo
+          # answering with the new build does not mean the rest have it.
           #
           # Asking the Worker rather than looking at the bundle filename: a
           # change that touches only the API leaves the assets byte-identical,
@@ -153,56 +184,47 @@ jobs:
           bundle=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)
           echo "waiting for ${GITHUB_SHA} and $bundle"
 
-          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+          agreed=0
+          for attempt in $(seq 1 25); do
             live=$(curl -s --max-time 20 "$base/api/version" || true)
             page=$(curl -s -o /tmp/page -w '%{http_code}' --max-time 20 "$base/" || true)
             if echo "$live" | grep -q "$GITHUB_SHA" && [ "$page" = "200" ] && grep -q "$bundle" /tmp/page; then
-              echo "this commit is live"
-              break
+              agreed=$((agreed + 1))
+              echo "this commit answered ($agreed/6)"
+              [ "$agreed" -ge 6 ] && break
+            else
+              agreed=0
+              echo "not yet — worker says ${live:-nothing}, page HTTP $page (attempt $attempt/25)"
             fi
-            echo "not yet — worker says ${live:-nothing}, page HTTP $page (attempt $attempt/10)"
-            sleep 6
-            if [ "$attempt" = "10" ]; then
-              echo "deployed, but the edge never served this commit"
-              exit 1
-            fi
+            sleep 5
           done
+          if [ "$agreed" -lt 6 ]; then
+            echo "deployed, but the edge never settled on this commit"
+            exit 1
+          fi
 
           # Locked. Every one of these returned customer names, phone numbers
           # and treatment notes to anybody who asked, before the sign-in
           # existed. They are named here so that they cannot go back to it
           # without this failing.
           for path in "/api/people" "/api/people/1" "/api/customers" "/api/room" "/api/day?date=2026-09-23" "/api/revenue?month=2026-09" "/api/shop"; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$base$path" || true)
-            echo "GET $path with no session -> HTTP $code"
-            if [ "$code" != "401" ]; then
-              echo "this should have been refused"
-              exit 1
-            fi
+            printf 'GET %-32s with no session -> ' "$path"
+            expect 401 "$base$path" || exit 1
           done
 
           # Writing, too. A gate that only covers reading is not a gate.
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
-            -H 'content-type: application/json' \
-            -d '{"customerId":1,"body":"probe"}' "$base/api/records" || true)
-          echo "POST /api/records with no session -> HTTP $code"
-          if [ "$code" != "401" ]; then
-            echo "an outsider could write to a guest's notes"
-            exit 1
-          fi
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST             -H 'content-type: application/json'             -d '{"name":"probe"}' "$base/api/people" || true)
-          echo "POST /api/people with no session -> HTTP $code"
-          if [ "$code" != "401" ]; then
-            echo "an outsider could add a guest"
-            exit 1
-          fi
+          printf 'POST %-31s with no session -> ' "/api/records"
+          expect 401 -X POST -H 'content-type: application/json' \
+            -d '{"customerId":1,"body":"probe"}' "$base/api/records" || exit 1
 
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X PUT             -H 'content-type: application/json'             -d '{"name":"probe"}' "$base/api/people/1" || true)
-          echo "PUT /api/people/1 with no session -> HTTP $code"
-          if [ "$code" != "401" ]; then
-            echo "an outsider could rewrite a guest"
-            exit 1
-          fi
+          printf 'POST %-31s with no session -> ' "/api/people"
+          expect 401 -X POST -H 'content-type: application/json' \
+            -d '{"name":"probe"}' "$base/api/people" || exit 1
+
+          printf 'PUT  %-31s with no session -> ' "/api/people/1"
+          expect 401 -X PUT -H 'content-type: application/json' \
+            -d '{"name":"probe"}' "$base/api/people/1" || exit 1
+
           echo "the doors are locked"
 
           # Now with the key. The public instance carries the same demo
@@ -216,9 +238,8 @@ jobs:
           if [ "$code" = "503" ]; then
             echo
             echo "The Worker has no signing key, so nobody can sign in."
-            echo "Set one and push again:"
-            echo "  npx wrangler secret put SESSION_SECRET"
-            echo "or add SESSION_SECRET to this repository's Actions secrets."
+            echo "Add SESSION_SECRET to this repository's Actions secrets, or set"
+            echo "it by hand with: npx wrangler secret put SESSION_SECRET"
             exit 1
           fi
           if [ "$code" != "200" ]; then
@@ -267,10 +288,6 @@ jobs:
           curl -s -o /dev/null --max-time 20 -c /tmp/jar2 -X POST \
             -H 'content-type: application/json' \
             -d '{"loginId":"ren","password":"chairside-demo"}' "$base/api/session" || true
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -b /tmp/jar2 "$base/api/revenue?month=2026-09" || true)
-          echo "GET /api/revenue as a stylist -> HTTP $code"
-          if [ "$code" != "403" ]; then
-            echo "a stylist could read the takings"
-            exit 1
-          fi
+          printf 'GET  %-31s as a stylist  -> ' "/api/revenue"
+          expect 403 -b /tmp/jar2 "$base/api/revenue?month=2026-09" || exit 1
           echo "the roles hold"

@@ -27,7 +27,10 @@ const recent = new Map<string, number[]>();
 function tooMany(who: string): boolean {
   const now = Date.now();
   const tries = (recent.get(who) ?? []).filter((at) => now - at < WINDOW_MS);
-  recent.set(who, tries);
+  // Dropped rather than left as an empty array. An isolate that answers for
+  // hours would otherwise keep a key for every address that ever asked.
+  if (tries.length === 0) recent.delete(who);
+  else recent.set(who, tries);
   return tries.length >= ATTEMPTS;
 }
 

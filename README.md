@@ -88,6 +88,18 @@ npm run dev
 `npm run dev` serves the interface on its own; the API needs the Worker, so
 `npx wrangler dev` runs both together against a local copy of the database.
 
+## The demo, and the instance
+
+The page at the address above is the demo. Press **Open the demo** and the
+whole shop loads into your own browser: SQLite compiled to WebAssembly, three
+months of an invented salon, and the same router the Worker runs. Nothing is
+sent anywhere, nobody else sees what you do, and a reload puts it back.
+
+Underneath it is the sign-in a real shop uses, and **nothing opens it.** The
+accounts live in the demo's database, not in the live one — so a visitor
+cannot write into something the next visitor reads. A shop running this gets
+its own Worker, its own database and passwords of its own.
+
 ## Signing in
 
 Everybody who works in the shop has a login. Apart from the sign-in screen

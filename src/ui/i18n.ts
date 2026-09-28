@@ -278,6 +278,23 @@ export const TEXT = {
     en: "This is the demo. The data lives in this browser only — nothing you do is visible to anybody else, and a reload puts it back.",
   },
   demoLeave: { ja: "デモを終了", zh: "結束示範", en: "Leave the demo" },
+  demoOpen: { ja: "デモを開く", zh: "開啟示範", en: "Open the demo" },
+  demoInvite: {
+    ja: "架空の店の3か月ぶんのデータで、予約・カルテ・会計・売上まで一通り動きます。",
+    zh: "以一間虛構店家三個月的資料，預約、紀錄、收款到營收都能實際操作。",
+    en: "Three months of an invented shop: bookings, records, the till and the takings all work.",
+  },
+  demoInBrowser: {
+    ja: "すべてこのブラウザの中で動きます。サーバには何も送られず、操作が他の人に見えることもありません。",
+    zh: "全部在這個瀏覽器中執行。不會傳送到伺服器，別人也看不到您的操作。",
+    en: "It all runs in this browser. Nothing is sent to a server, and nobody else sees what you do.",
+  },
+  shopSignIn: { ja: "店の方のサインイン", zh: "店家登入", en: "Shop sign-in" },
+  shopSignInNote: {
+    ja: "店で使っている人のための入口です。このデモ用の公開サイトには、入れるアカウントはありません。",
+    zh: "這是給店內人員使用的入口。此公開示範網站沒有可登入的帳號。",
+    en: "For the people who work in the shop. This public demo has no account that opens it.",
+  },
 
   // What the rules say. Built here rather than on the server, which can only
   // write in one language. The server still sends its own Japanese sentence

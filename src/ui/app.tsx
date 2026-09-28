@@ -164,6 +164,53 @@ function Screen() {
 
   const go = useCallback((days: number) => setDate((d) => shiftDate(d, days)), []);
 
+  /**
+   * Turn the demo on.
+   *
+   * Written once and used twice — from the first screen and from the header —
+   * because two copies of "load the engine, then the shop, then bump the
+   * views" drift, and the one that drifts is the one the visitor presses.
+   */
+  const enterDemo = useCallback(async (): Promise<boolean> => {
+    setDemo("loading");
+    setDemoWhy(null);
+    try {
+      await startDemo();
+      setDemo("on");
+      setRevision((n) => n + 1);
+      return true;
+    } catch (problem: unknown) {
+      setDemoWhy(String(problem));
+      setDemo("failed");
+      return false;
+    }
+  }, []);
+
+  /**
+   * The large button on the first screen: load the demo, then sign into it.
+   *
+   * One press rather than two. It still goes through the real sign-in — the
+   * request is the same POST /api/session the shop makes, answered by the
+   * same router — so nothing here is a way round the login. It just knows the
+   * password, which is printed on the screen anyway.
+   */
+  const openDemo = useCallback(async () => {
+    if (!(await enterDemo())) return;
+
+    const response = await fetch("/api/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(DEMO_LOGIN),
+    });
+    const reply = (await response.json()) as { ok?: boolean; staff?: Signed };
+    // Left on the sign-in screen with the details filled in if this fails,
+    // which is a screen somebody can act on.
+    if (reply.ok && reply.staff) {
+      setMe(reply.staff);
+      setRevision((n) => n + 1);
+    }
+  }, [enterDemo]);
+
   if (me === undefined) return <main class="wide"><p class="lede">{t("loading")}</p></main>;
 
   if (me === null) {
@@ -174,6 +221,9 @@ function Screen() {
           setMe(who);
           setRevision((n) => n + 1);
         }}
+        onOpenDemo={() => void openDemo()}
+        demoState={demo}
+        demoWhy={demoWhy}
       />
     );
   }
@@ -227,15 +277,7 @@ function Screen() {
               setRevision((n) => n + 1);
               return;
             }
-            setDemo("loading");
-            try {
-              await startDemo();
-              setDemo("on");
-              setRevision((n) => n + 1);
-            } catch (problem: unknown) {
-              setDemoWhy(String(problem));
-              setDemo("failed");
-            }
+            await enterDemo();
           }}
         >
           {demo === "loading" ? t("demoLoading") : demo === "on" ? t("demoLeave") : t("demoOn")}

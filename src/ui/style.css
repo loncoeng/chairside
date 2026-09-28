@@ -1103,6 +1103,32 @@ footer a:hover { color: var(--accent); border-color: var(--accent); }
   color: var(--ink-soft);
 }
 
+/* The invitation at the top of the first screen. */
+.sign-in-invite {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.sign-in-invite p { margin: 0; }
+.sign-in-invite .said { font-size: 0.82rem; color: var(--ink-soft); }
+.sign-in button.primary.big { padding: 0.7rem; font-size: 1.05rem; }
+
+.sign-in-shop {
+  margin: 1.4rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--rule);
+  padding-top: 1.1rem;
+}
+
+.sign-in > .said { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
+
 /* Who is signed in, and the way out. */
 .whoami { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--ink-soft); }
 .whoami button {

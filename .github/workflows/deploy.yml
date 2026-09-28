@@ -66,9 +66,15 @@ jobs:
           # fields, so re-applying it changes nothing and keeps any edit made
           # through the screen.
           npx wrangler d1 execute chairside --remote --file seed/demo-customer-details.sql
-          # The public instance is a demo too, so it has the same accounts.
-          # A shop running this for real would not apply this file.
-          npx wrangler d1 execute chairside --remote --file seed/logins.sql
+          # seed/logins.sql is deliberately NOT applied here. It goes into the
+          # browser demo's database instead (scripts/build-demo-db.ts), where the
+          # password can be printed on screen because that database is invented
+          # and lives in the visitor's browser.
+          #
+          # So the live instance has no account anybody can sign into. What a
+          # visitor wrote there would be waiting for the next visitor — and the
+          # next visitor might be a shop being shown the thing.
+          npx wrangler d1 execute chairside --remote --file seed/demo-no-logins.sql
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -227,31 +233,29 @@ jobs:
 
           echo "the doors are locked"
 
-          # Now with the key. The public instance carries the same demo
-          # accounts the browser demo prints on its sign-in screen, so there
-          # is nothing here that is not already on the page.
-          code=$(curl -s -o /tmp/session -w '%{http_code}' --max-time 20 -c /tmp/jar -X POST \
-            -H 'content-type: application/json' \
-            -d '{"loginId":"aoi","password":"chairside-demo"}' "$base/api/session" || true)
-          echo "POST /api/session -> HTTP $code"
+          # The demo's published account must not open the live instance.
+          # seed/logins.sql is not applied to D1, and this is what says so.
+          printf 'POST %-31s demo password -> ' "/api/session"
+          expect 401 -X POST -H 'content-type: application/json' \
+            -d '{"loginId":"aoi","password":"chairside-demo"}' "$base/api/session" || exit 1
+          echo "the published password does not open the live instance"
 
-          if [ "$code" = "503" ]; then
+          # Now with a session of our own. There is no password to sign in with,
+          # so the check signs a token using the key it already holds — the same
+          # issue() the Worker calls, not a second implementation of it.
+          if [ -z "$SESSION_SECRET" ]; then
             echo
-            echo "The Worker has no signing key, so nobody can sign in."
-            echo "Add SESSION_SECRET to this repository's Actions secrets, or set"
-            echo "it by hand with: npx wrangler secret put SESSION_SECRET"
+            echo "No SESSION_SECRET on file, so this check cannot make a session."
+            echo "Add SESSION_SECRET to this repository's Actions secrets."
             exit 1
           fi
-          if [ "$code" != "200" ]; then
-            head -c 300 /tmp/session; echo
-            echo "signing in did not work"
-            exit 1
-          fi
+          owner=$(node scripts/mint-session.ts 1 owner)
+          stylist=$(node scripts/mint-session.ts 2 stylist)
 
           # run_worker_first sends /api/* to the Worker. If that is wrong, the
           # SPA fallback returns the HTML page with a 200 on it, so the body
           # is checked, not just the status.
-          code=$(curl -s -o /tmp/api -w '%{http_code}' --max-time 20 -b /tmp/jar "$base/api/room" || true)
+          code=$(curl -s -o /tmp/api -w '%{http_code}' --max-time 20 -H "cookie: chairside_session=$owner" "$base/api/room" || true)
           echo "GET /api/room -> HTTP $code"
           head -c 300 /tmp/api; echo
           if [ "$code" != "200" ] || ! grep -q '"seats"' /tmp/api; then
@@ -272,7 +276,7 @@ jobs:
           # And the calendar. /api/day is what stage three is about, and an
           # empty day is a valid reply — so the sample week is asked for by
           # name rather than trusting whatever "today" happens to be.
-          code=$(curl -s -o /tmp/day -w '%{http_code}' --max-time 20 -b /tmp/jar "$base/api/day?date=2026-09-23" || true)
+          code=$(curl -s -o /tmp/day -w '%{http_code}' --max-time 20 -H "cookie: chairside_session=$owner" "$base/api/day?date=2026-09-23" || true)
           echo "GET /api/day -> HTTP $code"
           lines=$(grep -o '"itemId"' /tmp/day | wc -l)
           echo "treatments on that day: $lines"
@@ -285,9 +289,8 @@ jobs:
 
           # A stylist is not the owner. The role gate lives in one table
           # (src/db/permissions.ts) and this is the live proof it is wired in.
-          curl -s -o /dev/null --max-time 20 -c /tmp/jar2 -X POST \
-            -H 'content-type: application/json' \
-            -d '{"loginId":"ren","password":"chairside-demo"}' "$base/api/session" || true
           printf 'GET  %-31s as a stylist  -> ' "/api/revenue"
-          expect 403 -b /tmp/jar2 "$base/api/revenue?month=2026-09" || exit 1
+          expect 403 -H "cookie: chairside_session=$stylist" "$base/api/revenue?month=2026-09" || exit 1
           echo "the roles hold"
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}

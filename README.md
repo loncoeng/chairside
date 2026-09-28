@@ -88,6 +88,26 @@ npm run dev
 `npm run dev` serves the interface on its own; the API needs the Worker, so
 `npx wrangler dev` runs both together against a local copy of the database.
 
+## Signing in
+
+Everybody who works in the shop has a login. Apart from the sign-in screen
+and `/api/version`, nothing answers without one. The owner sees the takings
+and the settings; a stylist does not.
+
+A session is a signed token in an HttpOnly cookie, good for twelve hours, with
+no row to look up. Passwords are PBKDF2-SHA256, 100,000 rounds, salted per
+person.
+
+The Worker needs a signing key before anybody can sign in:
+
+```sh
+npx wrangler secret put SESSION_SECRET
+```
+
+Without one, every sign-in comes back 503. That is deliberate. The other
+behaviour — no key configured, so let them through — is the one that ships
+with no key configured.
+
 ## Personal data
 
 This holds customer names, contact details and treatment history. Macau's

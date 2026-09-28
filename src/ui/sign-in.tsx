@@ -1,0 +1,117 @@
+// Signing in.
+//
+// The demo shows this screen too, with the details filled in and said out
+// loud. Skipping it there would mean the thing on show is not the thing the
+// shop runs, and the login is the part a reader most wants to see is there.
+
+import { useEffect, useState } from "preact/hooks";
+import { useText } from "./lang-context.ts";
+import { LANGS, LANG_LABEL } from "./i18n.ts";
+import type { Lang } from "./i18n.ts";
+
+export type Signed = { id: number; name: string; role: string; grade?: string };
+
+export function SignIn({
+  demo,
+  onSignedIn,
+}: {
+  /** Credentials to fill in and show, when this is the public demo. */
+  demo: { loginId: string; password: string } | null;
+  onSignedIn: (who: Signed) => void;
+}) {
+  const { t, lang, setLang } = useText();
+  const [loginId, setLoginId] = useState(demo?.loginId ?? "");
+  const [password, setPassword] = useState(demo?.password ?? "");
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (demo) {
+      setLoginId(demo.loginId);
+      setPassword(demo.password);
+    }
+  }, [demo]);
+
+  async function send(event: Event) {
+    event.preventDefault();
+    setBusy(true);
+    setFailed(null);
+
+    try {
+      const response = await fetch("/api/session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ loginId, password }),
+      });
+      const reply = (await response.json()) as { ok?: boolean; staff?: Signed; error?: string };
+
+      if (reply.ok && reply.staff) {
+        onSignedIn(reply.staff);
+        return;
+      }
+      setFailed(reply.error ?? `HTTP ${response.status}`);
+    } catch (problem: unknown) {
+      setFailed(String(problem));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main class="sign-in">
+      <div class="langs" role="group" aria-label="Language">
+        {LANGS.map((code: Lang) => (
+          <button
+            type="button"
+            key={code}
+            class={code === lang ? "is-on" : undefined}
+            aria-pressed={code === lang}
+            onClick={() => setLang(code)}
+          >
+            {LANG_LABEL[code]}
+          </button>
+        ))}
+      </div>
+
+      <h1>chairside</h1>
+      <p class="tagline">{t("tagline")}</p>
+
+      <form onSubmit={send}>
+        <label class="field">
+          <span>{t("loginId")}</span>
+          <input
+            type="text"
+            autocomplete="username"
+            value={loginId}
+            onInput={(e) => setLoginId((e.target as HTMLInputElement).value)}
+          />
+        </label>
+
+        <label class="field">
+          <span>{t("password")}</span>
+          <input
+            type="password"
+            autocomplete="current-password"
+            value={password}
+            onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
+          />
+        </label>
+
+        {failed && (
+          <p class="failed" role="alert">
+            {failed}
+          </p>
+        )}
+
+        <button type="submit" class="primary" disabled={busy || loginId === "" || password === ""}>
+          {busy ? t("sending") : t("signIn")}
+        </button>
+      </form>
+
+      {/* The demo's password, in plain sight. There is nothing to protect —
+          the database is invented and lives in this browser — and hiding it
+          would only mean nobody could get in. */}
+      {demo && <p class="sign-in-demo">{t("demoCredentials", demo)}</p>}
+    </main>
+  );
+}

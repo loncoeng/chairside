@@ -42,12 +42,26 @@ export const staff = sqliteTable(
       .default("stylist2"),
     /** Colour on the calendar. */
     color: text("color"),
+    /**
+     * What they type to sign in. NULL for somebody who does not use the
+     * system — an assistant who never touches the screen still needs a row,
+     * because bookings point at them.
+     */
+    loginId: text("login_id"),
+    /**
+     * PBKDF2, salted, in the form `pbkdf2$<rounds>$<salt>$<hash>`.
+     *
+     * Never the password. The shop's own PC is shared by everybody in the
+     * room, and a stolen laptop should not hand over the staff's passwords
+     * along with the customer list.
+     */
+    passwordHash: text("password_hash"),
     joinedOn: text("joined_on"),
     /** NULL while they are still here. A date removes them from new bookings. */
     leftOn: text("left_on"),
     createdAt: integer("created_at").notNull().default(now),
   },
-  (t) => [index("staff_left_on_idx").on(t.leftOn)],
+  (t) => [index("staff_left_on_idx").on(t.leftOn), uniqueIndex("staff_login_key").on(t.loginId)],
 );
 
 /**

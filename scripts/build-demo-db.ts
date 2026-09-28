@@ -52,6 +52,8 @@ for (const name of migrations) {
 for (const file of [
   "seed/demo.sql",
   "seed/holidays.sql",
+  // The demo signs in for real, so it needs accounts.
+  "seed/logins.sql",
   "seed/demo-clear.sql",
   "seed/demo-customers.sql",
   "seed/demo-bookings.sql",

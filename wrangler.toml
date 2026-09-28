@@ -25,6 +25,12 @@ main = "./src/worker/index.ts"
 [vars]
 BUILD = "dev"
 
+# SESSION_SECRET is not here. It is set with `wrangler secret put
+# SESSION_SECRET`, so it never enters the repository — and the Worker refuses
+# to sign anybody in without it rather than falling back to something
+# guessable. A shop that cannot sign in is a bad afternoon; a shop whose
+# session tokens anybody can mint is a customer list on the open internet.
+
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"

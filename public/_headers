@@ -1,0 +1,13 @@
+# Sent with every static file. The Worker sets its own on API replies.
+#
+# A customer list needs these more than most pages do: the whole point of a
+# tight content policy is that an injected script cannot send the names
+# somewhere. Nothing here loads from anywhere else, so the policy can be as
+# narrow as it looks.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()

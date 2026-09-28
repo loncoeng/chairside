@@ -9,10 +9,9 @@ import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 
 import { bookingItems, bookings, businessHours, closures, staff } from "../db/schema.ts";
 
+import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
-const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Everything the settings screen shows at once. */
 export async function shopSettings(db: Db, from: string) {
@@ -73,8 +72,8 @@ export async function setHours(db: Db, request: Request): Promise<Response> {
     const closesAt = typeof row.closesAt === "string" ? row.closesAt : null;
 
     if (!closed) {
-      if (!opensAt || !TIME.test(opensAt)) return bad("開店時刻の形式が違います。");
-      if (!closesAt || !TIME.test(closesAt)) return bad("閉店時刻の形式が違います。");
+      if (!opensAt || !isTime(opensAt)) return bad("開店時刻の形式が違います。");
+      if (!closesAt || !isTime(closesAt)) return bad("閉店時刻の形式が違います。");
       // Refused rather than stored and worked around later. Every screen
       // that reads these assumes the day runs forwards.
       if (closesAt <= opensAt) return bad("閉店が開店より前になっています。");
@@ -104,7 +103,7 @@ export async function setClosure(db: Db, request: Request): Promise<Response> {
   } | null;
 
   const date = typeof body?.date === "string" ? body.date : "";
-  if (!DATE.test(date)) return bad("日付は YYYY-MM-DD で送ってください。");
+  if (!isDate(date)) return bad("日付は YYYY-MM-DD で送ってください。");
 
 
   if (body?.remove === true) {
@@ -164,8 +163,8 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
   if (!["owner", "stylist", "assistant"].includes(role)) return bad("役割が不正です。");
 
   const color = typeof body.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(body.color) ? body.color : null;
-  const joinedOn = typeof body.joinedOn === "string" && DATE.test(body.joinedOn) ? body.joinedOn : null;
-  const leftOn = typeof body.leftOn === "string" && DATE.test(body.leftOn) ? body.leftOn : null;
+  const joinedOn = typeof body.joinedOn === "string" && isDate(body.joinedOn) ? body.joinedOn : null;
+  const leftOn = typeof body.leftOn === "string" && isDate(body.leftOn) ? body.leftOn : null;
 
   const id = Number.isInteger(body.id) ? (body.id as number) : null;
 

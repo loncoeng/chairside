@@ -22,6 +22,7 @@ import {
   staff,
 } from "../db/schema.ts";
 
+import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
 /**
@@ -33,7 +34,10 @@ import type { Database as Db } from "../db/database.ts";
  * the shop has in front of them when the phone rings.
  */
 export async function listCustomers(db: Db, query: string) {
-  const q = query.trim();
+  // `%` and `_` are wildcards in LIKE, so a search for either of them matched
+  // everything — type an underscore and the whole book came back. Escaped
+  // here rather than stripped, because a name really can contain one.
+  const q = query.trim().replace(/[!%_]/g, (c) => `!${c}`);
   const base = db
     .select({
       id: customers.id,
@@ -48,9 +52,9 @@ export async function listCustomers(db: Db, query: string) {
     ? await base
         .where(
           or(
-            like(customers.name, `%${q}%`),
-            like(customers.searchKey, `%${q}%`),
-            like(customers.phone, `%${q}%`),
+            like(customers.name, sql`${`%${q}%`} ESCAPE '!'`),
+            like(customers.searchKey, sql`${`%${q}%`} ESCAPE '!'`),
+            like(customers.phone, sql`${`%${q}%`} ESCAPE '!'`),
           ),
         )
         .orderBy(asc(customers.name))
@@ -194,8 +198,11 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
 
   const firstVisitRaw = field("firstVisitOn", 10);
   const birthday = field("birthday", 10);
+  // isDate rather than a shape match: 2026-02-30 is the right shape and not a
+  // day, and it would sit in the row until some screen tried to subtract it
+  // from today.
   for (const date of [firstVisitRaw, birthday]) {
-    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    if (date && !isDate(date)) {
       return json({ ok: false, error: "日付は YYYY-MM-DD で送ってください。" }, 400);
     }
   }

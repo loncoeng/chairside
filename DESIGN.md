@@ -111,6 +111,34 @@ Each visitor's data lives in their own browser and never reaches a server.
 
 ---
 
+### The API was open, and this is how it closed
+
+Stages one to seven were built without a sign-in. At the end of stage seven
+the live instance was probed from outside. `GET /api/people` returned fifty
+guests with their phone numbers. `POST /api/records` appended to a guest's
+notes and came back 201. `PUT /api/shop/hours` rewrote the opening times.
+
+Nothing was injectable and nothing was cross-scriptable — every query goes
+through a placeholder, and the interface never builds HTML out of a string.
+The hole was simpler than either: nobody was ever asked who they were.
+
+The check sits in the router, once, rather than in each handler
+(`src/worker/router.ts`). A permission you have to remember to add is a
+permission the next endpoint goes without, and the endpoint that went without
+it is a customer list on the open internet. Roles are a table of path patterns
+(`src/db/permissions.ts`), so what an owner can reach and a stylist cannot is
+six lines anybody can read.
+
+The role travels inside the signed token, so a demotion takes up to twelve
+hours to bite. For a shop of eight that is the right side of the trade; for
+eighty it would not be.
+
+The demo signs in for real. It shows the same screen, with the details filled
+in and printed underneath it, because a demo that skipped the login would be
+showing something the shop does not run — and whether the login exists at all
+is the thing a reader most wants to check. There is nothing to protect: that
+database is invented and lives in the visitor's browser.
+
 ## Free tier
 
 Calculated for eight stylists and 56 visits a day.

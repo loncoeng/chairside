@@ -7,6 +7,10 @@
 
 import { asc, eq, isNull, max, min } from "drizzle-orm";
 import type { Database as Db } from "../db/database.ts";
+import { isDate, isMonth } from "../db/dates.ts";
+import { isOpen, mayReach } from "../db/permissions.ts";
+import { read, tokenFrom } from "../db/session.ts";
+import { signIn, signOut, whoAmI } from "./session-api.ts";
 import {
   bookingItems,
   bookings,
@@ -32,7 +36,12 @@ import { setClosure, setHours, setStaff, shopSettings } from "./shop-api.ts";
  * demo. src/db/portable.test.ts runs these very functions on sql.js so the
  * claim cannot rot quietly.
  */
-export async function route(db: Db, request: Request, build: string): Promise<Response> {
+export async function route(
+  db: Db,
+  request: Request,
+  build: string,
+  secret?: string,
+): Promise<Response> {
     const url = new URL(request.url);
 
     try {
@@ -41,12 +50,39 @@ export async function route(db: Db, request: Request, build: string): Promise<Re
       if (url.pathname === "/api/version") {
         return json({ build });
       }
+
+      // --- Everything below this line needs somebody signed in ------------
+      //
+      // The check is here rather than in each handler. A permission you have
+      // to remember to write is a permission somebody forgets on the next
+      // endpoint, and the endpoint that forgot it is a customer list on the
+      // open internet.
+
+      if (url.pathname === "/api/session") {
+        if (request.method === "POST") return await signIn(db, request, secret);
+        if (request.method === "DELETE") return signOut();
+        if (request.method === "GET") {
+          const open = await read(secret, tokenFrom(request));
+          return open ? await whoAmI(db, open.staffId) : json({ ok: false }, 401);
+        }
+        return json({ error: "method not allowed" }, 405);
+      }
+
+      const session = await read(secret, tokenFrom(request));
+
+      if (!isOpen(url.pathname) && session === null) {
+        return json({ error: "サインインしてください。" }, 401);
+      }
+
+      if (session !== null && !mayReach(session.role, url.pathname, request.method)) {
+        return json({ error: "この操作は許可されていません。" }, 403);
+      }
       if (url.pathname === "/api/room") {
         return json(await room(db));
       }
       // The endpoints that write.
       if (url.pathname === "/api/bookings" && request.method === "POST") {
-        return await createBooking(db, request);
+        return await createBooking(db, request, session?.staffId ?? null);
       }
 
       // /api/bookings/123 — read one, or change it.
@@ -59,7 +95,7 @@ export async function route(db: Db, request: Request, build: string): Promise<Re
           return json({ ...found, payments: await paymentsFor(db, id) });
         }
         if (request.method === "PATCH") {
-          return await updateBooking(db, request, id);
+          return await updateBooking(db, request, id, session?.staffId ?? null);
         }
         return json({ error: "method not allowed" }, 405);
       }
@@ -97,12 +133,12 @@ export async function route(db: Db, request: Request, build: string): Promise<Re
         return json(await currencyList(db));
       }
       if (url.pathname === "/api/payments" && request.method === "POST") {
-        return await takePayment(db, request);
+        return await takePayment(db, request, session?.staffId ?? null);
       }
       if (url.pathname === "/api/revenue") {
         const month = url.searchParams.get("month") ?? today().slice(0, 7);
-        if (!/^\d{4}-\d{2}$/.test(month)) {
-          return json({ error: "month must be YYYY-MM" }, 400);
+        if (!isMonth(month)) {
+          return json({ error: "month must be a real YYYY-MM" }, 400);
         }
         return json(await revenue(db, month));
       }
@@ -117,8 +153,8 @@ export async function route(db: Db, request: Request, build: string): Promise<Re
       }
       if (url.pathname === "/api/day") {
         const date = url.searchParams.get("date") ?? today();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-          return json({ error: "date must be YYYY-MM-DD" }, 400);
+        if (!isDate(date)) {
+          return json({ error: "date must be a real YYYY-MM-DD" }, 400);
         }
         return json(await day(db, date));
       }
@@ -265,14 +301,23 @@ async function bookedRange(db: Db) {
   return row?.from ? row : null;
 }
 
+/**
+ * Every reply the API makes.
+ *
+ * The headers are here rather than on each handler, for the same reason the
+ * session check is: one that has to be remembered is one that gets forgotten
+ * on the next endpoint. `no-store` matters more than usual — these replies
+ * carry names, phone numbers and what was done to somebody's hair, and a
+ * shared browser on the shop's PC should not keep them.
+ */
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      // The data is read fresh on every load. A booking screen showing a
-      // cached seat list is worse than a slightly slower one.
-      "cache-control": "no-store",
+      "cache-control": "no-store, private",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer",
     },
   });
 }

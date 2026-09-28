@@ -22,6 +22,7 @@ import {
 import { blocked, check } from "../db/booking-rules.ts";
 import type { Draft, Existing } from "../db/booking-rules.ts";
 
+import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
 /**
@@ -92,7 +93,11 @@ type Proposal = {
   serviceIds?: unknown;
 };
 
-export async function createBooking(db: Db, request: Request): Promise<Response> {
+export async function createBooking(
+  db: Db,
+  request: Request,
+  byStaffId: number | null,
+): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Proposal | null;
   if (!body || typeof body !== "object") return bad("本文が読み取れません。");
 
@@ -198,6 +203,7 @@ export async function createBooking(db: Db, request: Request): Promise<Response>
   await db.insert(bookingEvents).values({
     bookingId: created.id,
     kind: "created",
+    byStaffId,
     before: null,
     after: `${date} ${first.startsAt}`,
   });
@@ -360,7 +366,12 @@ export async function getBooking(db: Db, id: number) {
  * the day: a slot was held and then freed, and a shop looking back at a quiet
  * Tuesday needs to be able to tell that from a Tuesday nobody called.
  */
-export async function updateBooking(db: Db, request: Request, id: number): Promise<Response> {
+export async function updateBooking(
+  db: Db,
+  request: Request,
+  id: number,
+  byStaffId: number | null,
+): Promise<Response> {
   const body = (await request.json().catch(() => null)) as (Proposal & { status?: unknown }) | null;
   if (!body || typeof body !== "object") return bad("本文が読み取れません。");
 
@@ -388,6 +399,7 @@ export async function updateBooking(db: Db, request: Request, id: number): Promi
     await db.insert(bookingEvents).values({
       bookingId: id,
       kind: "status",
+      byStaffId,
       before: current.status,
       after: body.status,
     });
@@ -533,7 +545,7 @@ export async function updateBooking(db: Db, request: Request, id: number): Promi
   }
 
   if (changes.length > 0) {
-    await db.insert(bookingEvents).values(changes.map((c) => ({ bookingId: id, ...c })));
+    await db.insert(bookingEvents).values(changes.map((c) => ({ bookingId: id, byStaffId, ...c })));
   }
 
   return json({ ok: true, bookingId: id, verdicts });

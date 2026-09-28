@@ -136,6 +136,22 @@ export const TEXT = {
   "grade.assistant": { ja: "アシスタント", zh: "助理", en: "Assistant" },
   from: { ja: "{n} 〜", zh: "{n} 起", en: "from {n}" },
 
+  // Signing in
+  signIn: { ja: "サインイン", zh: "登入", en: "Sign in" },
+  signOut: { ja: "サインアウト", zh: "登出", en: "Sign out" },
+  loginId: { ja: "ID", zh: "帳號", en: "ID" },
+  password: { ja: "パスワード", zh: "密碼", en: "Password" },
+  demoCredentials: {
+    ja: "デモ用のIDとパスワードを入れてあります（{loginId} / {password}）。そのままサインインしてください。",
+    zh: "已填入示範用的帳號與密碼（{loginId} / {password}），直接登入即可。",
+    en: "The demo's ID and password are filled in ({loginId} / {password}). Just sign in.",
+  },
+  ownerOnly: {
+    ja: "この画面はオーナーだけが見られます。",
+    zh: "此頁面只有店主可以查看。",
+    en: "This screen is the owner's.",
+  },
+
   // Customers
   navDay: { ja: "予約", zh: "預約", en: "Bookings" },
   navPeople: { ja: "お客様", zh: "客戶", en: "Customers" },

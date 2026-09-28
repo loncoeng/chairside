@@ -61,7 +61,11 @@ export async function paymentsFor(db: Db, bookingId: number) {
  * The rate is read from the shop's settings here and written onto the row, so
  * what is stored is what was true at the till.
  */
-export async function takePayment(db: Db, request: Request): Promise<Response> {
+export async function takePayment(
+  db: Db,
+  request: Request,
+  byStaffId: number | null,
+): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     bookingId?: unknown;
     amount?: unknown;
@@ -121,6 +125,7 @@ export async function takePayment(db: Db, request: Request): Promise<Response> {
     await db.insert(bookingEvents).values({
       bookingId,
       kind: "status",
+      byStaffId,
       before: booking.status,
       after: "done",
     });

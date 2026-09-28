@@ -1062,3 +1062,57 @@ footer a:hover { color: var(--accent); border-color: var(--accent); }
   border-radius: 999px;
   padding: 0 0.5rem;
 }
+
+/* --- Signing in ---------------------------------------------------------- */
+
+.sign-in {
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: clamp(3rem, 12vh, 7rem) 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.sign-in .langs { align-self: flex-end; margin: 0 0 1rem; }
+.sign-in h1 { font-size: 1.8rem; }
+.sign-in .tagline { margin: 0 0 1.25rem; }
+.sign-in form { display: flex; flex-direction: column; gap: 0.9rem; }
+.sign-in .field span { font-size: 0.8rem; }
+
+.sign-in input {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  width: 100%;
+}
+
+.sign-in input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sign-in button.primary { padding: 0.5rem; font-size: 0.95rem; }
+
+.sign-in-demo {
+  border: 1px dashed var(--accent);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+/* Who is signed in, and the way out. */
+.whoami { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--ink-soft); }
+.whoami button {
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0.1rem 0.5rem;
+  cursor: pointer;
+}
+.whoami button:hover { color: var(--accent); border-color: var(--accent); }

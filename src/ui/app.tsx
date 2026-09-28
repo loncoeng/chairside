@@ -8,7 +8,9 @@ import { BookingPanel } from "./booking-panel.tsx";
 import { Customers } from "./customers.tsx";
 import { Money } from "./money.tsx";
 import { Shop } from "./shop.tsx";
-import { startDemo, stopDemo } from "./demo.ts";
+import { DEMO_LOGIN, startDemo, stopDemo } from "./demo.ts";
+import { SignIn } from "./sign-in.tsx";
+import type { Signed } from "./sign-in.tsx";
 import type { Customer, Service } from "./book.tsx";
 import type { Day, Line, Room } from "./types.ts";
 import { shiftDate, todayInShop } from "./types.ts";
@@ -84,6 +86,8 @@ function Screen() {
   const { t, lang, setLang, weekday } = useText();
   const [route, setRoute] = useState(readHash);
   const [demo, setDemo] = useState<"off" | "loading" | "on" | "failed">("off");
+  // undefined while the app is asking; null when nobody is signed in.
+  const [me, setMe] = useState<Signed | null | undefined>(undefined);
   // Kept and shown. "The demo did not load" with nothing after it sends
   // whoever is looking to the developer tools, and this failed on a missing
   // file whose name was in the error all along.
@@ -138,6 +142,20 @@ function Screen() {
     return () => stop.abort();
   }, [date, revision]);
 
+  // Who is signed in, asked once on load and again whenever the data source
+  // changes — switching the demo on is switching to a different database with
+  // a different set of accounts.
+  useEffect(() => {
+    const stop = new AbortController();
+    fetch("/api/session", { signal: stop.signal })
+      .then(async (r) => (r.ok ? ((await r.json()) as { staff?: Signed }).staff ?? null : null))
+      .then((staff) => setMe(staff ?? null))
+      .catch(() => {
+        if (!stop.signal.aborted) setMe(null);
+      });
+    return () => stop.abort();
+  }, [revision, demo]);
+
   useEffect(() => {
     const onHash = () => setRoute(readHash());
     window.addEventListener("hashchange", onHash);
@@ -145,6 +163,22 @@ function Screen() {
   }, []);
 
   const go = useCallback((days: number) => setDate((d) => shiftDate(d, days)), []);
+
+  if (me === undefined) return <main class="wide"><p class="lede">{t("loading")}</p></main>;
+
+  if (me === null) {
+    return (
+      <SignIn
+        demo={demo === "on" ? DEMO_LOGIN : null}
+        onSignedIn={(who) => {
+          setMe(who);
+          setRevision((n) => n + 1);
+        }}
+      />
+    );
+  }
+
+  const owner = me.role === "owner";
 
   return (
     <main class="wide">
@@ -164,12 +198,19 @@ function Screen() {
           <a href="#/people" class={route.view === "people" ? "is-on" : undefined}>
             {t("navPeople")}
           </a>
-          <a href="#/money" class={route.view === "money" ? "is-on" : undefined}>
-            {t("navMoney")}
-          </a>
-          <a href="#/shop" class={route.view === "shop" ? "is-on" : undefined}>
-            {t("navShop")}
-          </a>
+          {/* Hidden rather than shown-and-refused. The server refuses either
+              way; a menu item that always says no is a menu item that wastes
+              somebody's time twice a day. */}
+          {owner && (
+            <>
+              <a href="#/money" class={route.view === "money" ? "is-on" : undefined}>
+                {t("navMoney")}
+              </a>
+              <a href="#/shop" class={route.view === "shop" ? "is-on" : undefined}>
+                {t("navShop")}
+              </a>
+            </>
+          )}
         </nav>
 
         {/* Loaded only when asked for: the engine and the shop together are
@@ -199,6 +240,19 @@ function Screen() {
         >
           {demo === "loading" ? t("demoLoading") : demo === "on" ? t("demoLeave") : t("demoOn")}
         </button>
+
+        <span class="whoami">
+          {me.name}
+          <button
+            type="button"
+            onClick={async () => {
+              await fetch("/api/session", { method: "DELETE" });
+              setMe(null);
+            }}
+          >
+            {t("signOut")}
+          </button>
+        </span>
 
         <div class="langs" role="group" aria-label="Language">
           {LANGS.map((code) => (
@@ -238,7 +292,8 @@ function Screen() {
         </p>
       )}
 
-      {route.view === "shop" && (
+      {route.view === "shop" && !owner && <p class="failed">{t("ownerOnly")}</p>}
+      {route.view === "shop" && owner && (
         <section aria-labelledby="shop">
           <h2 id="shop" class="sr-only">
             {t("navShop")}
@@ -247,7 +302,8 @@ function Screen() {
         </section>
       )}
 
-      {route.view === "money" && (
+      {route.view === "money" && !owner && <p class="failed">{t("ownerOnly")}</p>}
+      {route.view === "money" && owner && (
         <section aria-labelledby="money">
           <h2 id="money" class="sr-only">
             {t("navMoney")}

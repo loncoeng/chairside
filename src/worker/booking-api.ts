@@ -102,7 +102,7 @@ export async function createBooking(
   if (!body || typeof body !== "object") return bad("本文が読み取れません。");
 
   const date = typeof body.date === "string" ? body.date : "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return bad("日付は YYYY-MM-DD で送ってください。");
+  if (!isDate(date)) return bad("日付は YYYY-MM-DD で送ってください。");
 
   // Two digits either side is not enough: "25:99" passes that and then gets
   // refused further down for crossing midnight, which tells whoever typed it
@@ -413,7 +413,7 @@ export async function updateBooking(
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("開始時刻の形式が違います。");
 
   const date = typeof body.date === "string" ? body.date : current.date;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return bad("日付は YYYY-MM-DD で送ってください。");
+  if (!isDate(date)) return bad("日付は YYYY-MM-DD で送ってください。");
 
   const serviceIds = Array.isArray(body.serviceIds)
     ? body.serviceIds.filter((sid): sid is number => Number.isInteger(sid))

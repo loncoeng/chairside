@@ -33,12 +33,19 @@ let realFetch: typeof fetch | null = null;
 /**
  * The session cookie, carried by hand.
  *
- * The demo answers requests with a Response object built in the page, and the
- * browser does not apply `Set-Cookie` from one of those — it never came off
- * the network. So the shim keeps the value and puts it back on the next
- * request, which leaves the router reading a Cookie header exactly as it does
- * in production. The alternative was a second way of holding a session, used
- * only by the demo, which is the kind of difference that makes a demo lie.
+ * The browser does not apply `Set-Cookie` from a Response the page built
+ * itself — it never came off the network. So the shim keeps the value and
+ * puts it back on the next request, which leaves the router reading a Cookie
+ * header exactly as it does in production.
+ *
+ * It is worse than the browser ignoring the header. **A page cannot even put
+ * `Set-Cookie` on a Response it constructs:** the name is forbidden on
+ * response-guarded headers, so the browser drops it at construction without
+ * saying anything. Node keeps it — which is why every test of this passed and
+ * the demo still could not sign in.
+ *
+ * So the cookie is minted here instead, from what the reply says, using the
+ * same issue() the router signs with. See keepSession below.
  */
 let demoCookie: string | null = null;
 
@@ -53,6 +60,46 @@ export const DEMO_LOGIN = { loginId: "aoi", password: "chairside-demo" };
  * to a copy of nothing, belonging to the person doing the forging.
  */
 const DEMO_SECRET = "demo-only-secret";
+
+/**
+ * What the demo's cookie should be after this exchange, or undefined to leave
+ * it as it was.
+ *
+ * Separate from the shim and exported so it can be tested, because the bug it
+ * exists for cannot be reproduced in Node: the browser drops `Set-Cookie`
+ * from a Response the page built, and Node does not. A test that read the
+ * header would pass here and fail there — which is what happened. So nothing
+ * here reads that header at all, and src/ui/demo.test.ts proves the demo
+ * signs in with no `Set-Cookie` anywhere in the exchange.
+ *
+ * The token is signed with the same issue() the router uses, and every later
+ * request is still checked by the real read(). What is stepped around is a
+ * browser rule about one header, not the session.
+ */
+export async function keepSession(
+  method: string,
+  pathname: string,
+  response: Response,
+): Promise<string | null | undefined> {
+  if (pathname !== "/api/session") return undefined;
+
+  // Signing out. The router clears the cookie by sending an empty one, which
+  // is the same header the browser will not let it send.
+  if (method === "DELETE") return null;
+  if (method !== "POST") return undefined;
+  if (!response.ok) return undefined;
+
+  const { COOKIE, issue } = await import("../db/session.ts");
+  const reply = (await response.clone().json()) as {
+    staff?: { id?: unknown; role?: unknown };
+  };
+
+  const id = reply.staff?.id;
+  const role = reply.staff?.role;
+  if (typeof id !== "number" || typeof role !== "string") return null;
+
+  return `${COOKIE}=${await issue(DEMO_SECRET, id, role)}`;
+}
 
 /**
  * Load SQLite, load the shop, and answer the API from here on.
@@ -89,11 +136,8 @@ export async function startDemo(onProgress?: (what: string) => void): Promise<vo
 
       const response = await route(db, carried, "demo", DEMO_SECRET);
 
-      const issued = response.headers.get("set-cookie");
-      if (issued !== null) {
-        const value = issued.split(";")[0] ?? "";
-        demoCookie = value.endsWith("=") ? null : value;
-      }
+      const kept = await keepSession(request.method, pathname, response);
+      if (kept !== undefined) demoCookie = kept;
 
       return response;
     }) as typeof fetch;

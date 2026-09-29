@@ -12,7 +12,7 @@
 // instance is.
 
 import { ok, strictEqual } from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 
 import { Window } from "happy-dom";
@@ -32,6 +32,19 @@ const JA = {
 
 const SQL = await initSqlJs();
 const SERVER_SECRET = "the-server-secret-for-these-tests";
+
+/**
+ * What this test needs on disk, and what to do about it.
+ *
+ * The demo is served here out of `public/`, where `npm run build` puts it. Run
+ * before that and the page asks for a database that is not there yet, the demo
+ * quietly fails, and the assertion further down says "still on the first
+ * screen" — which is true and tells nobody anything. This says it instead.
+ *
+ * It is also why the deploy builds before it tests.
+ */
+const NEEDED = ["public/demo.sqlite.gz", "public/sql-wasm-browser.wasm"];
+const missing = NEEDED.filter((file) => !existsSync(file));
 
 /**
  * The live instance: the schema, the shop's own rows, and no logins at all.
@@ -135,6 +148,23 @@ async function settle(times = 40): Promise<void> {
   for (let i = 0; i < times; i++) await new Promise((r) => setTimeout(r, 5));
 }
 
+/**
+ * Wait for the page to say something, rather than for a fixed number of ticks.
+ *
+ * The first version counted ticks. It was enough on the machine it was written
+ * on and not enough on CI, where loading half a megabyte of WebAssembly takes
+ * longer — so the test failed with "still on the first screen", which is what
+ * a real bug looks like too. A deadline and a reason keep the two apart.
+ */
+async function waitFor(what: string, ready: () => boolean, ms = 15_000): Promise<void> {
+  const until = Date.now() + ms;
+  while (Date.now() < until) {
+    if (ready()) return;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  throw new Error(`${what} — after ${ms}ms the page read: ${text().slice(0, 400)}`);
+}
+
 const text = (): string => (globalThis as unknown as { document: Document }).document.body.textContent ?? "";
 
 function button(label: string): HTMLElement | null {
@@ -146,6 +176,8 @@ function button(label: string): HTMLElement | null {
 }
 
 test("a visitor lands on the first screen, opens the demo, and stays in it", async () => {
+  ok(missing.length === 0, `run \`npm run build\` first — missing: ${missing.join(", ")}`);
+
   const web = browser();
   try {
     const { h, render } = await import("preact");
@@ -154,23 +186,25 @@ test("a visitor lands on the first screen, opens the demo, and stays in it", asy
     web.window.document.body.appendChild(root);
 
     render(h(App, null), root as never);
-    await settle();
 
     // The live instance has no accounts, so this is what anybody gets.
-    ok(text().includes(JA.demoOpen), `no invitation on the first screen: ${text().slice(0, 200)}`);
+    await waitFor("the first screen never appeared", () => text().includes(JA.demoOpen));
     ok(web.asked.includes("GET /api/session"), "the app never asked who was signed in");
 
     const open = button(JA.demoOpen);
     ok(open !== null, "there is no button to open the demo");
     open.click();
 
-    // Loading the engine, the database and signing in.
-    await settle(120);
-
-    // The booking screen. "予約" is the navigation; the calendar's own
-    // furniture is what says the day actually loaded.
-    ok(!text().includes(JA.demoOpen), "still on the first screen");
-    ok(text().includes(JA.demoLeave), `the way out is missing: ${text().slice(0, 300)}`);
+    // Loading the engine, the database, and signing in. The way out only
+    // exists on the booking screen, so this is both halves at once.
+    // A minute for this one: it is the engine, the database and the sign-in,
+    // and CI is slower than a laptop. Everything after it is already loaded,
+    // so the shorter default applies and a failure shows up quickly.
+    await waitFor(
+      "the demo never opened",
+      () => !text().includes(JA.demoOpen) && text().includes(JA.demoLeave),
+      60_000,
+    );
 
     // And it stays. The bug this is really for signed the visitor back out a
     // moment later, when a check sent before there was a session came back.
@@ -191,8 +225,8 @@ test("a visitor lands on the first screen, opens the demo, and stays in it", asy
     // Checked in the page rather than in the recorder above, because by now
     // startDemo has taken over fetch: /api/* no longer reaches the recorder,
     // which is exactly what the demo is for.
+    await waitFor("the seat columns never arrived", () => text().includes("A1"));
     const page = text();
-    ok(page.includes("A1"), `the seat columns are missing: ${page.slice(0, 300)}`);
     ok(!page.includes(JA.roomFailed), `the room failed to load: ${page.slice(0, 300)}`);
     ok(!page.includes(JA.dayFailed), `the day failed to load: ${page.slice(0, 300)}`);
 
@@ -203,14 +237,15 @@ test("a visitor lands on the first screen, opens the demo, and stays in it", asy
     const leave = button(JA.demoLeave);
     ok(leave !== null, "there is no way out of the demo");
     leave.click();
-    await settle();
-    ok(text().includes(JA.demoOpen), `leaving the demo did not go back: ${text().slice(0, 200)}`);
+    await waitFor("leaving the demo did not go back", () => text().includes(JA.demoOpen));
   } finally {
     web.done();
   }
 });
 
 test("nothing is asked of the API before somebody is signed in", async () => {
+  ok(missing.length === 0, `run \`npm run build\` first — missing: ${missing.join(", ")}`);
+
   // Every one of these came back 401 on the first screen and was never asked
   // for again, which left the calendar broken after a successful sign-in.
   const web = browser();

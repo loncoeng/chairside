@@ -92,6 +92,11 @@ function Screen() {
   // whoever is looking to the developer tools, and this failed on a missing
   // file whose name was in the error all along.
   const [demoWhy, setDemoWhy] = useState<string | null>(null);
+  // What the demo did, step by step, shown on the first screen if it ends up
+  // back there. Three rounds of this were spent guessing at a failure only a
+  // browser produced, from a screen that said nothing about it.
+  const [trail, setTrail] = useState<string[]>([]);
+  const note = useCallback((what: string) => setTrail((was) => [...was, what]), []);
   const [date, setDate] = useState(todayInShop);
   const [room, setRoom] = useState<Load<Room>>({ status: "loading" });
   const [day, setDay] = useState<Load<Day>>({ status: "loading" });
@@ -178,15 +183,22 @@ function Screen() {
   useEffect(() => {
     const stop = new AbortController();
     fetch("/api/session", { signal: stop.signal })
-      .then(async (r) => (r.ok ? ((await r.json()) as { staff?: Signed }).staff ?? null : null))
+      .then(async (r) => {
+        const staff = r.ok ? ((await r.json()) as { staff?: Signed }).staff ?? null : null;
+        // Only worth saying when it is the demo answering and the answer was
+        // no: that is the shape every version of this bug has taken.
+        if (source === "demo" && staff === null) note(`session recheck: HTTP ${r.status}`);
+        return staff;
+      })
       .then((staff) => {
         if (!stop.signal.aborted) setMe(staff ?? null);
       })
-      .catch(() => {
+      .catch((problem: unknown) => {
+        if (source === "demo") note(`session recheck threw: ${String(problem)}`);
         if (!stop.signal.aborted) setMe(null);
       });
     return () => stop.abort();
-  }, [revision, source]);
+  }, [revision, source, note]);
 
   useEffect(() => {
     const onHash = () => setRoute(readHash());
@@ -213,10 +225,11 @@ function Screen() {
   const openDemo = useCallback(async () => {
     setDemo("loading");
     setDemoWhy(null);
+    setTrail([]);
 
     let who: Signed | null = null;
     try {
-      await startDemo();
+      await startDemo(note);
 
       const response = await fetch("/api/session", {
         method: "POST",
@@ -224,6 +237,7 @@ function Screen() {
         body: JSON.stringify(DEMO_LOGIN),
       });
       const reply = (await response.json()) as { ok?: boolean; staff?: Signed };
+      note(`sign-in: HTTP ${response.status}${reply.staff ? ` as ${reply.staff.name}` : ""}`);
       if (!reply.ok || !reply.staff) throw new Error(`HTTP ${response.status}`);
       who = reply.staff;
     } catch (problem: unknown) {
@@ -237,7 +251,7 @@ function Screen() {
     setDemo("on");
     setMe(who);
     setRevision((n) => n + 1);
-  }, []);
+  }, [note]);
 
   const leaveDemo = useCallback(() => {
     stopDemo();
@@ -259,6 +273,7 @@ function Screen() {
         onOpenDemo={() => void openDemo()}
         demoState={demo}
         demoWhy={demoWhy}
+        trail={trail}
       />
     );
   }

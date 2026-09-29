@@ -26,6 +26,7 @@ export function SignIn({
   onOpenDemo,
   demoState,
   demoWhy,
+  trail,
 }: {
   /** Credentials to fill in and show, once the demo is running. */
   demo: { loginId: string; password: string } | null;
@@ -34,6 +35,8 @@ export function SignIn({
   onOpenDemo: (() => void) | null;
   demoState: "off" | "loading" | "on" | "failed";
   demoWhy: string | null;
+  /** What the demo did, if it did anything. Shown when it ended up back here. */
+  trail: string[];
 }) {
   const { t, lang, setLang } = useText();
   const [loginId, setLoginId] = useState(demo?.loginId ?? "");
@@ -156,6 +159,20 @@ export function SignIn({
         <p class="sign-in-demo">{t("demoCredentials", demo)}</p>
       ) : (
         <p class="said">{t("shopSignInNote")}</p>
+      )}
+
+      {/* If the demo ran and the visitor is reading this screen, something
+          went wrong after it started. This says what, on the screen, rather
+          than in a console nobody has open. */}
+      {trail.length > 0 && (
+        <details class="sign-in-trail" open>
+          <summary>{t("demoTrail")}</summary>
+          <ol>
+            {trail.map((step, at) => (
+              <li key={`${at}-${step}`}>{step}</li>
+            ))}
+          </ol>
+        </details>
       )}
     </main>
   );

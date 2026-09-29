@@ -148,19 +148,33 @@ reads — including a shop being shown the thing. The check after each deploy
 now asserts that the published password comes back 401, and signs its own
 token with the key it already holds instead (`scripts/mint-session.ts`).
 
+**Cookies do not work inside a page, in either direction.** Two releases went
+out learning this, one per direction, and Node reproduces neither.
+
 **A page cannot put `Set-Cookie` on a Response it builds.** The name is
 forbidden on response-guarded headers, so the browser drops it at construction
-and says nothing about it. Node keeps it. The demo learned its session by
-reading that header, which meant every test passed, the deploy went green, and
-signing in was impossible in a browser: the reply said `ok`, the next request
-came back 401, and the app went straight back to the sign-in screen.
+and says nothing. The demo learned its session by reading that header, so it
+could not sign in at all.
 
-The demo now mints the cookie itself from what the reply says, with the same
-`issue()` the router signs with, and `read()` still checks it on every request
-afterwards. What is stepped around is a browser rule about one header, not the
-session. `src/ui/demo.test.ts` strips `Set-Cookie` before anything sees it —
-which is what the browser does — so the assumption cannot come back; reverting
-the fix fails three of its four tests.
+**A page cannot put `Cookie` on a Request it builds either.** Also forbidden,
+also dropped in silence. With the first fixed, the demo signed in, minted a
+token, set it on the next request — and the browser removed it. Everything
+after the sign-in came back 401, and the app returned to the sign-in screen
+after showing the booking screen for a frame. Both times every test passed and
+the deploy was green.
+
+So the token is kept as a plain string and handed to `route()` as an argument.
+It changes where the token comes from and nothing about what is done with it:
+`read()` checks the signature and the expiry either way, and one handed in that
+does not verify gets exactly as far as one that arrived in a header. The Worker
+never passes it — production sends a real HttpOnly cookie over the network,
+where the browser applies it.
+
+`src/ui/demo.test.ts` now takes both rules away: every reply loses
+`Set-Cookie` and every request loses `Cookie`, which is what a browser does to
+a Response and a Request a page built. `src/ui/app.test.ts` drives the whole
+screen through the same conditions. Making the router ignore the argument fails
+four of them.
 
 **The demo is the front door.** It was behind a button in the header that only
 appeared once you were signed in, which made it unreachable for the one person

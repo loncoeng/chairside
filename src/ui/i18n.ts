@@ -279,6 +279,7 @@ export const TEXT = {
   },
   demoLeave: { ja: "デモを終了", zh: "結束示範", en: "Leave the demo" },
   demoOpen: { ja: "デモを開く", zh: "開啟示範", en: "Open the demo" },
+  demoTrail: { ja: "デモの経過", zh: "示範的過程", en: "What the demo did" },
   demoInvite: {
     ja: "架空の店の3か月ぶんのデータで、予約・カルテ・会計・売上まで一通り動きます。",
     zh: "以一間虛構店家三個月的資料，預約、紀錄、收款到營收都能實際操作。",

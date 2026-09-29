@@ -105,17 +105,37 @@ function Screen() {
   // Bumped after a booking goes in, to pull the day again.
   const [revision, setRevision] = useState(0);
 
+  /**
+   * What the data below belongs to: who is signed in, and to which database.
+   *
+   * Null means nobody, and every fetch waits. Without this the room was asked
+   * for once on mount — before anybody had signed in — came back 401, and was
+   * never asked for again, so the calendar stayed broken after a successful
+   * sign-in. Now the same sign-in that fills `me` refetches everything.
+   */
+  //
+  // Keyed on which database is answering, not on the demo's three states: the
+  // moment between pressing the button and the demo being ready is not a
+  // different data source, and treating it as one sent a session check out
+  // that came back after the sign-in had already happened.
+  const source = demo === "on" ? "demo" : "server";
+  const session = me == null ? null : `${me.id}:${source}`;
+
   useEffect(() => {
+    if (session === null) return;
     const stop = new AbortController();
     get<Room>("/api/room", stop.signal)
-      .then((value) => setRoom({ status: "ready", value }))
+      .then((value) => {
+        if (!stop.signal.aborted) setRoom({ status: "ready", value });
+      })
       .catch((error: unknown) => {
         if (!stop.signal.aborted) setRoom({ status: "failed", reason: String(error) });
       });
     return () => stop.abort();
-  }, []);
+  }, [session]);
 
   useEffect(() => {
+    if (session === null) return;
     const stop = new AbortController();
     Promise.all([
       get<Service[]>("/api/services", stop.signal),
@@ -129,32 +149,44 @@ function Screen() {
       // should not take the calendar down with it.
       .catch(() => undefined);
     return () => stop.abort();
-  }, [peopleRevision]);
+  }, [peopleRevision, session]);
 
   useEffect(() => {
+    if (session === null) return;
     const stop = new AbortController();
     setDay({ status: "loading" });
     get<Day>(`/api/day?date=${date}`, stop.signal)
-      .then((value) => setDay({ status: "ready", value }))
+      .then((value) => {
+        if (!stop.signal.aborted) setDay({ status: "ready", value });
+      })
       .catch((error: unknown) => {
         if (!stop.signal.aborted) setDay({ status: "failed", reason: String(error) });
       });
     return () => stop.abort();
-  }, [date, revision]);
+  }, [date, revision, session]);
 
   // Who is signed in, asked once on load and again whenever the data source
   // changes — switching the demo on is switching to a different database with
   // a different set of accounts.
+  //
+  // **The answer is dropped if this effect has been replaced.** A check that
+  // went out before there was a session to send comes back 401 a moment later,
+  // and without this it signed the visitor back out after they were already
+  // in: the booking screen appeared and the sign-in screen took its place.
+  // Only the failure path used to look at `aborted`, and a 401 is not a
+  // failure — it is an answer.
   useEffect(() => {
     const stop = new AbortController();
     fetch("/api/session", { signal: stop.signal })
       .then(async (r) => (r.ok ? ((await r.json()) as { staff?: Signed }).staff ?? null : null))
-      .then((staff) => setMe(staff ?? null))
+      .then((staff) => {
+        if (!stop.signal.aborted) setMe(staff ?? null);
+      })
       .catch(() => {
         if (!stop.signal.aborted) setMe(null);
       });
     return () => stop.abort();
-  }, [revision, demo]);
+  }, [revision, source]);
 
   useEffect(() => {
     const onHash = () => setRoute(readHash());
@@ -165,51 +197,54 @@ function Screen() {
   const go = useCallback((days: number) => setDate((d) => shiftDate(d, days)), []);
 
   /**
-   * Turn the demo on.
-   *
-   * Written once and used twice — from the first screen and from the header —
-   * because two copies of "load the engine, then the shop, then bump the
-   * views" drift, and the one that drifts is the one the visitor presses.
-   */
-  const enterDemo = useCallback(async (): Promise<boolean> => {
-    setDemo("loading");
-    setDemoWhy(null);
-    try {
-      await startDemo();
-      setDemo("on");
-      setRevision((n) => n + 1);
-      return true;
-    } catch (problem: unknown) {
-      setDemoWhy(String(problem));
-      setDemo("failed");
-      return false;
-    }
-  }, []);
-
-  /**
    * The large button on the first screen: load the demo, then sign into it.
    *
    * One press rather than two. It still goes through the real sign-in — the
-   * request is the same POST /api/session the shop makes, answered by the
-   * same router — so nothing here is a way round the login. It just knows the
-   * password, which is printed on the screen anyway.
+   * same POST /api/session the shop makes, answered by the same router — so
+   * nothing here is a way round the login. It just knows the password, which
+   * is printed on the screen anyway.
+   *
+   * **Every state change waits until the asking is done.** Flipping `demo` to
+   * "on" first set the effects above running against a database nobody had
+   * signed into yet, and their answers arrived after the sign-in and undid it.
+   * Ordering it this way leaves no moment when the demo is on and there is no
+   * session to go with it.
    */
   const openDemo = useCallback(async () => {
-    if (!(await enterDemo())) return;
+    setDemo("loading");
+    setDemoWhy(null);
 
-    const response = await fetch("/api/session", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(DEMO_LOGIN),
-    });
-    const reply = (await response.json()) as { ok?: boolean; staff?: Signed };
-    // Left on the sign-in screen with the details filled in if this fails,
-    // which is a screen somebody can act on.
-    if (reply.ok && reply.staff) {
-      setMe(reply.staff);
-      setRevision((n) => n + 1);
+    let who: Signed | null = null;
+    try {
+      await startDemo();
+
+      const response = await fetch("/api/session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(DEMO_LOGIN),
+      });
+      const reply = (await response.json()) as { ok?: boolean; staff?: Signed };
+      if (!reply.ok || !reply.staff) throw new Error(`HTTP ${response.status}`);
+      who = reply.staff;
+    } catch (problem: unknown) {
+      // The demo is left running if it loaded, so the sign-in form below can
+      // be used by hand with the details it prints. Only the reason is shown.
+      setDemoWhy(String(problem));
+      setDemo("failed");
+      return;
     }
-  }, [enterDemo]);
+
+    setDemo("on");
+    setMe(who);
+    setRevision((n) => n + 1);
+  }, []);
+
+  const leaveDemo = useCallback(() => {
+    stopDemo();
+    setDemo("off");
+    setMe(null);
+    setRevision((n) => n + 1);
+  }, []);
 
   if (me === undefined) return <main class="wide"><p class="lede">{t("loading")}</p></main>;
 
@@ -263,25 +298,15 @@ function Screen() {
           )}
         </nav>
 
-        {/* Loaded only when asked for: the engine and the shop together are
-            about half a megabyte, and somebody who just wants to read the
-            calendar should not pay for it. */}
-        <button
-          type="button"
-          class={`demo-toggle${demo === "on" ? " is-on" : ""}`}
-          disabled={demo === "loading"}
-          onClick={async () => {
-            if (demo === "on") {
-              stopDemo();
-              setDemo("off");
-              setRevision((n) => n + 1);
-              return;
-            }
-            await enterDemo();
-          }}
-        >
-          {demo === "loading" ? t("demoLoading") : demo === "on" ? t("demoLeave") : t("demoOn")}
-        </button>
+        {/* Only a way out. The demo is opened from the first screen, which is
+            where somebody who has not signed in actually is — and a shop
+            running this for real should not have a button that swaps its
+            database for an invented one. */}
+        {demo === "on" && (
+          <button type="button" class="demo-toggle is-on" onClick={leaveDemo}>
+            {t("demoLeave")}
+          </button>
+        )}
 
         <span class="whoami">
           {me.name}

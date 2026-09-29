@@ -28,12 +28,17 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Types
-        run: npm run check
-      - name: Tests
-        run: npm test
+      # Build first, then test. src/ui/app.test.ts mounts the real app and
+      # serves the real demo database and WebAssembly out of public/, which is
+      # where the build puts them — run the other way round and that test has
+      # nothing to serve.
+      #
+      # `npm run build` runs the type check itself, so there is no separate
+      # step for it.
       - name: Build
         run: npm run build
+      - name: Tests
+        run: npm test
 
       - uses: actions/setup-python@v5
         with:

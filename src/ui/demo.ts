@@ -31,23 +31,28 @@ let ready: Promise<Database> | null = null;
 let realFetch: typeof fetch | null = null;
 
 /**
- * The session cookie, carried by hand.
+ * The session token, carried by hand — and nowhere near a header.
  *
- * The browser does not apply `Set-Cookie` from a Response the page built
- * itself — it never came off the network. So the shim keeps the value and
- * puts it back on the next request, which leaves the router reading a Cookie
- * header exactly as it does in production.
+ * Cookies do not work here in either direction, and both directions cost a
+ * release to learn.
  *
- * It is worse than the browser ignoring the header. **A page cannot even put
- * `Set-Cookie` on a Response it constructs:** the name is forbidden on
- * response-guarded headers, so the browser drops it at construction without
- * saying anything. Node keeps it — which is why every test of this passed and
- * the demo still could not sign in.
+ * **A page cannot put `Set-Cookie` on a Response it constructs.** The name is
+ * forbidden on response-guarded headers, so the browser drops it at
+ * construction without saying anything.
  *
- * So the cookie is minted here instead, from what the reply says, using the
- * same issue() the router signs with. See keepSession below.
+ * **A page cannot put `Cookie` on a Request it constructs either.** That name
+ * is forbidden too. The demo signed in, minted a token, set it on the next
+ * request — and the browser quietly removed it, so everything after the
+ * sign-in came back 401 and the app returned to the sign-in screen.
+ *
+ * Node does both. Every test passed. Both times.
+ *
+ * So the token is kept here as a plain string and handed to route() as an
+ * argument. read() still checks the signature and the expiry, which is the
+ * part that matters; what is skipped is a browser rule about two header
+ * names, not the session.
  */
-let demoCookie: string | null = null;
+let demoToken: string | null = null;
 
 /** The account the demo signs in with. Invented, and printed on the screen. */
 export const DEMO_LOGIN = { loginId: "aoi", password: "chairside-demo" };
@@ -89,7 +94,7 @@ export async function keepSession(
   if (method !== "POST") return undefined;
   if (!response.ok) return undefined;
 
-  const { COOKIE, issue } = await import("../db/session.ts");
+  const { issue } = await import("../db/session.ts");
   const reply = (await response.clone().json()) as {
     staff?: { id?: unknown; role?: unknown };
   };
@@ -98,7 +103,8 @@ export async function keepSession(
   const role = reply.staff?.role;
   if (typeof id !== "number" || typeof role !== "string") return null;
 
-  return `${COOKIE}=${await issue(DEMO_SECRET, id, role)}`;
+  // The token itself, not a cookie line. Nothing here ever becomes a header.
+  return await issue(DEMO_SECRET, id, role);
 }
 
 /**
@@ -129,15 +135,12 @@ export async function startDemo(onProgress?: (what: string) => void): Promise<vo
 
       const { route } = await import("../worker/router.ts");
 
-      const carried = new Request(request, {
-        headers: new Headers(request.headers),
-      });
-      if (demoCookie !== null) carried.headers.set("cookie", demoCookie);
-
-      const response = await route(db, carried, "demo", DEMO_SECRET);
+      // The request goes through untouched, and the session is handed over
+      // beside it. Setting a Cookie header here is what the browser refuses.
+      const response = await route(db, request, "demo", DEMO_SECRET, demoToken);
 
       const kept = await keepSession(request.method, pathname, response);
-      if (kept !== undefined) demoCookie = kept;
+      if (kept !== undefined) demoToken = kept;
 
       return response;
     }) as typeof fetch;

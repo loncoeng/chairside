@@ -41,6 +41,21 @@ export async function route(
   request: Request,
   build: string,
   secret?: string,
+  /**
+   * The session token, when the caller cannot put it on the request.
+   *
+   * The Worker never passes this: the browser sends a Cookie header and
+   * tokenFrom reads it. The browser demo has to, because **`Cookie` is a
+   * forbidden request header** — a page may not set one on a Request it
+   * builds, and the browser drops it without a word. (Node keeps it, which is
+   * how this shipped twice.)
+   *
+   * It changes where the token comes from and nothing about what is done with
+   * it: read() checks the signature and the expiry either way, and a token
+   * handed in here that does not verify gets exactly as far as one that
+   * arrived in a header.
+   */
+  token?: string | null,
 ): Promise<Response> {
     const url = new URL(request.url);
 
@@ -62,13 +77,13 @@ export async function route(
         if (request.method === "POST") return await signIn(db, request, secret);
         if (request.method === "DELETE") return signOut();
         if (request.method === "GET") {
-          const open = await read(secret, tokenFrom(request));
+          const open = await read(secret, token ?? tokenFrom(request));
           return open ? await whoAmI(db, open.staffId) : json({ ok: false }, 401);
         }
         return json({ error: "method not allowed" }, 405);
       }
 
-      const session = await read(secret, tokenFrom(request));
+      const session = await read(secret, token ?? tokenFrom(request));
 
       if (!isOpen(url.pathname) && session === null) {
         return json({ error: "サインインしてください。" }, 401);

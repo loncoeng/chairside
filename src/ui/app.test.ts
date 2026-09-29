@@ -125,7 +125,12 @@ function browser() {
       }
     }
 
+    // The live instance, reached the way a browser reaches it. A page cannot
+    // set a Cookie header on a request it builds, so neither does this: the
+    // shop's own sign-in would arrive with one from the browser, but nothing
+    // on this path ever does.
     const request = input instanceof Request ? input : new Request(url, init);
+    ok(request.headers.get("cookie") === null, "a page cannot send a Cookie header");
     return await route(db, request, "test", SERVER_SECRET);
   }) as typeof fetch;
 

@@ -1129,6 +1129,18 @@ footer a:hover { color: var(--accent); border-color: var(--accent); }
 
 .sign-in > .said { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
 
+.sign-in-trail {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.sign-in-trail summary { cursor: pointer; }
+.sign-in-trail ol { margin: 0.4rem 0 0; padding-left: 1.4rem; }
+.sign-in-trail li { margin: 0.15rem 0; font-family: ui-monospace, monospace; }
+
 /* Who is signed in, and the way out. */
 .whoami { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--ink-soft); }
 .whoami button {

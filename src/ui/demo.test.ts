@@ -1,19 +1,25 @@
-// The demo's session, with no Set-Cookie anywhere.
+// The demo's session, with no cookie in either direction.
 //
-// This exists because of a bug Node cannot reproduce. The demo answers the API
-// from inside the page, and **a page cannot put `Set-Cookie` on a Response it
-// constructs** — the name is forbidden on response-guarded headers, so the
-// browser drops it at construction and says nothing. Node keeps it.
+// This exists because of two bugs Node cannot reproduce, one per release.
 //
-// So the first version of the demo read that header to learn its session. Every
-// test passed, the deploy was green, and signing in was impossible in a
-// browser: the cookie was never picked up, the next request came back 401, and
-// the app went straight back to the sign-in screen.
+// **A page cannot put `Set-Cookie` on a Response it constructs.** The name is
+// forbidden on response-guarded headers and the browser drops it at
+// construction, silently. The demo read that header to learn its session, so
+// it could not sign in at all — while every test passed.
 //
-// The test below therefore strips the header before anything looks at it —
-// which is what the browser does — and proves the demo still signs in and
-// stays signed in. Reading a header Node hands over and a browser does not is
-// exactly the assumption that broke, so nothing here reads one.
+// **A page cannot put `Cookie` on a Request it constructs either.** Also
+// forbidden, also dropped silently. With the first bug fixed, the demo signed
+// in, minted a token, set it on the next request — and the browser removed it.
+// Everything after the sign-in came back 401 and the app returned to the
+// sign-in screen, showing the booking screen for a frame on the way. Every
+// test passed again.
+//
+// Node does both, which is what made both of them invisible here. So this
+// harness takes both away — strips `Set-Cookie` off every reply and refuses to
+// carry a `Cookie` on any request — and proves the demo signs in and stays
+// signed in regardless. The token travels as an argument to route(), which is
+// what demo.ts does and the only part of this that is not the production
+// path.
 
 import { strictEqual, ok } from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -47,24 +53,23 @@ function database() {
 }
 
 /**
- * The demo's fetch, with the browser's rule about Set-Cookie applied.
+ * The demo's fetch, with both of the browser's cookie rules applied.
  *
- * Every reply is rebuilt without that header, so anything downstream that
- * depended on it fails here the way it fails in a browser.
+ * Requests lose any `Cookie` and replies lose any `Set-Cookie`, which is what
+ * a browser does to a Request and a Response a page built. Anything that
+ * depended on either fails here the way it failed there.
  */
 function browser(db: ReturnType<typeof database>) {
-  let cookie: string | null = null;
+  let token: string | null = null;
 
   return async function call(path: string, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers ?? {});
-    if (cookie !== null) headers.set("cookie", cookie);
+    // Whatever anybody put there, the browser would not have carried it.
+    headers.delete("cookie");
+    const sent = new Request(`https://demo.invalid${path}`, { ...init, headers });
+    strictEqual(sent.headers.get("cookie"), null, "the browser would have dropped this");
 
-    const answer = await route(
-      db,
-      new Request(`https://demo.invalid${path}`, { ...init, headers }),
-      "demo",
-      SECRET,
-    );
+    const answer = await route(db, sent, "demo", SECRET, token);
 
     const stripped = new Headers(answer.headers);
     stripped.delete("set-cookie");
@@ -72,10 +77,10 @@ function browser(db: ReturnType<typeof database>) {
       status: answer.status,
       headers: stripped,
     });
-    strictEqual(seen.headers.get("set-cookie"), null, "the browser would have dropped this");
+    strictEqual(seen.headers.get("set-cookie"), null, "the browser would have dropped this too");
 
     const kept = await keepSession(init.method ?? "GET", path, seen);
-    if (kept !== undefined) cookie = kept;
+    if (kept !== undefined) token = kept;
 
     return seen;
   };
@@ -87,7 +92,7 @@ const asJson = (body: unknown): RequestInit => ({
   body: JSON.stringify(body),
 });
 
-test("the demo signs in with no Set-Cookie in the exchange", async () => {
+test("the demo signs in with no cookie in either direction", async () => {
   const call = browser(database());
 
   // Nobody yet, which is the sign-in screen.
@@ -111,14 +116,15 @@ test("the wrong password still gets nobody in", async () => {
   strictEqual((await call("/api/room")).status, 401);
 });
 
-test("signing out of the demo puts the cookie back to nothing", async () => {
+test("signing out of the demo puts the session back to nothing", async () => {
   const call = browser(database());
   await call("/api/session", asJson(DEMO_LOGIN));
   strictEqual((await call("/api/room")).status, 200);
 
   await call("/api/session", { method: "DELETE" });
-  // The router signs out by sending an empty cookie — the same header the
-  // browser will not carry — so this is handled by method, not by reading it.
+  // The router signs out by sending an empty cookie — one of the two headers
+  // the browser will not carry — so this is handled by the method, not by
+  // reading anything back.
   strictEqual((await call("/api/room")).status, 401);
 });
 

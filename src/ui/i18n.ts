@@ -115,7 +115,10 @@ export const TEXT = {
   // What happened to this booking
   history: { ja: "変更の記録", zh: "更改記錄", en: "What has happened" },
   movedTimes: { ja: "この予約は {n} 回変更されています", zh: "這個預約已更改 {n} 次", en: "Moved {n} times" },
-  "event.created": { ja: "予約を取った", zh: "建立預約", en: "Booked" },
+  // Not 予約済み or 予約完了: both are the names of statuses — booked and
+  // done — so the log would read "予約済み" and then "予約済み → 完了".
+  // English had the same collision with "Booked".
+  "event.created": { ja: "予約を登録", zh: "建立預約", en: "Created" },
   "event.status": { ja: "{before} → {after}", zh: "{before} → {after}", en: "{before} → {after}" },
   "event.moved": { ja: "{before} から {after} へ変更", zh: "由 {before} 改為 {after}", en: "Moved from {before} to {after}" },
   "event.restaffed": { ja: "担当を {before} から {after} へ変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },

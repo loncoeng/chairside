@@ -133,3 +133,16 @@ INSERT OR REPLACE INTO records (id, customer_id, booking_id, formula, note, caut
   (3, 3, NULL, NULL,                                 'いつもどおり肩上。前髪は眉下', NULL,                          '2026-08-30'),
   (4, 5, NULL, 'ストレート剤 弱酸性 / 20min',        '既矯正部は避ける',             '過去に他店で強い薬剤。毛先が弱い', '2026-06-15'),
   (5, 9, NULL, NULL,                                 'English only. Prefers short.', NULL,                          '2026-09-06');
+
+-- One unscheduled closure, on a day that already has bookings.
+--
+-- The sample had none at all, which hid a fault in the notice above the
+-- calendar for weeks: the sentence was glued together out of fragments and
+-- only came out right for a plain closed day. Nobody saw it because nobody
+-- could get the screen to show it.
+--
+-- It also puts the rule on display rather than only in DESIGN.md: closing a
+-- day does not cancel what is booked on it. Forty-three people are still
+-- coming, and somebody has to ring them.
+INSERT OR REPLACE INTO closures (id, date, reason) VALUES
+  (1, '2026-09-25', '設備点検');

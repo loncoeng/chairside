@@ -76,8 +76,10 @@ export const TEXT = {
   // Days that are not ordinary
   closedDay: { ja: "定休日", zh: "休息日", en: "Closed" },
   closure: { ja: "臨時休業", zh: "臨時休息", en: "Closed today" },
-  butBooked: { ja: "ですが、予約が入っています。", zh: "，但仍有預約。", en: " — but there are bookings." },
-  fullStop: { ja: "です。", zh: "。", en: "." },
+  // A whole sentence, shown or not shown. The fragments this replaced were
+  // glued onto whatever came before them, which only worked for one of the
+  // four combinations.
+  bookedAnyway: { ja: "予約が入っています。", zh: "仍有預約。", en: "There are bookings." },
 
   // Taking a booking
   bookOn: { ja: "{date} に予約を取る", zh: "為 {date} 新增預約", en: "New booking on {date}" },
@@ -198,10 +200,12 @@ export const TEXT = {
   byMethod: { ja: "支払方法", zh: "付款方式", en: "By method" },
   byService: { ja: "メニュー別（件数）", zh: "服務別（次數）", en: "By service (count)" },
   noTakings: { ja: "この月の会計はまだありません。", zh: "這個月還沒有帳單。", en: "Nothing taken this month yet." },
+  // What the number means. Why it is worked out that way is in
+  // src/db/credit.ts, where anybody changing it will already be.
   takingsNote: {
-    ja: "会計は担当したスタイリストに付きます。シャンプーだけの来店は、担当したアシスタントに付きます。1件の会計を施術ごとに分けることはしていません。",
-    zh: "帳單歸於負責的髮型師；只洗頭的客人歸於負責的助理。一張帳單不會按服務拆分。",
-    en: "A bill belongs to the stylist who did the treatment; a wash on its own belongs to whoever did it. One bill is not split between its treatments.",
+    ja: "売上は担当したスタイリストに付きます（シャンプーのみの来店はアシスタント）。",
+    zh: "營業額歸於負責的髮型師（只洗頭的客人歸於助理）。",
+    en: "Takings belong to the stylist (a wash on its own, to the assistant).",
   },
   "method.cash": { ja: "現金", zh: "現金", en: "Cash" },
   "method.card": { ja: "カード", zh: "信用卡", en: "Card" },
@@ -258,10 +262,12 @@ export const TEXT = {
     zh: "已設為離職。之後仍有 {n} 個預約，請在預約畫面更改負責人。",
     en: "Marked as left. {n} bookings still stand — change who takes them on the booking screen.",
   },
+  // Two facts. This used to argue its own case, which is of no use to somebody
+  // who wants to know what to press. The reasoning is in DESIGN.md.
   nobodyDeleted: {
-    ja: "スタッフは削除できません。削除すると過去の予約から担当者が消え、スタイリスト別の売上が合わなくなるためです。退職は日付で記録します。",
-    zh: "員工不能刪除。刪除後過去的預約會失去負責人，髮型師別的營業額也會對不上。離職以日期記錄。",
-    en: "Nobody is deleted. Removing somebody takes them out of bookings that already happened and stops per-stylist takings adding up; leaving is recorded as a date.",
+    ja: "スタッフは削除できません。退職は日付で記録します。",
+    zh: "員工不能刪除，離職以日期記錄。",
+    en: "Nobody is deleted. Leaving is recorded as a date.",
   },
 
   // The demo

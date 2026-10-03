@@ -220,6 +220,13 @@ function Block({
  * Said above the grid rather than instead of it. An earlier version returned
  * this in place of the calendar, so a Monday the shop opened for a wedding
  * party showed "closed" and hid the bookings.
+ *
+ * The labels are labels and the sentence is a sentence. They used to be glued
+ * together out of fragments — a word, then "です。" or "ですが、予約が入って
+ * います。" — which read correctly for a closed day and fell apart everywhere
+ * else: a closure with a reason came out as 臨時休業：棚卸しです。, with the
+ * です attached to the reason, and a day that was both gave 定休日臨時休業：
+ * 棚卸しですが…. The sample has no closures in it, so nobody ever saw either.
  */
 function ClosedNotice({ day, hasBookings }: { day: Day; hasBookings: boolean }) {
   const { t } = useText();
@@ -230,10 +237,10 @@ function ClosedNotice({ day, hasBookings }: { day: Day; hasBookings: boolean }) 
       {day.closure && (
         <strong>
           {t("closure")}
-          {day.closure.reason ? `：${day.closure.reason}` : ""}
+          {day.closure.reason ? `（${day.closure.reason}）` : ""}
         </strong>
       )}
-      {hasBookings ? t("butBooked") : t("fullStop")}
+      {hasBookings && <span>{t("bookedAnyway")}</span>}
     </p>
   );
 }

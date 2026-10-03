@@ -15,6 +15,7 @@
 // Everything here loads on demand. A shop using this for real never fetches
 // any of it, and neither does a visitor who does not ask.
 
+import { todayInShop } from "./types.ts";
 import type { Database } from "../db/database.ts";
 
 /**
@@ -65,6 +66,70 @@ export const DEMO_LOGIN = { loginId: "aoi", password: "chairside-demo" };
  * to a copy of nothing, belonging to the person doing the forging.
  */
 const DEMO_SECRET = "demo-only-secret";
+
+/** A day is this many seconds; the file stores times in seconds, not milliseconds. */
+const DAY = 86_400;
+
+const asDate = (text: string): number => Date.parse(`${text}T00:00:00Z`);
+
+/**
+ * How far to move the sample so that the visitor's own today is a working day.
+ *
+ * **Always a whole number of weeks.** The shop closes on Mondays, and the
+ * sample has no bookings on one. Move it by three days and a Tuesday's work
+ * lands on the closed day, Wednesdays go quiet, and every rule about how busy
+ * a Saturday is becomes nonsense. A multiple of seven keeps the week's shape
+ * exactly as it was generated.
+ *
+ * The target is a week past today rather than today itself, so the calendar
+ * opens with something still to come as well as a month behind it — a salon
+ * with no future bookings is a salon in trouble, which is not what this is
+ * meant to show.
+ *
+ * Returns 0 when the sample is already far enough ahead. It never moves
+ * anything backwards: a demo built this morning should be left alone.
+ */
+export function weeksToShift(lastDay: string, today: string): number {
+  const behind = (asDate(today) - asDate(lastDay)) / (DAY * 1000) + 7;
+  if (behind <= 0) return 0;
+  return Math.ceil(behind / 7) * 7;
+}
+
+/**
+ * Move the sample forward, in place.
+ *
+ * The file is built once and the world keeps going. A demo opened a month
+ * later opened on an empty calendar, which reads as "this does not work"
+ * rather than "this data is from September". Everything moves together, so
+ * who comes back, who cancels late and what each visit cost are all still the
+ * same rows — nothing is regenerated and no rule is re-run.
+ *
+ * **Holidays do not move.** They are real days in a real calendar: 國慶日 is
+ * the first of October whatever this demo does.
+ */
+export function moveToNow(raw: {
+  run: (sql: string) => void;
+  exec: (sql: string) => { values: unknown[][] }[];
+}): void {
+  const found = raw.exec("SELECT max(date) FROM bookings")[0]?.values[0]?.[0];
+  if (typeof found !== "string") return;
+
+  const days = weeksToShift(found, todayInShop());
+  if (days === 0) return;
+
+  const seconds = days * DAY;
+  // date(x, '+N days') leaves NULL alone, which is what a guest with no first
+  // visit on file and a member of staff who has not left both need.
+  raw.run(`
+    UPDATE bookings SET date = date(date, '+${days} days'), created_at = created_at + ${seconds};
+    UPDATE booking_events SET at = at + ${seconds};
+    UPDATE payments SET paid_at = paid_at + ${seconds};
+    UPDATE records SET recorded_on = date(recorded_on, '+${days} days'), created_at = created_at + ${seconds};
+    UPDATE customers SET first_visit_on = date(first_visit_on, '+${days} days'), created_at = created_at + ${seconds};
+    UPDATE closures SET date = date(date, '+${days} days');
+    UPDATE staff SET joined_on = date(joined_on, '+${days} days'), left_on = date(left_on, '+${days} days');
+  `);
+}
 
 /**
  * What the demo's cookie should be after this exchange, or undefined to leave
@@ -187,6 +252,9 @@ async function build(onProgress?: (what: string) => void): Promise<Database> {
   // cancelling relies on cascades, and the references without one are there
   // to stop a delete rather than to follow it.
   raw.run("PRAGMA foreign_keys = ON");
+
+  // Today should be a working day, however long ago this file was built.
+  moveToNow(raw);
 
   onProgress?.("ready");
   return drizzle(raw) as unknown as Database;

@@ -121,13 +121,6 @@ export const TEXT = {
   "event.restaffed": { ja: "担当を {before} から {after} へ変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
   "event.edited": { ja: "内容を変更", zh: "內容已更改", en: "Edited" },
 
-  // The line at the bottom
-  designLink: {
-    ja: "設計と、作らなかったものの理由は DESIGN.md に書いてあります。",
-    zh: "設計與刻意未實作的部分，寫在 DESIGN.md。",
-    en: "The design, and what was left out on purpose, are in DESIGN.md.",
-  },
-
   // What a stylist charges. Not the same as what they do — somebody can be
   // promoted without their permissions changing.
   "grade.owner": { ja: "オーナー", zh: "店主", en: "Owner" },

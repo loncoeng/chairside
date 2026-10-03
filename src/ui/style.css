@@ -151,16 +151,6 @@ h2 {
   font-family: var(--mono);
 }
 
-footer {
-  border-top: 1px solid var(--rule);
-  padding-top: 1.25rem;
-  color: var(--ink-faint);
-  font-size: 0.8125rem;
-}
-
-/* No width here. `ch` is the width of a zero, so Japanese wraps at half the
-   intended count — and this is one sentence, which needs no limit at all. */
-footer p { margin: 0; }
 code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }
 
 /* The database not answering is a state the screen has to show, not hide.
@@ -994,9 +984,6 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
 .person .lede,
 section[aria-labelledby="room"] .lede { max-width: none; }
 
-footer p { margin: 0; font-size: 0.85rem; }
-footer a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule); }
-footer a:hover { color: var(--accent); border-color: var(--accent); }
 
 /* A number on its own does not say what it is for. */
 .person-phone { display: inline-flex; align-items: baseline; gap: 0.4rem; }

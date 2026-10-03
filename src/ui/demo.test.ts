@@ -141,3 +141,77 @@ test("the token the demo mints is one the router accepts", async () => {
   const body = (await room.json()) as { seats?: unknown[] };
   ok(Array.isArray(body.seats) && body.seats.length > 0, "the room came back empty");
 });
+
+// --- Moving the sample to the visitor's today -----------------------------
+//
+// The file is built once. Opened a month later it opened on an empty calendar,
+// which reads as "this does not work" rather than "this data is from
+// September" — so the whole sample is moved forward when it loads.
+//
+// The checks below run on the real file, because the thing that can go wrong
+// here is arithmetic against real dates: the shop closes on Mondays and the
+// sample has no bookings on one, so a shift of any size that is not a whole
+// number of weeks puts a Tuesday's work on the closed day.
+
+import { existsSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
+
+import { moveToNow, weeksToShift } from "./demo.ts";
+import { todayInShop } from "./types.ts";
+
+const DEMO_FILE = "public/demo.sqlite.gz";
+
+test("the sample is only ever moved forward, and only by whole weeks", () => {
+  for (const [last, today] of [
+    ["2026-09-30", "2026-10-03"],
+    ["2026-09-30", "2026-09-30"],
+    ["2026-09-30", "2027-03-01"],
+    ["2026-09-30", "2029-12-31"],
+  ]) {
+    const days = weeksToShift(last!, today!);
+    strictEqual(days % 7, 0, `${last} → ${today} moved by ${days} days, which is not whole weeks`);
+
+    const end = new Date(Date.parse(`${last}T00:00:00Z`) + days * 86_400_000);
+    const lead = (end.getTime() - Date.parse(`${today}T00:00:00Z`)) / 86_400_000;
+    ok(lead >= 7, `${today} would have only ${lead} days of bookings ahead of it`);
+  }
+});
+
+test("a sample that is already ahead is left alone", () => {
+  // A demo built this morning should not be shuffled about.
+  strictEqual(weeksToShift("2026-09-30", "2026-09-20"), 0);
+  strictEqual(weeksToShift("2026-09-30", "2026-01-01"), 0);
+});
+
+test("the real sample lands on the visitor's today, and not on the closed day", () => {
+  ok(existsSync(DEMO_FILE), `run \`npm run build\` first — missing: ${DEMO_FILE}`);
+
+  const raw = new SQL.Database(new Uint8Array(gunzipSync(readFileSync(DEMO_FILE))));
+  const one = (sql: string): unknown => raw.exec(sql)[0]?.values[0]?.[0];
+
+  const closed = one("SELECT weekday FROM business_hours WHERE closed = 1");
+  const before = one("SELECT min(date) FROM holidays WHERE date >= '2026-10-01'");
+
+  moveToNow(raw);
+
+  const today = todayInShop();
+  const last = String(one("SELECT max(date) FROM bookings"));
+  ok(last >= today, `the last booking is ${last}, which is behind today (${today})`);
+
+  // Nothing on the shop's day off. This is what a shift of three days would
+  // break, silently and plausibly.
+  strictEqual(
+    one(`SELECT count(*) FROM bookings WHERE strftime('%w', date) = '${String(closed)}'`),
+    0,
+    "bookings landed on the day the shop is shut",
+  );
+
+  // And today has a day's work in it, unless today is the day off.
+  const todayIsClosed = new Date(`${today}T00:00:00Z`).getUTCDay() === Number(closed);
+  const booked = Number(one(`SELECT count(*) FROM bookings WHERE date = '${today}'`));
+  if (todayIsClosed) strictEqual(booked, 0, "the shop is shut today and yet has bookings");
+  else ok(booked > 0, `today (${today}) came out empty`);
+
+  // Holidays are real days in a real calendar and do not move with the sample.
+  strictEqual(one("SELECT min(date) FROM holidays WHERE date >= '2026-10-01'"), before);
+});

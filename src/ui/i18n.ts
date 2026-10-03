@@ -281,9 +281,9 @@ export const TEXT = {
   demoOpen: { ja: "デモを開く", zh: "開啟示範", en: "Open the demo" },
   demoTrail: { ja: "デモの経過", zh: "示範的過程", en: "What the demo did" },
   demoInvite: {
-    ja: "架空の店の3か月ぶんのデータで、予約・カルテ・会計・売上まで一通り動きます。",
-    zh: "以一間虛構店家三個月的資料，預約、紀錄、收款到營收都能實際操作。",
-    en: "Three months of an invented shop: bookings, records, the till and the takings all work.",
+    ja: "架空の店の5週間ぶんのデータで、予約・カルテ・会計・売上まで一通り動きます。",
+    zh: "以一間虛構店家五週的資料，預約、紀錄、收款到營收都能實際操作。",
+    en: "Five weeks of an invented shop: bookings, records, the till and the takings all work.",
   },
   demoInBrowser: {
     ja: "すべてこのブラウザの中で動きます。サーバには何も送られず、操作が他の人に見えることもありません。",

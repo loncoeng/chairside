@@ -36,9 +36,10 @@
 * { box-sizing: border-box; }
 
 body {
-  /* 日本語は文節で折り返す。これが無いと「書いてありま / す。」のように
-     語の途中で切れる。対応していないブラウザでは従来どおりに折り返すだけ
-     なので、入れて損がない。 */
+  /* Japanese wraps at phrase boundaries rather than mid-word. Without this
+     a sentence breaks anywhere, including inside a word, which reads as a
+     typo. Browsers that do not know the value wrap as they always did, so
+     there is nothing to lose by asking. */
   word-break: auto-phrase;
   margin: 0;
   background: var(--ground);
@@ -77,8 +78,9 @@ h2 {
    that, so 46ch wrapped at roughly 23 characters and the summary came out
    three short lines in a very wide column. `em` tracks the font size and
    measures the same for all three languages. */
-/* 読みやすさのための幅。日本語は1行45文字前後が目安で、`em` は文字サイズ
-   そのものなので3言語とも同じ文字数で折り返す。1文だけの通知には掛けない。 */
+/* A readable line length. Around 45 characters is the usual advice for
+   Japanese, and `em` is the font's own size, so all three languages wrap at
+   about the same count. Not applied to a one-sentence notice. */
 .lede { color: var(--ink-soft); margin: 0 0 1.25rem; max-width: 45em; }
 
 .rows { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -156,8 +158,8 @@ footer {
   font-size: 0.8125rem;
 }
 
-/* 幅の指定はしない。`ch` は「0」1文字の幅で、日本語では半分の文字数で
-   折り返す。ここは1文だけなので、そもそも制限が要らない。 */
+/* No width here. `ch` is the width of a zero, so Japanese wraps at half the
+   intended count — and this is one sentence, which needs no limit at all. */
 footer p { margin: 0; }
 code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }
 
@@ -859,8 +861,8 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 
 .rows-n { text-align: right; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .rows-value { text-align: right; font-variant-numeric: tabular-nums; }
-/* 数行の注記ではなく1文なので、読み幅の制限より「折り返さない」ほうが読みやすい。
-   狭い画面では素直に折り返す。 */
+/* One sentence rather than a paragraph, so keeping it on a line reads better
+   than holding it to a reading width. On a narrow screen it wraps normally. */
 .money-note { font-size: 0.8rem; max-width: none; }
 
 /* The till, inside a booking. */

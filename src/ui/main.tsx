@@ -1,8 +1,8 @@
-// 画面の入口。
+// Where the screen starts.
 //
-// 第1段階では、まだデータベースに繋がない。**動いて公開されている状態**を
-// 先に作り、そこへ機能を足していく。一気に作って最後にデプロイすると、
-// 途中で詰まったときに何も残らない。
+// Stage one is not connected to a database. Something deployed and working
+// comes first, and the features go on top of it. Building the whole thing and
+// deploying at the end leaves nothing behind if it stalls halfway.
 
 import { render } from "preact";
 

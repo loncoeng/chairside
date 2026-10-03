@@ -1,7 +1,5 @@
 # chairside
 
-*[日本語版 / Japanese version](README.ja.md)*
-
 Booking and customer records for one hair salon in Macau — nine styling
 chairs, three shampoo stations, and the three currencies a salon there takes.
 

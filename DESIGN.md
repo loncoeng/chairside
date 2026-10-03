@@ -256,8 +256,3 @@ samples. Not "a real customer with the details changed."
 
 CI runs `publish-guard verify` so that a shop name, a person's name or an
 address cannot reach the history unnoticed.
-
----
-
-> The code comments in this repository are in English. The Japanese design
-> notes live in [DESIGN.ja.md](DESIGN.ja.md).

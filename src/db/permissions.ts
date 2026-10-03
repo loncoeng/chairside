@@ -27,19 +27,12 @@ export function isOpen(path: string): boolean {
 /**
  * Whether this role may make this request.
  *
- * Reading the customer list is allowed for everybody who works here: a
- * stylist checking what they did to somebody's hair last time is the job. So
- * is taking a booking, or ringing up a bill — an assistant on the phone does
- * both. Deleting is not something anybody can do, so it does not appear.
+ * Everybody who works here reads the customer list, takes a booking and rings
+ * up a bill. A role this file does not recognise gets nothing: a role renamed
+ * in the database and not here should stop working rather than pass.
  *
- * A role this file does not recognise gets nothing. Tokens are signed, so one
- * cannot arrive by being made up — but a role renamed in the database and not
- * here should stop working rather than pass.
- *
- * `method` earns its place in the signature, not in the body: no rule turns on
- * it yet, because the one line that matters runs between whole endpoints
- * rather than between reading and writing one. Adding a rule that does is a
- * line here, which is the point of the table.
+ * `method` is in the signature and not yet in the body — the line that
+ * matters runs between endpoints, not between reading and writing one.
  */
 export function mayReach(role: string, path: string, _method: string): boolean {
   if (!ROLES.includes(role)) return false;

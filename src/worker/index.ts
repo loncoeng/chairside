@@ -1,13 +1,8 @@
-// The Worker.
+// The Worker, and the only file here that names D1. It hands Cloudflare's
+// database to the router and gets out of the way.
 //
-// **The only file in the repository that names D1.** It takes the request,
-// hands Cloudflare's database to the router, and gets out of the way.
-//
-// Everything the router calls is typed against ../db/database.ts — any of
-// drizzle's SQLite databases — which is what lets the same code answer from a
-// SQLite file on a shop PC and from SQLite compiled to WebAssembly in a
-// visitor's browser. src/db/portable.test.ts runs those functions on sql.js
-// so the claim cannot rot quietly.
+// DESIGN.md, "One schema, three places to run it". src/db/portable.test.ts
+// runs the real queries on sql.js so that claim cannot rot quietly.
 
 import { drizzle } from "drizzle-orm/d1";
 

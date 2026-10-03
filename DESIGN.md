@@ -52,6 +52,28 @@ Registering a departure also **lists that person's future bookings and asks
 who takes them over.** Skip it and the gap is discovered on the day, at the
 chair. Unglamorous, and the single most useful thing in daily use.
 
+### A bill belongs to the stylist, not to whoever went first
+
+A visit is several treatments and they are not all done by the same person.
+The obvious rule — credit whoever did the first one — puts the month's takings
+on the assistant, because the first treatment is nearly always the shampoo and
+the assistant is nearly always the one doing it.
+
+It looked right. Every stylist had a number, the numbers added up to the
+month's total, and the assistant was quietly top of the list with three times
+anybody else's. Nothing about the screen said anything was wrong.
+
+So the bill goes to whoever did the treatment the guest came in for: the first
+one that occupies a styling chair. A wash on its own still belongs to the
+person who did it — somebody who only comes in for a shampoo was served by
+that person and nobody else.
+
+Splitting a bill between the stylist and the assistant would need a rule the
+shop has not been asked for, a share or a price per line, and inventing one
+would put numbers on a payslip that nobody agreed to. The rule is in
+`src/db/credit.ts` with six tests, rather than inside a join condition where
+nobody would find it.
+
 ### The shop sets the exchange rate
 
 MOP, HKD, CNY. Most shops in Macau work at 1:1:1; 1:1.03 turns up

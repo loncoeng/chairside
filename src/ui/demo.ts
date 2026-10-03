@@ -32,26 +32,14 @@ let ready: Promise<Database> | null = null;
 let realFetch: typeof fetch | null = null;
 
 /**
- * The session token, carried by hand — and nowhere near a header.
+ * The session token, carried by hand and nowhere near a header.
  *
- * Cookies do not work here in either direction, and both directions cost a
- * release to learn.
+ * A page cannot put `Cookie` on a Request it builds, or `Set-Cookie` on a
+ * Response — both names are forbidden and the browser drops them in silence,
+ * while Node keeps them. So the token is a plain string, handed to route() as
+ * an argument; read() still checks the signature and the expiry.
  *
- * **A page cannot put `Set-Cookie` on a Response it constructs.** The name is
- * forbidden on response-guarded headers, so the browser drops it at
- * construction without saying anything.
- *
- * **A page cannot put `Cookie` on a Request it constructs either.** That name
- * is forbidden too. The demo signed in, minted a token, set it on the next
- * request — and the browser quietly removed it, so everything after the
- * sign-in came back 401 and the app returned to the sign-in screen.
- *
- * Node does both. Every test passed. Both times.
- *
- * So the token is kept here as a plain string and handed to route() as an
- * argument. read() still checks the signature and the expiry, which is the
- * part that matters; what is skipped is a browser rule about two header
- * names, not the session.
+ * DESIGN.md, "Cookies do not work inside a page, in either direction".
  */
 let demoToken: string | null = null;
 
@@ -73,21 +61,12 @@ const DAY = 86_400;
 const asDate = (text: string): number => Date.parse(`${text}T00:00:00Z`);
 
 /**
- * How far to move the sample so that the visitor's own today is a working day.
+ * How far to move the sample so the visitor's own today is a working day.
  *
- * **Always a whole number of weeks.** The shop closes on Mondays, and the
- * sample has no bookings on one. Move it by three days and a Tuesday's work
- * lands on the closed day, Wednesdays go quiet, and every rule about how busy
- * a Saturday is becomes nonsense. A multiple of seven keeps the week's shape
- * exactly as it was generated.
- *
- * The target is a week past today rather than today itself, so the calendar
- * opens with something still to come as well as a month behind it — a salon
- * with no future bookings is a salon in trouble, which is not what this is
- * meant to show.
- *
- * Returns 0 when the sample is already far enough ahead. It never moves
- * anything backwards: a demo built this morning should be left alone.
+ * Always a whole number of weeks: the shop shuts on Mondays and the sample
+ * has nothing booked on one, so any other shift lands a Tuesday's work on the
+ * closed day. It aims a week past today, and returns 0 when the sample is
+ * already ahead — it never moves anything backwards.
  */
 export function weeksToShift(lastDay: string, today: string): number {
   const behind = (asDate(today) - asDate(lastDay)) / (DAY * 1000) + 7;

@@ -13,6 +13,7 @@ import { useEffect, useState } from "preact/hooks";
 import type { Line, Person, Status } from "./types.ts";
 import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
+import type { Key } from "./i18n.ts";
 import type { Service } from "./book.tsx";
 import { priceFor } from "./book.tsx";
 import { METHODS } from "../db/payment-methods.ts";
@@ -65,6 +66,19 @@ type Detail = {
 };
 
 /** The four a receptionist reaches for, plus the way back. */
+/**
+ * What a stored status is called on screen.
+ *
+ * The same table the buttons use, so the change log cannot drift away from
+ * them. Anything unrecognised is returned as it was: a value this screen does
+ * not know is better shown than swallowed.
+ */
+function statusName(value: string | null, t: (key: Key) => string): string {
+  if (value === null) return "—";
+  const known = MOVES.find((move) => move.status === value);
+  return known ? t(known.key) : value;
+}
+
 const MOVES: { status: Status; key: "markArrived" | "markDone" | "markCancelled" | "markNoShow" | "markBooked" }[] = [
   { status: "booked", key: "markBooked" },
   { status: "arrived", key: "markArrived" },
@@ -465,8 +479,12 @@ function History({ events, staff }: { events: Event[]; staff: Person[] }) {
                     after: nameOf(event.after),
                   })
                 : t(`event.${event.kind}`, {
-                    before: event.before ?? "—",
-                    after: event.after ?? "—",
+                    // A status change holds the stored value, which is
+                    // English and lower case. The log was printing it raw:
+                    // "booked → done" under buttons that said 予約済み and
+                    // 完了.
+                    before: statusName(event.before, t),
+                    after: statusName(event.after, t),
                   })}
             </span>
           </li>

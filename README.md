@@ -3,10 +3,13 @@
 *[日本語版 / Japanese version](README.ja.md)*
 
 Booking and customer records for one hair salon in Macau — nine styling
-chairs, three shampoo stations, and the three currencies the shop actually
-takes.
+chairs, three shampoo stations, and the three currencies a salon there takes.
 
 Replacing a spreadsheet that had grown a few macros.
+
+[**Try it**](https://chairside.loncoeng.workers.dev) — press "Open the demo" on
+the first screen and it runs entirely inside your browser. Nothing you do is
+visible to anybody else, and a reload puts it back.
 
 ---
 
@@ -91,8 +94,10 @@ npm run dev
 ## The demo, and the instance
 
 The page at the address above is the demo. Press **Open the demo** and the
-whole shop loads into your own browser: SQLite compiled to WebAssembly, three
-months of an invented salon, and the same router the Worker runs. Nothing is
+whole shop loads into your own browser: SQLite compiled to WebAssembly, five
+weeks of an invented salon, and the same router the Worker runs. The sample
+moves forward to meet the day you open it — by whole weeks, because the shop
+shuts on Mondays. Nothing is
 sent anywhere, nobody else sees what you do, and a reload puts it back.
 
 Underneath it is the sign-in a real shop uses, and **nothing opens it.** The

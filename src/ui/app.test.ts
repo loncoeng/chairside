@@ -222,15 +222,20 @@ test("a visitor lands on the first screen, opens the demo, and stays in it", asy
     await settle(80);
     ok(!text().includes(JA.demoOpen), "the demo signed the visitor back out");
 
-    // The calendar's own contents, which is the proof that the data was
-    // fetched with a session and not before. The seat columns come from
-    // /api/room and the day from /api/day, and both are refused to a visitor
-    // with no session — so their being here is the whole thing working.
+    // Proof that the data was fetched with a session and not before: the room
+    // summary comes from /api/room, which is refused to a visitor who has not
+    // signed in. Checked in the page rather than in the recorder above,
+    // because by now startDemo has taken over fetch — /api/* no longer
+    // reaches the recorder, which is exactly what the demo is for.
     //
-    // Checked in the page rather than in the recorder above, because by now
-    // startDemo has taken over fetch: /api/* no longer reaches the recorder,
-    // which is exactly what the demo is for.
-    await waitFor("the seat columns never arrived", () => text().includes("A1"));
+    // **Not the seat columns.** They were the first thing this waited for, and
+    // the test passed on the Saturday it was written and failed on the Monday
+    // after: the shop is shut on Mondays, so the grid has no bookings to draw
+    // and no column headers appear. The room summary is there whichever day it
+    // is, and says the same thing about the session.
+    // Japanese only, because browser() pins the language to it. Alternatives
+    // for the other two would be guesses nothing here exercises.
+    await waitFor("the room never loaded", () => /セット面\s*\d+\s*台/.test(text()));
     const page = text();
     ok(!page.includes(JA.roomFailed), `the room failed to load: ${page.slice(0, 300)}`);
     ok(!page.includes(JA.dayFailed), `the day failed to load: ${page.slice(0, 300)}`);

@@ -21,7 +21,7 @@
     "logins": "node scripts/make-logins.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.6.4",
     "@types/sql.js": "^1.4.11",
     "drizzle-kit": "^0.31.11",
     "happy-dom": "^20.14.5",

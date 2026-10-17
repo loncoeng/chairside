@@ -184,7 +184,7 @@ test("a sample that is already ahead is left alone", () => {
 });
 
 test("the real sample lands on the visitor's today, and not on the closed day", () => {
-  ok(existsSync(DEMO_FILE), `run \`npm run build\` first — missing: ${DEMO_FILE}`);
+  ok(existsSync(DEMO_FILE), `run \`npm run demo:db\` first — missing: ${DEMO_FILE}`);
 
   const raw = new SQL.Database(new Uint8Array(gunzipSync(readFileSync(DEMO_FILE))));
   const one = (sql: string): unknown => raw.exec(sql)[0]?.values[0]?.[0];

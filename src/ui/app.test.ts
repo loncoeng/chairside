@@ -36,12 +36,12 @@ const SERVER_SECRET = "the-server-secret-for-these-tests";
 /**
  * What this test needs on disk, and what to do about it.
  *
- * The demo is served here out of `public/`, where `npm run build` puts it. Run
- * before that and the page asks for a database that is not there yet, the demo
- * quietly fails, and the assertion further down says "still on the first
- * screen" — which is true and tells nobody anything. This says it instead.
- *
- * It is also why the deploy builds before it tests.
+ * The demo is served here out of `public/`, where `npm run demo:db` puts it.
+ * `npm test` runs that first, so this only fires when the tests are started
+ * some other way. Without it the page asks for a database that is not there,
+ * the demo quietly fails, and the assertion further down says "still on the
+ * first screen" — which is true and tells nobody anything. This says it
+ * instead.
  */
 const NEEDED = ["public/demo.sqlite.gz", "public/sql-wasm-browser.wasm"];
 const missing = NEEDED.filter((file) => !existsSync(file));
@@ -181,7 +181,7 @@ function button(label: string): HTMLElement | null {
 }
 
 test("a visitor lands on the first screen, opens the demo, and stays in it", async () => {
-  ok(missing.length === 0, `run \`npm run build\` first — missing: ${missing.join(", ")}`);
+  ok(missing.length === 0, `run \`npm run demo:db\` first — missing: ${missing.join(", ")}`);
 
   const web = browser();
   try {
@@ -254,7 +254,7 @@ test("a visitor lands on the first screen, opens the demo, and stays in it", asy
 });
 
 test("nothing is asked of the API before somebody is signed in", async () => {
-  ok(missing.length === 0, `run \`npm run build\` first — missing: ${missing.join(", ")}`);
+  ok(missing.length === 0, `run \`npm run demo:db\` first — missing: ${missing.join(", ")}`);
 
   // Every one of these came back 401 on the first screen and was never asked
   // for again, which left the calendar broken after a successful sign-in.

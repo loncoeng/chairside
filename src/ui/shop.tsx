@@ -1,9 +1,5 @@
-// The shop's own settings.
-//
-// Rarely opened, and the place where a mistake is quietest: an opening hour
-// typed wrong throws nothing, it just stops bookings being offered at six and
-// nobody notices for a week. So each save says what it did, and the ones with
-// consequences say what the consequence was.
+// Shop settings: opening hours, closures and staff.
+// Each save shows a confirmation, including side effects such as bookings left standing.
 
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
@@ -138,8 +134,7 @@ export function Shop() {
           ))}
         </ul>
 
-        {/* All seven at once. The shop thinks "we open at ten except Sunday",
-            and seven separate saves is seven chances to leave it half done. */}
+        {/* Saves all seven days at once. */}
         <div class="sheet-actions">
           <button
             type="button"
@@ -186,9 +181,7 @@ export function Shop() {
               });
               if (!reply) return;
               setCloseWhy("");
-              // Bookings on the day are not touched — ringing the guests is
-              // somebody's job, and it cannot be done if the appointments
-              // have been deleted. So the count is said out loud.
+              // Bookings on that day are kept (guests still need a call), so report the count.
               const standing = Number(reply.bookingsOnThatDay ?? 0);
               setSaid(standing > 0 ? t("closedWithBookings", { n: standing }) : t("closedSaved"));
             }}
@@ -296,7 +289,7 @@ function TeamRow({
     <li class={gone ? "is-gone" : undefined}>
       <span class="dot" style={{ background: person.color ?? "#888" }} aria-hidden="true" />
       <span class="team-name">{person.name}</span>
-      {/* What they may do, and what they charge — two different things. */}
+      {/* Role (permissions) and grade (price) are separate. */}
       <span class="role">{t(person.role as "stylist")}</span>
       <span class="grade">{t(`grade.${person.grade ?? "stylist2"}` as "grade.owner")}</span>
 

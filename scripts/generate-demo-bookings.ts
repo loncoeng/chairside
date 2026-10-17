@@ -1,26 +1,14 @@
-// Writes seed/demo-bookings.sql: about three months of invented bookings for
-// the public instance, with the history behind them.
+// Generates about three months of sample bookings, with history and payments, into seed/.
+// Every treatment is placed on a free seat and stylist, as the booking screen requires.
 //
-// Generated rather than typed out, for two reasons.
-//
-// A hand-written week puts two guests in one chair by the third day. This
-// places every treatment against a seat and a stylist that were actually
-// free, which is the same constraint the booking screen enforces — so the
-// sample data cannot contradict the rules the app is about.
-//
-// And the customers screen is only worth looking at if the guests behave like
-// guests. One of them reschedules constantly; one cancels the morning of; one
-// does not turn up. Those are the numbers that page exists to surface, and a
-// week of tidy bookings shows none of them.
-//
-// Run it with `npm run demo:bookings`. The output is committed.
+// Run with `npm run demo:bookings`. The output is committed.
 
 import { writeFileSync } from "node:fs";
 
-/** The window the sample covers. The last week is still ahead. */
+/** Date range of the sample. */
 const FROM = "2026-07-01";
 const TO = "2026-09-30";
-/** Anything on or after this is still to come, so it is booked rather than done. */
+/** Bookings on or after this date stay `booked`. */
 const TODAY = "2026-09-24";
 
 const OPEN: Record<number, [string, string]> = {
@@ -31,7 +19,7 @@ const OPEN: Record<number, [string, string]> = {
   5: ["10:00", "20:00"],
   6: ["10:00", "20:00"],
 };
-// Monday (1) is missing on purpose — the shop is closed.
+// Closed on Monday (1).
 
 const STYLING_SEATS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const SHAMPOO_SEATS = [10, 11, 12];
@@ -39,7 +27,7 @@ const STYLISTS = [1, 2, 3, 4, 5, 6, 7];
 const ASSISTANT = 8;
 
 type Service = { minutes: number; seat: "styling" | "shampoo"; price: number };
-/** Kept in step with seed/demo.sql. `price` is the flat one. */
+/** Must match seed/demo.sql. `price` is the flat price. */
 const SERVICE: Record<number, Service> = {
   1: { minutes: 45, seat: "styling", price: 450 },
   3: { minutes: 15, seat: "styling", price: 150 },
@@ -52,13 +40,7 @@ const SERVICE: Record<number, Service> = {
   10: { minutes: 40, seat: "shampoo", price: 680 },
 };
 
-/**
- * What each grade charges, where the person makes a difference.
- *
- * Same numbers as seed/demo.sql. A cut is 750 with the owner and 300 with a
- * junior, and a month of takings that ignored that would make the per-stylist
- * column meaningless — everybody would look the same but busier or quieter.
- */
+/** Per-grade prices for services that depend on the stylist. Must match seed/demo.sql. */
 const BY_GRADE: Record<number, Record<string, number>> = {
   1: { owner: 750, stylist1: 450, stylist2: 300 },
   5: { owner: 380, stylist1: 280, stylist2: 220 },
@@ -67,7 +49,7 @@ const BY_GRADE: Record<number, Record<string, number>> = {
   8: { owner: 2800, stylist1: 2200, stylist2: 1800 },
 };
 
-/** Who is what. Kept in step with seed/demo.sql. */
+/** Staff id to grade. Must match seed/demo.sql. */
 const GRADE: Record<number, string> = {
   1: "owner",
   2: "stylist1",
@@ -86,11 +68,8 @@ const priceOf = (serviceId: number, staffId: number | null): number => {
 };
 
 /**
- * What the shop takes, and how.
- *
- * All three at 1:1, which is what most shops in Macau work at. The rate is
- * copied onto the payment rather than looked up later, so a shop that changes
- * its policy does not move takings that have already happened.
+ * Accepted currencies and payment methods. All currencies at 1:1, as most Macau shops do.
+ * The rate is stored on each payment so a later policy change does not alter past takings.
  */
 const CURRENCIES: { code: string; weight: number }[] = [
   { code: "MOP", weight: 70 },
@@ -117,14 +96,8 @@ function weighted<T extends { weight: number }>(list: T[]): T {
 }
 
 /**
- * How the twelve invented guests behave.
- *
- * `every` is roughly how many days between visits; `usual` is the stylist
- * they ask for. The rest are the things the customers screen counts, given as
- * the chance of it happening on any one booking.
- *
- * Deliberately uneven. If everybody reschedules a little, the screen shows
- * twelve people who all look the same and the numbers say nothing.
+ * The twelve named guests. `every` is days between visits, `usual` the preferred stylist,
+ * the rest are per-booking probabilities. Deliberately uneven so the customers screen shows differences.
  */
 const GUESTS: {
   id: number;
@@ -142,32 +115,24 @@ const GUESTS: {
 }[] = [
   { id: 1, every: 30, usual: 3, menu: [4, 6, 1], moves: 0.1, cancels: 0.04, late: 0.3, noShow: 0 },
   { id: 2, every: 28, usual: 2, menu: [4, 1], moves: 0.05, cancels: 0.03, late: 0.2, noShow: 0 },
-  // Reschedules constantly. The one the screen should make obvious.
+  // Reschedules constantly.
   { id: 3, every: 13, usual: 4, menu: [4, 1], moves: 0.9, cancels: 0.1, late: 0.4, noShow: 0 },
   { id: 4, every: 38, usual: 6, menu: [4, 5], moves: 0.1, cancels: 0.05, late: 0.2, noShow: 0 },
   { id: 5, every: 34, usual: 5, menu: [4, 8], moves: 0.15, cancels: 0.05, late: 0.2, noShow: 0 },
-  // Cancels, and nearly always on the day.
+  // Cancels, usually on the day.
   { id: 6, every: 13, usual: 7, menu: [10, 1], moves: 0.2, cancels: 0.5, late: 0.9, noShow: 0 },
   { id: 7, every: 31, usual: 2, menu: [4, 1, 9], moves: 0.1, cancels: 0.04, late: 0.2, noShow: 0 },
   { id: 8, every: 21, usual: 3, menu: [3], moves: 0.08, cancels: 0.03, late: 0.2, noShow: 0 },
   { id: 9, every: 44, usual: 1, menu: [4, 1], moves: 0.12, cancels: 0.06, late: 0.3, noShow: 0 },
-  // Does not turn up. A different problem from cancelling, and counted apart.
+  // No-shows, counted separately from cancellations.
   { id: 10, every: 14, usual: 6, menu: [4, 1], moves: 0.15, cancels: 0.08, late: 0.5, noShow: 0.4 },
   { id: 11, every: 27, usual: 5, menu: [4, 6], moves: 0.1, cancels: 0.04, late: 0.2, noShow: 0 },
   { id: 12, every: 40, usual: 4, menu: [3], moves: 0.06, cancels: 0.04, late: 0.2, noShow: 0 },
 ];
 
 /**
- * The rest of the shop's book.
- *
- * Twelve guests is not a salon. Three months at this size is a few thousand
- * appointments, and if all but thirty of them have no name against them then
- * the customers screen has nothing to show and the day looks like it is run
- * for strangers.
- *
- * So the generator invents the rest of the clientele as well: surnames and
- * given names combined, mostly Cantonese with some Portuguese and Japanese,
- * which is what a salon in Macau looks like. None of them is anybody.
+ * Name pools for the other generated guests: mostly Cantonese, some Portuguese and
+ * Japanese, matching a Macau salon. All names are fictional.
  */
 const ZH_SURNAMES =
   "陳李黃張梁何吳劉蔡楊鄭謝許羅高林周葉朱馮曾徐胡盧邱蘇余潘杜江".split("");
@@ -202,12 +167,12 @@ const JA_GIVEN: [string, string][] = [
   ["美月", "mizuki"], ["陽向", "hinata"],
 ];
 
-/** How many invented guests the shop has on file, beyond the named twelve. */
+/** Number of generated guests beyond the named twelve. */
 const EXTRA_GUESTS = 240;
-/** The first id they take. The hand-written twelve keep 1 to 12. */
+/** First generated guest id. The named twelve use 1 to 12. */
 const EXTRA_FROM = 101;
 
-/** What everybody else books. Bulk, to fill the room. */
+/** Menus for the generated guests' bookings. */
 const WALK_IN_MENUS: { items: number[]; weight: number }[] = [
   { items: [4, 1], weight: 38 },
   { items: [4, 6], weight: 12 },
@@ -220,8 +185,7 @@ const WALK_IN_MENUS: { items: number[]; weight: number }[] = [
   { items: [4, 1, 9], weight: 7 },
 ];
 
-// A fixed sequence, so regenerating produces the same months. Math.random
-// would make every run a diff.
+// Seeded PRNG so regeneration is deterministic (Math.random would change the output every run).
 let seed = 20260701;
 function random(): number {
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
@@ -249,25 +213,10 @@ type Extra = { id: number; name: string; key: string; phone: string; since: stri
 
 const extras: Extra[] = [];
 
-/**
- * Invented names, and no two the same.
- *
- * The first version drew from twenty surnames and eight Portuguese pairs, and
- * produced nine Miguel Ferreiras out of 240 guests — 129 of them shared a
- * name with somebody else. A customer list where a name appears seven times
- * is not a list anybody can use, and searching it says nothing.
- *
- * The pools are bigger now, and a name already taken is drawn again.
- */
+/** Names already used. A duplicate is redrawn so customer search stays usable. */
 const takenNames = new Set<string>();
 
-/**
- * Which country the number belongs to.
- *
- * A salon in Macau has local guests, regulars over from Hong Kong, and
- * visitors from the mainland — three different dialling codes, and a number
- * with none of them on it cannot be rung from a phone.
- */
+/** Phone number formats: Macau, Hong Kong and mainland China. */
 const DIALLING: { code: string; weight: number; make: () => string }[] = [
   { code: "+853", weight: 72, make: () => `6${digits(3)} ${digits(4)}` },
   { code: "+852", weight: 20, make: () => `${pick(["9", "6", "5"])}${digits(3)} ${digits(4)}` },
@@ -284,9 +233,7 @@ for (let i = 0; i < EXTRA_GUESTS; i++) {
   let name = "";
   let key = "";
 
-  // Ten attempts, then take whatever came out. With roughly 1,200 possible
-  // names against 240 guests, ten is more than enough; the cap is only there
-  // so a shrunken pool cannot hang the build.
+  // About 1,200 possible names for 240 guests. The cap keeps a small pool from looping forever.
   for (let attempt = 0; attempt < 10; attempt++) {
     const roll = random();
 
@@ -361,13 +308,7 @@ function take(store: Map<string, Map<number, Span[]>>, date: string, id: number,
 let bookingId = 1;
 const placed: Placed[] = [];
 
-/**
- * Try to put a booking on a day.
- *
- * Returns null when there is nowhere for it, which is the honest outcome: the
- * room fills up, and a generator that forces a booking in anyway produces
- * sample data the app's own rules would reject.
- */
+/** Places a booking on the given day, or returns null when no seat and stylist are free. */
 function place(
   date: string,
   menu: number[],
@@ -402,8 +343,7 @@ function place(
           break;
         }
 
-        // A shampoo is done by whoever is free, often the assistant. The
-        // treatment itself stays with the stylist the guest came for.
+        // Shampoo often goes to the assistant; other treatments stay with the chosen stylist.
         const who = service.seat === "shampoo" && chance(0.6) ? ASSISTANT : stylist;
         if (!free(staffBusy, date, who, span)) {
           ok = false;
@@ -446,7 +386,7 @@ function place(
 }
 
 // ---------------------------------------------------------------------------
-// The twelve named guests first, so that their preferred times are available.
+// Named guests first, so their preferred times are still free.
 
 const bookingRows: string[] = [];
 const itemRows: string[] = [];
@@ -478,17 +418,14 @@ function record(
     );
   });
 
-  // Money only where the guest actually came. A cancelled booking has
-  // nothing behind it, and a row saying 0 would be counted as a visit that
-  // paid nothing rather than as a visit that did not happen.
+  // Payments only for completed visits. A 0 row would count as a paid visit.
   if (status === "done") {
-    // Priced by whoever did each line, which is the point of the grades.
+    // Priced by the grade of whoever did each line.
     const list = booking.items.reduce(
       (sum, item) => sum + priceOf(item.serviceId, item.staffId),
       0,
     );
-    // The list price is what the menu says. What was handed over is rounded,
-    // occasionally discounted, and sometimes a little more.
+    // Round to 10, with an occasional discount or surcharge.
     const roll = random();
     const adjusted = roll < 0.08 ? list * 0.9 : roll < 0.12 ? list + 50 : list;
     const amount = Math.round(adjusted / 10) * 10;
@@ -512,8 +449,7 @@ function record(
 }
 
 for (const guest of GUESTS) {
-  // Start them at a scattered point in the first interval, so twelve people
-  // do not all arrive in the same week.
+  // Random first visit within the first interval, so guests don't cluster.
   let date = addDays(FROM, Math.floor(random() * guest.every));
 
   while (date <= TO) {
@@ -528,7 +464,7 @@ for (const guest of GUESTS) {
     if (booking) {
       const history: { at: number; kind: string; before: string | null; after: string | null }[] = [];
 
-      // Taken somewhere between a fortnight and a day before.
+      // Booked 1 to 13 days ahead.
       const takenOn = addDays(booking.date, -(1 + Math.floor(random() * 13)));
       history.push({
         at: stamp(takenOn, "11:00"),
@@ -537,8 +473,7 @@ for (const guest of GUESTS) {
         after: `${booking.date} ${clock(booking.startsAt)}`,
       });
 
-      // Moves. The time it ended up at is the one in the row, so the earlier
-      // times are invented backwards from it.
+      // The final time is the one in the row, so earlier times are derived backwards from it.
       if (chance(guest.moves)) {
         const times = 1 + (chance(0.4) ? 1 : 0);
         let previous = clock(booking.startsAt - 15 * (times + 1));
@@ -567,8 +502,7 @@ for (const guest of GUESTS) {
         });
       } else if (chance(guest.cancels)) {
         status = "cancelled";
-        // On the day, or a comfortable few days out. The gap is the whole
-        // point of keeping `at`.
+        // Late (same day) or 3 to 7 days ahead.
         const when = chance(guest.late)
           ? { date: booking.date, time: clock(Math.max(9 * 60, booking.startsAt - 120)) }
           : { date: addDays(booking.date, -(3 + Math.floor(random() * 5))), time: "12:00" };
@@ -595,9 +529,7 @@ for (const guest of GUESTS) {
   }
 }
 
-// Everybody else, to fill the room. No history beyond being taken: these
-// stand for the shop's ordinary traffic, and giving all of them stories would
-// make the twelve who have one impossible to pick out.
+// Background traffic. Little history, so the named guests stand out.
 function weightedMenu(): number[] {
   const total = WALK_IN_MENUS.reduce((sum, m) => sum + m.weight, 0);
   let point = random() * total;
@@ -626,20 +558,14 @@ for (let date = FROM; date <= TO; date = addDays(date, 1)) {
     for (let attempt = 0; attempt < 3; attempt++) {
       if (random() > demandAt(Math.floor(at / 60)) * 0.5) continue;
 
-      // Everybody has a name here.
-      //
-      // A real salon does take walk-ins, and a booking with no customer
-      // against it is a case the screen has to handle — so it still says
-      // 「未登録」 rather than nothing. But a fifth of the demo arriving
-      // nameless made the calendar look broken rather than realistic, which
-      // is the wrong thing for a demo to show.
+      // Always attach a customer. The UI still handles none (shows 「未登録」), but
+      // many nameless bookings made the demo calendar look broken.
       const who = pick(extras).id;
       const booking = place(date, weightedMenu(), null, at, who, chance(0.45));
       if (!booking) continue;
 
       const takenOn = addDays(booking.date, -(1 + Math.floor(random() * 10)));
-      // Typed, or `before: null` narrows the whole array to null and the
-      // later pushes stop compiling.
+      // Explicit type: otherwise `before: null` narrows the array and later pushes fail to compile.
       const history: { at: number; kind: string; before: string | null; after: string | null }[] = [
         {
           at: stamp(takenOn, "11:00"),
@@ -649,8 +575,7 @@ for (let date = FROM; date <= TO; date = addDays(date, 1)) {
         },
       ];
 
-      // A little ordinary churn, so that the twelve with a story stand out
-      // against people rather than against a flat zero.
+      // A little ordinary rescheduling as a baseline.
       if (chance(0.07)) {
         history.push({
           at: stamp(addDays(booking.date, -3), "15:00"),
@@ -682,15 +607,7 @@ for (let date = FROM; date <= TO; date = addDays(date, 1)) {
 
 // ---------------------------------------------------------------------------
 
-/**
- * One INSERT per chunk of rows.
- *
- * Three thousand rows in a single statement is rejected outright:
- * `statement too long: SQLITE_TOOBIG`. The limit is on the statement, not on
- * the file, so the fix is to cut it up rather than to send less.
- *
- * Two hundred is well under it and keeps the file readable.
- */
+/** One INSERT per chunk of rows. A single 3,000-row statement fails with SQLITE_TOOBIG. */
 function inserts(into: string, columns: string, rows: string[], per = 100): string {
   const out: string[] = [];
   const br = String.fromCharCode(10);
@@ -702,13 +619,9 @@ function inserts(into: string, columns: string, rows: string[], per = 100): stri
 }
 
 /**
- * Written as several files, applied one after another.
- *
- * All of it in a single `wrangler d1 execute` reset the database's Durable
- * Object outright: `{"D1_RESET_DO":true}`. The limit is not on any one
- * statement — those are already cut to a hundred rows — but on how much one
- * call may carry. Smaller calls, with the delete first so that the inserts
- * never race the cascade.
+ * Split into several files applied in order. One large `wrangler d1 execute` call
+ * fails with `{"D1_RESET_DO":true}` (a per-call size limit, not per statement).
+ * The delete runs first so inserts never race the cascade.
  */
 const header = (what: string) => `-- Generated by scripts/generate-demo-bookings.ts. Do not edit by hand.
 --
@@ -805,10 +718,8 @@ ${inserts(
 )}
 `;
 
-// How many bookings this file puts in. The deploy reads it and skips the
-// whole thing when the database already holds exactly that many — a megabyte
-// of DELETE and INSERT on every push is a quarter of a day's free writes for
-// no change at all.
+// Booking count. The deploy skips reseeding when the database already has this many,
+// since a full reseed uses about a quarter of D1's free daily writes.
 writeFileSync(new URL("../seed/demo-bookings.count", import.meta.url), `${bookingRows.length}
 `);
 writeFileSync(new URL("../seed/demo-customers.sql", import.meta.url), customerSql);

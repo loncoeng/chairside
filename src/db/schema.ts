@@ -1,13 +1,5 @@
-// The table definitions. This is the only copy, and all three environments
-// use it:
-//
-//   Cloudflare Workers + D1        the shop's production
-//   Node + a SQLite file           if the shop keeps it on one PC
-//   SQLite in the browser (WASM)   the public demo
-//
-// D1 is SQLite underneath, so the schema and the queries carry across
-// unchanged. Choosing MySQL or PostgreSQL here would close off both the
-// on-premise option and the demo.
+// Table definitions, shared by D1 (production), Node + a SQLite file (on-premise)
+// and sql.js in the browser (demo). All three are SQLite.
 
 import { sql } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -15,63 +7,38 @@ import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-or
 const now = sql`(unixepoch())`;
 
 /**
- * Staff.
- *
- * **Never deleted.** Removing someone takes them out of bookings that already
- * happened, and per-stylist revenue stops adding up. People who have left
- * simply stop appearing as a choice on new bookings.
+ * Staff. Never deleted: past bookings and per-stylist revenue reference them.
+ * Set `leftOn` instead.
  */
 export const staff = sqliteTable(
   "staff",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
-    /** An owner sees settings and revenue; a stylist sees their own day. */
+    /** Access level. See permissions.ts. */
     role: text("role", { enum: ["owner", "stylist", "assistant"] }).notNull().default("stylist"),
     /**
-     * What they charge, which is not the same as what they do.
-     *
-     * A cut costs 750 with the owner, 450 with a senior stylist and 300 with
-     * a junior one. Guests choose partly on that, so it belongs on the person
-     * rather than being folded into the menu — and it is separate from
-     * `role`, because a stylist can be promoted without their permissions
-     * changing.
+     * Price tier (see `service_prices`). Separate from `role` so a promotion
+     * doesn't change permissions.
      */
     grade: text("grade", { enum: ["owner", "stylist1", "stylist2", "assistant"] })
       .notNull()
       .default("stylist2"),
     /** Colour on the calendar. */
     color: text("color"),
-    /**
-     * What they type to sign in. NULL for somebody who does not use the
-     * system — an assistant who never touches the screen still needs a row,
-     * because bookings point at them.
-     */
+    /** Sign-in name. null for staff who don't use the system but appear on bookings. */
     loginId: text("login_id"),
-    /**
-     * PBKDF2, salted, in the form `pbkdf2$<rounds>$<salt>$<hash>`.
-     *
-     * Never the password. The shop's own PC is shared by everybody in the
-     * room, and a stolen laptop should not hand over the staff's passwords
-     * along with the customer list.
-     */
+    /** Salted PBKDF2, `pbkdf2$<rounds>$<salt>$<hash>`. Never the plain password. */
     passwordHash: text("password_hash"),
     joinedOn: text("joined_on"),
-    /** NULL while they are still here. A date removes them from new bookings. */
+    /** null while employed. Once set, they are hidden from new bookings. */
     leftOn: text("left_on"),
     createdAt: integer("created_at").notNull().default(now),
   },
   (t) => [index("staff_left_on_idx").on(t.leftOn), uniqueIndex("staff_login_key").on(t.loginId)],
 );
 
-/**
- * Seats. The count and the ceiling differ by kind.
- *
- * There is only one more styling chair than there are stylists, and during a
- * colour's processing time one stylist occupies two of them. Shampoo stations
- * number three and are contested in the evening. Held together as one
- * undifferentiated "seat", that difference disappears.
- */
+/** Seats. Styling chairs and shampoo stations are counted separately for capacity. */
 export const seats = sqliteTable("seats", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
@@ -86,18 +53,14 @@ export const customers = sqliteTable(
   "customers",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    /** Held exactly as typed. Kanji, kana and Latin script all turn up. */
+    /** Stored as typed (kanji, kana or Latin). */
     name: text("name").notNull(),
-    /** A second spelling to search by — a reading, or Latin. Optional. */
+    /** Optional alternate spelling for search (a reading or romanisation). */
     searchKey: text("search_key"),
     phone: text("phone"),
-    /**
-     * Free text, one field. Macau addresses mix Portuguese and Chinese street
-     * names and a building-and-floor line that fits no form's columns; split
-     * into parts, the parts would be wrong more often than right.
-     */
+    /** Free text. Macau addresses mix Portuguese and Chinese and don't fit split fields. */
     address: text("address"),
-    /** YYYY-MM-DD. Optional; for a birthday-month offer, and for small talk. */
+    /** YYYY-MM-DD, optional. */
     birthday: text("birthday"),
     note: text("note"),
     firstVisitOn: text("first_visit_on"),
@@ -106,39 +69,26 @@ export const customers = sqliteTable(
   (t) => [index("customers_name_idx").on(t.name), index("customers_phone_idx").on(t.phone)],
 );
 
-/**
- * The menu. Names carry three languages.
- *
- * Interface strings belong in a dictionary file, but menu names are data the
- * shop types in, so they have to be columns rather than translations.
- */
+/** The menu. Names are shop-entered data, so each language is a column. */
 export const services = sqliteTable("services", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   nameJa: text("name_ja").notNull(),
   nameZh: text("name_zh"),
   nameEn: text("name_en"),
-  /** Default length in minutes, used when building a booking. */
+  /** Default duration in minutes. */
   durationMin: integer("duration_min").notNull().default(30),
-  /** Which kind of seat this occupies. NULL takes no seat at all. */
+  /** Seat kind this occupies; null for none. */
   seatKind: text("seat_kind", { enum: ["styling", "shampoo"] }),
   /**
-   * The list price when nobody's grade applies — a shampoo costs the same
-   * whoever does it. Where it does depend on the person, `service_prices`
-   * has a row per grade and this is the fallback.
-   *
-   * What was actually handed over lives in `payments`.
+   * Flat list price, and the fallback when `service_prices` has no row for the
+   * grade. Amounts actually paid are in `payments`.
    */
   price: real("price"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
-/**
- * Bookings.
- *
- * `source` exists so that adding online booking later is an addition rather
- * than a rewrite. Only `staff` is written today, but the column is there.
- */
+/** Bookings. Only `source = "staff"` is written today; the column is for online booking later. */
 export const bookings = sqliteTable(
   "bookings",
   {
@@ -153,7 +103,7 @@ export const bookings = sqliteTable(
     })
       .notNull()
       .default("booked"),
-    /** Requested by name, or whoever is free. Feeds commission and review. */
+    /** Whether the guest requested a specific stylist. */
     nominated: integer("nominated", { mode: "boolean" }).notNull().default(false),
     source: text("source", { enum: ["staff", "wechat", "phone", "online"] })
       .notNull()
@@ -161,18 +111,12 @@ export const bookings = sqliteTable(
     note: text("note"),
     createdAt: integer("created_at").notNull().default(now),
   },
-  // The calendar reads by date. Without this index the first year runs fine
-  // and the third year hits D1's examined-rows ceiling and stops.
+  // The calendar queries by date; without this index D1's rows-examined limit
+  // is eventually hit as bookings accumulate.
   (t) => [index("bookings_date_idx").on(t.date), index("bookings_customer_idx").on(t.customerId)],
 );
 
-/**
- * One line per treatment. A booking holds several.
- *
- * A single service per booking cannot express a stylist changing partway
- * through — starting another guest while a colour processes, which is
- * ordinary here. One-to-many from the start avoids rebuilding it later.
- */
+/** One row per treatment; a booking has several, possibly with different staff. */
 export const bookingItems = sqliteTable(
   "booking_items",
   {
@@ -194,10 +138,8 @@ export const bookingItems = sqliteTable(
 );
 
 /**
- * The currencies the shop takes, at the rate the shop sets.
- *
- * Not a market rate. Most shops in Macau work at 1:1:1 and 1:1.03 turns up
- * occasionally. Nothing is fetched, so this works offline.
+ * Accepted currencies at shop-set rates, not market rates (Macau shops commonly
+ * use 1:1, sometimes 1:1.03). Nothing is fetched, so it works offline.
  */
 export const currencies = sqliteTable("currencies", {
   code: text("code").primaryKey(),
@@ -207,13 +149,7 @@ export const currencies = sqliteTable("currencies", {
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
-/**
- * Payments.
- *
- * **The rate is copied in at the moment of payment.** Change the configured
- * rate later and past takings stay where they were. A record of money
- * received must not move after the fact.
- */
+/** Payments. The rate is copied at payment time so later rate changes don't alter past takings. */
 export const payments = sqliteTable(
   "payments",
   {
@@ -221,16 +157,12 @@ export const payments = sqliteTable(
     bookingId: integer("booking_id")
       .notNull()
       .references(() => bookings.id, { onDelete: "cascade" }),
-    /** What was handed over, in the currency it was handed over in. */
+    /** Amount in `currency`. */
     amount: real("amount").notNull(),
     currency: text("currency").notNull(),
-    /** A copy of the configured rate as it stood at the time. */
+    /** Snapshot of the configured rate at payment time. */
     rateToBase: real("rate_to_base").notNull(),
-    /**
-     * Macau takes more than cash and cards. MPay and BOC Pay are the two
-     * local wallets; WeChat and Alipay come over the border with the guests
-     * who use them.
-     */
+    /** MPay and BOC Pay are Macau wallets; WeChat Pay and Alipay are mainland. See payment-methods.ts. */
     method: text("method", {
       enum: ["cash", "card", "mpay", "boc", "wechat", "alipay"],
     })
@@ -241,12 +173,7 @@ export const payments = sqliteTable(
   (t) => [index("payments_booking_idx").on(t.bookingId), index("payments_paid_at_idx").on(t.paidAt)],
 );
 
-/**
- * Treatment records — the most valuable thing a salon keeps.
- *
- * "The same as last time" has to be answerable. This is most likely what the
- * spreadsheet was really for.
- */
+/** Treatment records (formulas, notes), used to repeat a previous treatment. */
 export const records = sqliteTable(
   "records",
   {
@@ -255,10 +182,10 @@ export const records = sqliteTable(
       .notNull()
       .references(() => customers.id, { onDelete: "cascade" }),
     bookingId: integer("booking_id").references(() => bookings.id),
-    /** Colour mix, perm solution and processing time, and so on. */
+    /** Colour mix, perm solution, processing time, etc. */
     formula: text("formula"),
     note: text("note"),
-    /** Allergies, a tender scalp — anything that belongs to the person. */
+    /** Allergies, sensitive scalp, etc. */
     caution: text("caution"),
     recordedOn: text("recorded_on").notNull(),
     createdAt: integer("created_at").notNull().default(now),
@@ -266,7 +193,7 @@ export const records = sqliteTable(
   (t) => [index("records_customer_idx").on(t.customerId)],
 );
 
-/** Opening hours, one row per weekday. Settings do not go in one big blob. */
+/** Opening hours, one row per weekday. */
 export const businessHours = sqliteTable(
   "business_hours",
   {
@@ -288,16 +215,9 @@ export const closures = sqliteTable("closures", {
 });
 
 /**
- * Holidays for Macau, Hong Kong and the mainland.
- *
- * `date-holidays` covers 207 countries and omits Macau. Nager.Date has no
- * Macau either and returns six entries for China against a real figure near
- * fifteen. Google's calendar feeds cover all three, so they are imported once
- * a year.
- *
- * `source` and `fetchedOn` record **what this came from and when**. Entering
- * a year with nothing on file puts a notice on screen rather than showing an
- * empty calendar.
+ * Macau, Hong Kong and mainland holidays, imported yearly from Google's calendar
+ * feeds (`date-holidays` and Nager.Date lack Macau; Nager has ~6 of ~15 for CN).
+ * A year with no rows shows a notice instead of an empty calendar.
  */
 export const holidays = sqliteTable(
   "holidays",
@@ -316,22 +236,9 @@ export const holidays = sqliteTable(
 );
 
 /**
- * What happened to a booking after it was taken.
- *
- * One row per change, never updated and never deleted. The booking itself
- * only ever shows its current state, and that state answers "when are they
- * coming" but not "how many times has this moved".
- *
- * **The second question is the one with a person behind it.** A guest who
- * reschedules three times a month, or cancels the morning of, is a pattern
- * the shop can see from the desk but cannot prove — and cannot hand to
- * whoever is covering for them. A booking that has been moved twice looks
- * exactly like one that was booked correctly the first time.
- *
- * `at` is when the change was made, which together with the booking's own
- * date and time says how much notice a cancellation gave. An hour before is
- * a different thing from a week before, and the row has to be able to tell
- * them apart later.
+ * Append-only change log per booking (never updated or deleted). Used to count
+ * moves and short-notice cancellations, which the booking row can't show.
+ * `at` is unix seconds when the change was made.
  */
 export const bookingEvents = sqliteTable(
   "booking_events",
@@ -344,34 +251,23 @@ export const bookingEvents = sqliteTable(
     kind: text("kind", {
       enum: ["created", "status", "moved", "restaffed", "edited"],
     }).notNull(),
-    /** What it was. NULL where there was nothing before. */
+    /** Previous value; null when there was none. */
     before: text("before"),
-    /** What it became. */
+    /** New value. */
     after: text("after"),
-    /**
-     * Who made the change. NULL until there is a way to sign in — the column
-     * exists now so that adding logins later is a change to one query rather
-     * than a migration over a year of history.
-     */
+    /** Staff who made the change; null when unknown. */
     byStaffId: integer("by_staff_id").references(() => staff.id),
   },
   (t) => [
     index("booking_events_booking_idx").on(t.bookingId),
-    // Counting how often one guest moves their bookings reads this by time.
+    // For counting a guest's changes over time.
     index("booking_events_at_idx").on(t.at),
   ],
 );
 
 /**
- * What a treatment costs with each grade of stylist.
- *
- * Only where it varies. A shampoo is a shampoo; a cut is 750 with the owner
- * and 300 with a junior, and the guest is choosing between those two things
- * when they book.
- *
- * Kept apart from `services` rather than adding four price columns to it:
- * the grades are the shop's to rename, and a table takes a new one without a
- * migration.
+ * Per-grade prices, only for services where price varies by stylist. A separate
+ * table so grades can change without a migration on `services`.
  */
 export const servicePrices = sqliteTable(
   "service_prices",

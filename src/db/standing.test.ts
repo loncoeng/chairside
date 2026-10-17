@@ -6,7 +6,7 @@ import { standingOf } from "./standing.ts";
 type Booking = { id: number; date: string; startsAt: string; status: string };
 type Event = { bookingId: number; at: number; kind: string; after: string | null };
 
-/** A unix time, given as the shop reads a clock. */
+/** Unix seconds from a local (+08:00) time. */
 const when = (iso: string) => Date.parse(`${iso}+08:00`) / 1000;
 
 test("a guest who simply comes has nothing against them", () => {
@@ -27,8 +27,6 @@ test("a guest who simply comes has nothing against them", () => {
 });
 
 test("every move is counted, including several on one booking", () => {
-  // The thing the shop notices about a guest is not that one booking moved;
-  // it is that their bookings keep moving.
   const s = standingOf(
     [{ id: 1, date: "2026-09-01", startsAt: "10:00", status: "done" }],
     [
@@ -43,8 +41,7 @@ test("every move is counted, including several on one booking", () => {
 });
 
 test("cancelling and putting it back is not a cancellation", () => {
-  // Somebody taps the wrong button. Counting the event rather than the
-  // booking's state would hold that against the guest forever.
+  // Counted from current status, not from events.
   const s = standingOf(
     [{ id: 1, date: "2026-09-01", startsAt: "10:00", status: "booked" }],
     [
@@ -67,8 +64,6 @@ test("a cancellation the morning of counts as short notice", () => {
 });
 
 test("a cancellation a week out does not", () => {
-  // "Cancels a lot" and "cancels the morning of" are different things to say
-  // about somebody, and the shop should be able to tell them apart.
   const s = standingOf(
     [{ id: 1, date: "2026-09-01", startsAt: "14:00", status: "cancelled" }],
     [{ bookingId: 1, at: when("2026-08-25T14:00:00"), kind: "status", after: "cancelled" }],
@@ -79,8 +74,7 @@ test("a cancellation a week out does not", () => {
 });
 
 test("exactly a day before is not short notice", () => {
-  // The boundary is decided rather than left to whichever comparison was
-  // typed first.
+  // Boundary: exactly 24 hours is not short notice.
   const s = standingOf(
     [{ id: 1, date: "2026-09-02", startsAt: "14:00", status: "cancelled" }],
     [{ bookingId: 1, at: when("2026-09-01T14:00:00"), kind: "status", after: "cancelled" }],
@@ -90,8 +84,7 @@ test("exactly a day before is not short notice", () => {
 });
 
 test("the last cancellation is the one measured", () => {
-  // Cancelled early, restored, cancelled again on the day. What the shop
-  // lost is the second one.
+  // Cancelled early, restored, cancelled again on the day.
   const s = standingOf(
     [{ id: 1, date: "2026-09-01", startsAt: "14:00", status: "cancelled" }],
     [
@@ -105,8 +98,7 @@ test("the last cancellation is the one measured", () => {
 });
 
 test("a cancellation with no event behind it is counted but not judged", () => {
-  // Rows imported from the shop's spreadsheet have no history. Guessing
-  // "short notice" from nothing would invent a fact about a person.
+  // Imported rows have no events, so short notice can't be judged.
   const s = standingOf(
     [{ id: 1, date: "2026-09-01", startsAt: "14:00", status: "cancelled" }],
     [],

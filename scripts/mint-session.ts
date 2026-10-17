@@ -1,12 +1,6 @@
-// A session token, printed, for a deploy check to use.
-//
-// The public instance has no account anybody can sign into — seed/logins.sql
-// is applied to the browser demo's database and not to D1 — so the check
-// after a deploy cannot sign in with a password. It does not need to: it
-// holds the signing key, which is more than a password would give it.
-//
-// This is the same issue() the Worker calls. A second way of making a token,
-// written for the check, would pass while the real one was broken.
+// Prints a session token for the post-deploy check. D1 has no login accounts
+// (seed/logins.sql only goes into the browser demo), so the check signs a token itself.
+// Uses the Worker's own issue() so the check exercises the real code path.
 //
 //   SESSION_SECRET=… node scripts/mint-session.ts <staffId> <role>
 

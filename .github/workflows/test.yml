@@ -5,16 +5,13 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-  # Called by deploy, so that nothing ships without passing first. Writing
-  # the same steps into deploy would let the two drift apart.
+  # Called by deploy.yml so nothing ships untested and the steps can't drift.
   workflow_call:
     secrets:
       FORBIDDEN_TERMS:
         required: false
 
-# The token this job is given. Without this block it gets the repository's
-# default, which is wider than anything here needs: nothing writes back to the
-# repository, and a step that is compromised should not be able to.
+# Read-only token: nothing writes to the repo, and a compromised step shouldn't be able to.
 permissions:
   contents: read
 
@@ -24,8 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # publish-guard reads the whole history, so a shallow clone would
-          # make the check meaningless.
+          # publish-guard scans the full history.
           fetch-depth: 0
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -34,9 +30,7 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # The build is here for its own sake: it runs the type check and proves
-      # the bundle still builds. The tests no longer depend on it — `npm test`
-      # makes the demo database and WebAssembly it serves out of public/.
+      # Type check and bundle. Tests don't need it: `npm test` builds the demo DB and wasm itself.
       - name: Build
         run: npm run build
       - name: Tests
@@ -46,13 +40,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The shop's name, the owner's name and the address must not reach the
-      # history. A public repository cannot carry that list in a committed
-      # config file — writing the terms down to forbid them would publish
-      # them — so they arrive from a secret and the config is built here.
-      #
-      # An unset secret skips the check loudly. Passing silently would be
-      # worse than failing.
+      # Identifying terms (shop, owner, address) come from a secret, since committing
+      # the list would publish it. An unset secret skips the check with a warning.
       - name: Nothing identifying in the history
         env:
           FORBIDDEN_TERMS: ${{ secrets.FORBIDDEN_TERMS }}
@@ -68,9 +57,7 @@ jobs:
           print("[forbidden]")
           print("terms = [")
           for t in terms:
-              # json.dumps escapes quotes and backslashes the way a TOML basic
-              # string needs. repr() with the quotes swapped looks like it does
-              # and breaks on the first term carrying either.
+              # json.dumps escapes quotes and backslashes as a TOML basic string needs; repr() does not.
               print("  " + json.dumps(t, ensure_ascii=False) + ",")
           print("]")
           PY

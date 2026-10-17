@@ -1,9 +1,5 @@
-// The day, as a grid: one column per seat, one row per quarter hour.
-//
-// Seats are the columns rather than stylists, because the seats are what runs
-// out. Nine styling chairs against eight stylists is almost never the
-// binding constraint; three shampoo stations against the same eight is, and
-// laying the room out this way puts that on screen instead of in a document.
+// Day view: one column per seat, one row per quarter hour.
+// Columns are seats, not stylists, because seats (especially shampoo stations) run out first.
 
 import type { Day, Line, Seat } from "./types.ts";
 import { HEADER_ROWS, STEP, clock, linesFor, place, span as gridSpan, usage } from "./layout.ts";
@@ -11,7 +7,7 @@ import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
 import type { Service } from "./book.tsx";
 
-/** The column for treatments that have no seat yet. */
+/** Column id for treatments with no seat. */
 const UNASSIGNED = -1;
 
 export function Calendar({
@@ -43,17 +39,14 @@ export function Calendar({
   const shampoo = seats.filter((s) => s.kind === "shampoo");
   const columns: { id: number; name: string; kind: string }[] = [...styling, ...shampoo];
 
-  // A treatment booked without a station is not an error and must not vanish.
-  // It gets a column of its own rather than being dropped, which is what the
-  // first version did: the booking went in, the API returned it, and the
-  // screen quietly had nowhere to put it.
+  // Treatments without a seat are valid and get their own column instead of being dropped.
   if (day.lines.some((line) => line.seatId === null)) {
     columns.push({ id: UNASSIGNED, name: t("unassigned"), kind: "unassigned" });
   }
 
   const column = new Map(columns.map((seat, index) => [seat.id, index + 2]));
 
-  // Runs of the same kind, for the band across the top.
+  // Runs of the same seat kind, for the group header row.
   const groups: { kind: string; label: string; from: number; count: number }[] = [];
   for (const seat of columns) {
     const last = groups[groups.length - 1];
@@ -69,8 +62,7 @@ export function Calendar({
     });
   }
 
-  // Every whole hour gets a label. Labelling every quarter turns the left
-  // edge into noise at the width this has to work at.
+  // Label whole hours only.
   const hourMarks: number[] = [];
   for (let at = Math.ceil(open / 60) * 60; at < close; at += 60) hourMarks.push(at);
 
@@ -87,10 +79,7 @@ export function Calendar({
         >
           <div class="cal-corner" style={{ gridRow: `1 / span ${HEADER_ROWS}` }} />
 
-          {/* Which group a column belongs to. "A1" and "S1" are made up —
-              a salon has no standard seat names, one numbers its mirrors and
-              another calls them by position — so the grid says it outright
-              instead of hoping the letter carries it. */}
+          {/* Seat kind header. Seat names have no standard, so the kind is spelled out. */}
           {groups.map((group) => (
             <div
               key={group.kind}
@@ -121,9 +110,7 @@ export function Calendar({
             </div>
           ))}
 
-          {/* One line across the whole row. Without it the eye cannot follow a
-              time across twelve columns. Kept as its own pass rather than a
-              fragment per hour, which would need a key on the fragment. */}
+          {/* Hour rules across all columns. A separate pass avoids keyed fragments. */}
           {hourMarks.map((at) => (
             <div
               key={`r${at}`}
@@ -176,17 +163,15 @@ function Block({
   line: Line;
   what: string;
   lines: 1 | 2 | 3;
-  /** What to show when the booking has nobody on file against it. */
+  /** Label for a booking with no customer. */
   noGuest: string;
-  /** What the star means, for a reader and for a screen reader. */
+  /** Accessible label for the nomination star. */
   nominatedLabel: string;
   onPick: (line: Line) => void;
   picked: boolean;
   style: Record<string, string | number>;
 }) {
-  // A button, not a div with a click handler: the grid has to be usable from
-  // the keyboard, and a booking screen that only works with a mouse is one
-  // more thing the desk has to reach for.
+  // A button so the grid is keyboard accessible.
   return (
     <button
       type="button"
@@ -210,23 +195,9 @@ function Block({
 }
 
 /**
- * Why the day is not a normal one.
- *
- * Three different things, said separately. A closed Monday is a rule, a
- * closure is a decision somebody made, and a holiday is information the shop
- * may well open through. "Closed" as a catch-all leaves whoever is looking
- * unable to tell them apart.
- *
- * Said above the grid rather than instead of it. An earlier version returned
- * this in place of the calendar, so a Monday the shop opened for a wedding
- * party showed "closed" and hid the bookings.
- *
- * The labels are labels and the sentence is a sentence. They used to be glued
- * together out of fragments — a word, then "です。" or "ですが、予約が入って
- * います。" — which read correctly for a closed day and fell apart everywhere
- * else: a closure with a reason came out as 臨時休業：棚卸しです。, with the
- * です attached to the reason, and a day that was both gave 定休日臨時休業：
- * 棚卸しですが…. The sample has no closures in it, so nobody ever saw either.
+ * Notice for a regular closed day and/or a one-off closure, shown above the
+ * grid (not instead of it) so bookings on that day stay visible. Labels and
+ * the sentence are separate strings; concatenating fragments breaks in Japanese.
  */
 function ClosedNotice({ day, hasBookings }: { day: Day; hasBookings: boolean }) {
   const { t } = useText();
@@ -245,7 +216,7 @@ function ClosedNotice({ day, hasBookings }: { day: Day; hasBookings: boolean }) 
   );
 }
 
-/** How full it gets, and when. The arithmetic is in layout.ts, under test. */
+/** Peak seat usage. The arithmetic is in layout.ts. */
 export function Peak({ day, seats }: { day: Day; seats: Seat[] }) {
   const { t } = useText();
   const counts = usage(day, seats);
@@ -253,8 +224,7 @@ export function Peak({ day, seats }: { day: Day; seats: Seat[] }) {
 
   return (
     <ul class="peak">
-      {/* What the star on a block means. A mark nobody can decode is a mark
-          that is not there — and on a phone there is no hover to explain it. */}
+      {/* Legend for the star (phones have no hover title). */}
       <li class="peak-key">
         <span class="cal-nom">★</span>
         {t("nominated")}

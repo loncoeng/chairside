@@ -1,9 +1,5 @@
-// Taking a booking. The only place in the API that writes.
-//
-// The rules live in ../db/booking-rules.ts and run here, next to the
-// database. The screen runs the same ones so it can warn before the round
-// trip, but a check that only happens in the browser is decoration — anything
-// that reaches this endpoint has to be judged again.
+// Booking endpoints. The rules in ../db/booking-rules.ts also run in the UI,
+// but the server re-checks every request.
 
 import { asc, eq, inArray } from "drizzle-orm";
 
@@ -25,13 +21,7 @@ import type { Draft, Existing } from "../db/booking-rules.ts";
 import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
-/**
- * The menu, for the booking form.
- *
- * Each treatment carries what it costs with each grade of stylist, where that
- * differs. A cut is 750 with the owner and 300 with a junior, and the screen
- * cannot show the guest a price without knowing who is doing it.
- */
+/** Active services with per-grade prices (`byGrade`, null when the price doesn't vary). */
 export async function menu(db: Db) {
   const [rows, graded] = await Promise.all([
     db
@@ -66,7 +56,7 @@ export async function menu(db: Db) {
   return rows.map((row) => ({ ...row, byGrade: byService.get(row.id) ?? null }));
 }
 
-/** The customer list, for picking one on the booking form. */
+/** Customer list for the booking form picker. */
 export async function customerList(db: Db) {
   return await db
     .select({ id: customers.id, name: customers.name, searchKey: customers.searchKey })
@@ -74,14 +64,7 @@ export async function customerList(db: Db) {
     .orderBy(asc(customers.name));
 }
 
-/**
- * What a client is allowed to send. Everything else on the row is decided
- * here.
- *
- * Durations come from the menu rather than the request: a client that asked
- * for a ten-hour cut would otherwise be given one, and every capacity check
- * downstream would be reasoning about a fiction.
- */
+/** Fields a client may send. Durations come from the menu, never the request. */
 type Proposal = {
   date?: unknown;
   customerId?: unknown;
@@ -104,9 +87,7 @@ export async function createBooking(
   const date = typeof body.date === "string" ? body.date : "";
   if (!isDate(date)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
 
-  // Two digits either side is not enough: "25:99" passes that and then gets
-  // refused further down for crossing midnight, which tells whoever typed it
-  // the wrong thing about what they did wrong.
+  // Strict range check, or "25:99" would be refused later as crossing midnight.
   const startsAt = typeof body.startsAt === "string" ? body.startsAt : "";
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("bad-start-time", "The start time is not in HH:MM form.");
 
@@ -127,8 +108,7 @@ export async function createBooking(
 
   const staffId = intOrNull(body.staffId);
 
-  // Lines run back to back from the start time, which is how a booking is
-  // taken at the desk: a shampoo, then the cut, then whatever follows.
+  // Treatments run back to back from the start time.
   let cursor = toMinutes(startsAt);
   const drafts: Draft[] = [];
   const plan: { serviceId: number; startsAt: string; endsAt: string }[] = [];
@@ -149,8 +129,7 @@ export async function createBooking(
     cursor = to;
   }
 
-  // A booking that runs past midnight is not a long appointment, it is a
-  // typo. Refusing here keeps the day's arithmetic from wrapping.
+  // Refuse past midnight so day arithmetic doesn't wrap.
   if (cursor >= 24 * 60) return bad("crosses-midnight", "Starting then, it would run past midnight.");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
@@ -160,8 +139,7 @@ export async function createBooking(
     return json({ ok: false, verdicts }, 409);
   }
 
-  // Warnings are shown, and only then accepted. Writing on the first attempt
-  // would mean the shop never reads them.
+  // Warnings must be confirmed with acceptWarnings before saving.
   if (verdicts.length > 0 && body.acceptWarnings !== true) {
     return json({ ok: false, verdicts, needsConfirmation: true }, 409);
   }
@@ -191,8 +169,7 @@ export async function createBooking(
       bookingId: created.id,
       serviceId: line.serviceId,
       staffId,
-      // Left unset on purpose. Which station it turns out to be is decided on
-      // the day — see the note on Draft.seatId.
+      // Assigned on the day. See Draft.seatId.
       seatId: null,
       startsAt: line.startsAt,
       endsAt: line.endsAt,
@@ -212,11 +189,8 @@ export async function createBooking(
 }
 
 /**
- * Everything already on the books that day.
- *
- * A treatment with no seat still occupies one of its kind, which is the whole
- * reason the capacity warning exists — so the service's kind stands in when
- * the seat is not chosen yet.
+ * Existing booking lines for a date. An unseated line still takes a seat of
+ * its kind, so the service's seat kind stands in for capacity checks.
  */
 async function existingOn(db: Db, date: string): Promise<Existing[]> {
   const rows = await db
@@ -293,11 +267,10 @@ function json(body: unknown, status = 200): Response {
 
 const bad = (code: string, message: string) => json({ ok: false, code, error: message }, 400);
 
-/** The statuses a booking can be moved to. */
 const STATUSES = ["booked", "arrived", "done", "cancelled", "no_show"] as const;
 type Status = (typeof STATUSES)[number];
 
-/** One booking, with its treatments, for the edit panel. */
+/** One booking with its items and history, for the edit panel. */
 export async function getBooking(db: Db, id: number) {
   const [booking] = await db
     .select({
@@ -332,8 +305,7 @@ export async function getBooking(db: Db, id: number) {
     .where(eq(bookingItems.bookingId, id))
     .orderBy(asc(bookingItems.sortOrder), asc(bookingItems.id));
 
-  // Oldest first: this is read as a story, and a story that starts at the end
-  // has to be read backwards.
+  // Oldest first.
   const history = await db
     .select({
       id: bookingEvents.id,
@@ -350,21 +322,8 @@ export async function getBooking(db: Db, id: number) {
 }
 
 /**
- * Change a booking.
- *
- * Two quite different things share this endpoint, and the difference matters:
- *
- *   a status change   the guest arrived, or did not. Nothing about the
- *                     schedule moves, so there is nothing to check.
- *   a reschedule      the time, the stylist or the treatments change. This
- *                     goes through the same rules as a new booking, with
- *                     the booking's own rows left out of the comparison —
- *                     otherwise moving it by fifteen minutes reads as a
- *                     clash with itself.
- *
- * **Nothing is ever deleted.** A booking that was cancelled is a fact about
- * the day: a slot was held and then freed, and a shop looking back at a quiet
- * Tuesday needs to be able to tell that from a Tuesday nobody called.
+ * Status change (no checks) or reschedule (same rules as a new booking, minus
+ * its own rows). Bookings are never deleted; cancelled ones stay in the history.
  */
 export async function updateBooking(
   db: Db,
@@ -378,24 +337,21 @@ export async function updateBooking(
   const current = await getBooking(db, id);
   if (!current) return json({ ok: false, code: "booking-not-found", error: "That booking was not found." }, 404);
 
-  // --- Just the status -----------------------------------------------------
+  // Status only.
 
   if (typeof body.status === "string") {
     if (!(STATUSES as readonly string[]).includes(body.status)) {
       return bad("bad-status", "That status is not valid.");
     }
 
-    // Any status to any status, on purpose. Somebody at the desk taps the
-    // wrong one, and a system that refuses to undo it is a system they work
-    // around. Cancelling frees the seat either way, because the rules read
-    // the status rather than the row's existence.
+    // Any transition is allowed so mis-taps can be undone. The rules read the
+    // status, so cancelling frees the seat.
     await db
       .update(bookings)
       .set({ status: body.status as Status })
       .where(eq(bookings.id, id));
 
-    // Recorded even when it is the same state coming round again, because
-    // "cancelled, then put back, then cancelled" is the thing worth seeing.
+    // Logged even when repeating a previous state.
     await db.insert(bookingEvents).values({
       bookingId: id,
       kind: "status",
@@ -407,7 +363,7 @@ export async function updateBooking(
     return json({ ok: true, bookingId: id, status: body.status });
   }
 
-  // --- A reschedule --------------------------------------------------------
+  // Reschedule.
 
   const startsAt = typeof body.startsAt === "string" ? body.startsAt : current.startsAt;
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("bad-start-time", "The start time is not in HH:MM form.");
@@ -430,20 +386,9 @@ export async function updateBooking(
   const byId = new Map(chosen.map((s) => [s.id, s]));
   if (serviceIds.some((sid) => !byId.has(sid))) return bad("unknown-service", "A treatment is not on the menu.");
 
-  /**
-   * Who does each treatment.
-   *
-   * A booking's lines do not all belong to the same person: an assistant
-   * shampoos and the stylist cuts, which is ordinary and is what the schema's
-   * per-line staff_id is for.
-   *
-   * So when the caller says nothing about the stylist, and the treatments are
-   * the same ones in the same order, each line keeps whoever had it. Moving a
-   * booking half an hour must not quietly reassign the shampoo.
-   *
-   * When the caller does name a stylist, or the treatments changed, there is
-   * nothing to carry over and one person takes the lot.
-   */
+  // Staff is per line (e.g. assistant shampoos, stylist cuts). If no staffId is sent
+  // and the services are unchanged, each line keeps its staff; otherwise one
+  // person takes every line.
   const sameServices =
     body.serviceIds === undefined ||
     (serviceIds.length === current.items.length &&
@@ -480,8 +425,7 @@ export async function updateBooking(
   if (cursor >= 24 * 60) return bad("crosses-midnight", "Starting then, it would run past midnight.");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
-  // Its own rows are left out, or moving a booking reads as a clash with the
-  // place it is moving from.
+  // Exclude its own rows so a move doesn't clash with itself.
   const verdicts = check(drafts, existing, room, { ignoreBookingId: id });
 
   if (blocked(verdicts)) return json({ ok: false, verdicts }, 409);
@@ -505,9 +449,7 @@ export async function updateBooking(
     })
     .where(eq(bookings.id, id));
 
-  // The lines are replaced rather than patched. Working out which of three
-  // rows became which of four is a great deal of code for a table that holds
-  // at most eight, and every version of that code has a case it gets wrong.
+  // Replace rather than diff the lines (at most eight).
   await db.delete(bookingItems).where(eq(bookingItems.bookingId, id));
   await db.insert(bookingItems).values(
     plan.map((lineItem, index) => ({
@@ -521,9 +463,7 @@ export async function updateBooking(
     })),
   );
 
-  // One row per thing that changed, rather than one row saying "edited".
-  // Counting how often a guest moves their appointment means counting moves,
-  // and a single catch-all kind would make that impossible to ask for.
+  // One event per kind of change, so moves can be counted.
   const changes: { kind: "moved" | "restaffed"; before: string; after: string }[] = [];
 
   if (date !== current.date || first.startsAt !== current.startsAt) {

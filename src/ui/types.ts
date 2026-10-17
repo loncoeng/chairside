@@ -1,13 +1,11 @@
-// What the API sends back. Written out here rather than inferred, because the
-// screen and the Worker are compiled separately and a shape that only exists
-// in one of them is how the two drift apart.
+// API response shapes. Written out by hand because the UI and the Worker compile separately.
 
 export type Seat = { id: number; name: string; kind: "styling" | "shampoo" };
 export type Person = {
   id: number;
   name: string;
   role: string;
-  /** What they charge. Separate from `role`, which is what they may do. */
+  /** Price grade. Separate from `role`, which sets permissions. */
   grade?: string;
   color: string | null;
 };
@@ -15,11 +13,7 @@ export type Room = { seats: Seat[]; staff: Person[] };
 
 export type Status = "booked" | "arrived" | "done" | "cancelled" | "no_show";
 
-/**
- * One treatment, not one booking. A guest who is shampooed and then cut
- * appears twice, on two different seats — which is the thing a single row
- * per booking could not say.
- */
+/** One treatment, not one booking. A booking may have several, on different seats. */
 export type Line = {
   itemId: number;
   bookingId: number;
@@ -64,12 +58,7 @@ export function shiftDate(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/**
- * Today in the shop's time, not the visitor's.
- *
- * Someone looking at this from Tokyo or Lisbon should see the shop's day.
- * Macau does not observe daylight saving, so a fixed +8 stays correct.
- */
+/** Today's date in Macau (fixed UTC+8, no daylight saving), not the visitor's zone. */
 export function todayInShop(): string {
   return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }

@@ -1,12 +1,5 @@
-// The claim this repository makes in its README is that one schema and one
-// set of queries run in three places: Cloudflare's D1, a SQLite file on a
-// shop PC, and SQLite compiled to WebAssembly in a browser.
-//
-// A claim like that rots quietly. Somebody reaches for a D1-only method, it
-// works in production, and the sentence in the README stays true-looking for
-// a year. So the queries are run here against sql.js — the same engine the
-// browser demo uses, and not D1 by any stretch — and if that stops working
-// this test says so.
+// Runs the real queries on sql.js (the browser demo's engine) to catch D1-only
+// code. The README claims the same queries run on D1, a SQLite file and sql.js.
 
 import { deepStrictEqual, strictEqual, ok } from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -22,12 +15,11 @@ import { shopSettings } from "../worker/shop-api.ts";
 
 const SQL = await initSqlJs();
 
-/** The schema and a handful of rows, built in memory. */
+/** In-memory database with all migrations and some sample rows. */
 function database() {
   const raw = new SQL.Database();
 
-  // Every migration, not a list to keep up to date. A list gets out of step
-  // and the test then checks last month's schema.
+  // Read every migration from disk rather than a hand-kept list.
   for (const name of readdirSync("migrations").filter((n) => n.endsWith(".sql")).sort()) {
     for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
       if (statement.trim() !== "") raw.run(statement);
@@ -80,12 +72,10 @@ test("the menu reads on sql.js, prices and all", async () => {
   strictEqual(rows.length, 2);
   strictEqual(rows[0]?.nameJa, "カット");
 
-  // A cut costs 750 with the owner and 300 with a junior. The menu carries
-  // both, because the screen cannot price a booking without knowing who is
-  // doing it.
+  // Per-grade prices, since the price depends on who does the cut.
   strictEqual(rows[0]?.byGrade?.owner, 750);
   strictEqual(rows[0]?.byGrade?.stylist2, 300);
-  // A shampoo is a shampoo — no rows, and the flat price stands.
+  // No per-grade rows: the flat price applies.
   strictEqual(rows[1]?.byGrade, null);
   strictEqual(rows[1]?.price, 180);
 });
@@ -112,8 +102,7 @@ test("searching finds by the second spelling", async () => {
 });
 
 test("the month's takings add up, and go to the stylist", async () => {
-  // The shampoo is first and the assistant did it; the bill belongs to Aoi.
-  // This is the rule from credit.ts, reached through the real query.
+  // The assistant's shampoo is first, but credit.ts gives the bill to Aoi.
   const month = await revenue(database(), "2026-08");
   strictEqual(month.total, 400);
   strictEqual(month.bills, 1);

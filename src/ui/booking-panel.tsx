@@ -1,13 +1,5 @@
-// One booking, opened by clicking it on the grid.
-//
-// What the desk does with an existing booking is almost always one of four
-// things — they arrived, they are finished, they cancelled, they never came —
-// so those are buttons rather than a menu. Moving the time is the rarer case
-// and sits below.
-//
-// Nothing here deletes. A booking that was cancelled is a fact about the day:
-// a slot was held and then freed, and a shop looking back at a quiet Tuesday
-// needs to tell that apart from a Tuesday nobody called.
+// Panel for one booking: status buttons, payment, reschedule and history.
+// Nothing is deleted; cancellations and no-shows stay on record as statuses.
 
 import { useEffect, useState } from "preact/hooks";
 import type { Line, Person, Status } from "./types.ts";
@@ -65,20 +57,14 @@ type Detail = {
   payments: Payment[];
 };
 
-/** The four a receptionist reaches for, plus the way back. */
-/**
- * What a stored status is called on screen.
- *
- * The same table the buttons use, so the change log cannot drift away from
- * them. Anything unrecognised is returned as it was: a value this screen does
- * not know is better shown than swallowed.
- */
+/** Display name for a stored status, from the same table as the buttons. Unknown values pass through. */
 function statusName(value: string | null, t: (key: Key) => string): string {
   if (value === null) return "—";
   const known = MOVES.find((move) => move.status === value);
   return known ? t(known.key) : value;
 }
 
+/** Status buttons. */
 const MOVES: { status: Status; key: "markArrived" | "markDone" | "markCancelled" | "markNoShow" | "markBooked" }[] = [
   { status: "booked", key: "markBooked" },
   { status: "arrived", key: "markArrived" },
@@ -130,11 +116,8 @@ export function BookingPanel({
         setMovingTo(found.startsAt);
         setStaffId(found.items[0]?.staffId ?? null);
 
-        // The list price of what was booked, as a starting figure. It is the
-        // menu's number, not the bill: discounts and rounding happen, and
-        // what gets stored is what was handed over.
-        // Priced by whoever actually did each line, which is why the grade
-        // lives on the person rather than on the booking.
+        // Prefill with the list price; the stored amount is what was actually paid.
+        // Each line is priced by its own stylist's grade.
         const listed = found.items.reduce((sum, item) => {
           const service = services.find((sv) => sv.id === item.serviceId);
           const grade = staff.find((p) => p.id === item.staffId)?.grade ?? null;
@@ -220,8 +203,7 @@ export function BookingPanel({
   }
 
   const stopped = verdicts.some((v) => v.level === "stop");
-  // Only what actually changed is sent, so that the server can keep each
-  // line's own stylist when the stylist was not the thing being changed.
+  // Send only changed fields so the server keeps per-line stylists when the stylist isn't edited.
   const moved = detail !== null && movingTo !== detail.startsAt;
   const restaffed = detail !== null && staffId !== (detail.items[0]?.staffId ?? null);
 
@@ -229,10 +211,7 @@ export function BookingPanel({
     <div class="sheet" role="dialog" aria-label={t("bookingDetail")}>
       <div class="sheet-head">
         <h3>
-          {/* Once it has loaded, the booking's own times. The block that was
-              clicked is one treatment out of several — its 17:15 is not when
-              the guest arrives, and showing it beside the full list read as
-              two different bookings. */}
+          {/* Prefer the booking's times over the clicked treatment's once loaded. */}
           {detail?.customerName ?? line.customerName ?? t("noGuest")}
           <span class="sheet-when">
             {detail ? `${detail.startsAt}–${detail.endsAt}` : `${line.startsAt}–${line.endsAt}`}
@@ -279,8 +258,7 @@ export function BookingPanel({
             ))}
           </div>
 
-          {/* Taking payment finishes the visit — there is no separate paid
-              state, which is what the shop asked for. */}
+          {/* Taking payment finishes the visit. There is no separate paid status, by the shop's request. */}
           {detail.status !== "cancelled" && detail.status !== "no_show" && (
             <div class="till">
               {detail.payments.length > 0 ? (
@@ -375,9 +353,6 @@ export function BookingPanel({
               </label>
             </div>
 
-            {/* Sent only when changed. A booking whose shampoo is done by an
-                assistant keeps that, as long as the stylist is not what is
-                being edited. */}
             <div class="sheet-actions">
               {needsConfirmation && !stopped ? (
                 <button
@@ -438,14 +413,7 @@ export function BookingPanel({
   );
 }
 
-/**
- * What has happened to this booking.
- *
- * The count is said first. Reading five lines and working out that three of
- * them are moves is the reader doing the arithmetic; "moved three times" is
- * the thing they wanted to know, and it is what makes a guest who reschedules
- * constantly visible to whoever is covering the desk today.
- */
+/** Change log for a booking, with the number of moves shown in the summary. */
 function History({ events, staff }: { events: Event[]; staff: Person[] }) {
   const { t, lang } = useText();
   const moves = events.filter((e) => e.kind === "moved").length;
@@ -479,10 +447,7 @@ function History({ events, staff }: { events: Event[]; staff: Person[] }) {
                     after: nameOf(event.after),
                   })
                 : t(`event.${event.kind}`, {
-                    // A status change holds the stored value, which is
-                    // English and lower case. The log was printing it raw:
-                    // "booked → done" under buttons that said 予約済み and
-                    // 完了.
+                    // Stored statuses are raw English values ("booked"); translate them.
                     before: statusName(event.before, t),
                     after: statusName(event.after, t),
                   })}

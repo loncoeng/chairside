@@ -14,14 +14,11 @@ test("a password checks against its own hash and nothing else", async () => {
 });
 
 test("the same password hashes differently every time", async () => {
-  // Salted. Two people who choose the same password must not have the same
-  // row, or cracking one cracks both.
+  // Salted.
   notStrictEqual(await hashPassword("same"), await hashPassword("same"));
 });
 
 test("somebody with no password set cannot sign in", async () => {
-  // Not "signs in with an empty one". That is the difference between an
-  // account that is not ready and an account anybody can use.
   strictEqual(await checkPassword("", null), false);
   strictEqual(await checkPassword("anything", null), false);
   strictEqual(await checkPassword("", ""), false);
@@ -46,7 +43,6 @@ test("a token signed with another secret is nobody", async () => {
 });
 
 test("changing the role in a token invalidates it", async () => {
-  // The whole reason the role can live in the token rather than in a lookup.
   const token = await issue(SECRET, 3, "stylist");
   const forged = token.replace("stylist", "owner");
   notStrictEqual(forged, token);
@@ -56,14 +52,11 @@ test("changing the role in a token invalidates it", async () => {
 test("an expired token is nobody", async () => {
   const token = await issue(SECRET, 3, "owner");
   const [staffId, role, , signature] = token.split(".");
-  // Same signature, a past expiry: the signature covers the expiry, so this
-  // fails on the signature — which is the point.
+  // The signature covers the expiry, so this fails signature verification.
   strictEqual(await read(SECRET, `${staffId}.${role}.${Date.now() - 1000}.${signature}`), null);
 });
 
 test("no secret means nobody is signed in, rather than everybody", async () => {
-  // The version that returns "probably fine" when the secret is unset is the
-  // version that ships with the secret unset.
   const token = await issue(SECRET, 3, "owner");
   strictEqual(await read(undefined, token), null);
   strictEqual(await read("", token), null);

@@ -1,6 +1,4 @@
-// The arithmetic behind the grid, kept out of the component so it can be
-// tested. Whether the blocks look right needs eyes; whether they land on the
-// right rows does not.
+// Calendar grid arithmetic, kept out of the component so it can be unit tested.
 
 import type { Day, Line, Seat } from "./types.ts";
 import { minutesOf } from "./types.ts";
@@ -9,25 +7,15 @@ import { minutesOf } from "./types.ts";
 export const STEP = 15;
 
 /**
- * Rows above the treatments: the kind of seat, then the seat itself.
- *
- * "A1" and "S1" are made up. A salon does not have industry-standard seat
- * names — one numbers its mirrors, another calls them by position — so the
- * grid says which group a column belongs to rather than relying on the letter
- * to carry it.
+ * Header rows: seat kind, then seat name. Seat names have no standard, so the
+ * kind gets its own row instead of relying on a prefix letter.
  */
 export const HEADER_ROWS = 2;
 
 /**
- * When the grid starts and ends.
- *
- * Opening hours where there are any, widened to cover anything booked outside
- * them. Where there are none — a Monday the shop opened anyway — the bookings
- * themselves decide.
- *
- * A day with a booking on it has to be able to show that booking. Returning
- * "closed, nothing to see" hides the very thing somebody opened the day to
- * look at, and the booking screen deliberately lets such bookings be made.
+ * Grid range in minutes: opening hours widened to whole hours covering every
+ * booking. On a closed day the bookings alone decide, since bookings on closed
+ * days are allowed and must stay visible.
  */
 export function span(day: Day): { open: number; close: number } {
   const { opensAt, closesAt, closed } = day.hours;
@@ -45,17 +33,9 @@ export function span(day: Day): { open: number; close: number } {
 }
 
 /**
- * Where a treatment sits in the grid.
- *
- * The header takes the first rows, so the first quarter hour is the one after
- * them. Anything running past closing is clipped rather than pushed outside
- * the grid, where CSS would silently stretch the last row to hold it.
- *
- * The height rounds **up**. A twenty-minute shampoo drawn as fifteen is a
- * block that ends before the guest does, and it left the name with nowhere to
- * sit — two lines of text in one row's worth of space, sliced through the
- * middle. Overstating by five minutes is the safe direction on a calendar
- * anyway: nobody is double-booked by a block that looks too long.
+ * Grid row and span for a treatment (1-based, after the header rows). Clipped
+ * to the range, since CSS would otherwise stretch the last row to fit. Height
+ * rounds up so a 20-minute block isn't drawn shorter than the treatment.
  */
 export function place(
   line: Pick<Line, "startsAt" | "endsAt">,
@@ -71,15 +51,9 @@ export function place(
 }
 
 /**
- * How many lines of text a block has room for.
- *
- * Worked out rather than guessed: a row is 1.3rem, the text is 0.72rem at
- * 1.25 line height, and a block loses about 4px to padding and borders. A
- * quarter-hour block therefore holds one line and no more.
- *
- * Getting this wrong does not look like a bug. It looks like a name with its
- * bottom half sliced off, which reads as a rendering glitch rather than as
- * too much text in too small a box.
+ * Lines of text that fit in a block of `span` rows. A row is 1.3rem, text is
+ * 0.72rem at 1.25 line height, minus ~4px padding and borders, so one row
+ * holds one line.
  */
 export function linesFor(span: number): 1 | 2 | 3 {
   if (span <= 1) return 1;
@@ -89,27 +63,20 @@ export function linesFor(span: number): 1 | 2 | 3 {
 
 export type Usage = {
   kind: "styling" | "shampoo";
-  /** The most seats of this kind in use at once. */
+  /** Most seats of this kind in use at once. */
   peak: number;
-  /** When that happened, in minutes from midnight. */
+  /** When the peak occurred, in minutes from midnight. */
   at: number;
   total: number;
   full: boolean;
 };
 
 /**
- * How full each kind of seat gets, and when.
- *
- * The peak is what matters, not the average. A shampoo station idle all
- * morning does nothing for the guest who arrives at six — which is the whole
- * argument for counting the two kinds separately.
- *
- * Cancelled treatments do not occupy anything. Counting them would report a
- * room busier than it was and make the number useless for planning.
+ * Peak usage per seat kind, sampled every STEP minutes. Cancelled and no-show
+ * treatments occupy nothing.
  */
 export function usage(day: Day, seats: Seat[]): Usage[] {
-  // Measured over whatever the grid covers, not over the opening hours, so a
-  // day the shop opened outside its pattern still gets counted.
+  // Measure over the grid range, not opening hours, so off-pattern days count.
   const { open, close } = span(day);
   if (close <= open) return [];
 
@@ -126,8 +93,7 @@ export function usage(day: Day, seats: Seat[]): Usage[] {
     for (const line of day.lines) {
       if (line.seatId === null) continue;
       if (line.status === "cancelled" || line.status === "no_show") continue;
-      // Half-open: a treatment ending at 14:00 is not occupying the chair at
-      // 14:00, or every handover would read as a double booking.
+      // Half-open: a treatment ending at 14:00 does not occupy the seat at 14:00.
       if (minutesOf(line.startsAt) > at || minutesOf(line.endsAt) <= at) continue;
 
       const kind = kindOf.get(line.seatId);

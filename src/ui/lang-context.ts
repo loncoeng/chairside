@@ -1,12 +1,5 @@
-// Which language the screen is in.
-//
-// Kept in a context rather than passed down, because it reaches almost every
-// component and threading it through as a prop would mean touching every one
-// of them to add a string.
-//
-// The choice is remembered per browser. It is a preference, not data — a
-// second guest at the same desk should get the language that desk was left
-// in, and nothing about it belongs in the database.
+// UI language, in a context. The choice is stored per browser in localStorage,
+// not in the database.
 
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
@@ -22,12 +15,8 @@ export const LangContext = createContext<{ lang: Lang; setLang: (lang: Lang) => 
 });
 
 /**
- * What to start in.
- *
- * What was chosen here before, then what the browser asks for, then Japanese.
- * Storage can throw outright in a private window, so the whole thing is
- * wrapped: a screen that will not render because it could not read a
- * preference is worse than one in the wrong language.
+ * Saved choice, then browser languages, then Japanese. Wrapped in try because
+ * localStorage can throw in a private window.
  */
 export function initialLang(): Lang {
   try {
@@ -55,11 +44,11 @@ export function rememberLang(lang: Lang): void {
   try {
     localStorage.setItem(STORAGE_KEY, lang);
   } catch {
-    // The screen still works; the choice just will not survive a reload.
+    // Not persisted; the screen still works.
   }
 }
 
-/** Everything a component needs to say something. */
+/** Translation helpers bound to the current language. */
 export function useText() {
   const { lang, setLang } = useContext(LangContext);
 

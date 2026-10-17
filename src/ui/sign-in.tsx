@@ -1,17 +1,5 @@
-// The first screen, and the only one anybody sees without a session.
-//
-// It does two jobs, and which one is first matters. A visitor wants to look
-// at the thing: the demo is the large button, it runs in their own browser,
-// and one press is enough. Somebody who works in the shop wants to sign in:
-// that form is underneath, and it is empty.
-//
-// It used to be the other way round — the form first, and the demo behind a
-// button that only appeared once you were already signed in. Which meant the
-// demo was unreachable for the one person it was built for.
-//
-// The demo still goes through this same screen rather than around it. A demo
-// that skipped the login would be showing something the shop does not run,
-// and whether there is a login at all is what a reader most wants to check.
+// Sign-in screen, shown without a session. The demo button comes first, the
+// staff form below. The demo also signs in through the real login.
 
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
@@ -28,14 +16,14 @@ export function SignIn({
   demoWhy,
   trail,
 }: {
-  /** Credentials to fill in and show, once the demo is running. */
+  /** Demo credentials to prefill and show; null when the demo is off. */
   demo: { loginId: string; password: string } | null;
   onSignedIn: (who: Signed) => void;
-  /** Load the demo and sign into it. Absent where there is no demo to open. */
+  /** Load the demo and sign in. Null when there is no demo. */
   onOpenDemo: (() => void) | null;
   demoState: "off" | "loading" | "on" | "failed";
   demoWhy: string | null;
-  /** What the demo did, if it did anything. Shown when it ended up back here. */
+  /** Demo step log, shown when the demo falls back to this screen. */
   trail: string[];
 }) {
   const { t, lang, setLang, failure } = useText();
@@ -149,21 +137,15 @@ export function SignIn({
         </button>
       </form>
 
-      {/* The demo's password, in plain sight. There is nothing to protect —
-          that database is invented and lives in this browser — and hiding it
-          would only mean nobody could get in.
-
-          With the demo off there is no hint, because there is nothing to hint
-          at: the public instance has no account anybody can open. */}
+      {/* Demo password shown openly (invented data, local only). The public
+          instance has no open account, so no hint when the demo is off. */}
       {demo ? (
         <p class="sign-in-demo">{t("demoCredentials", demo)}</p>
       ) : (
         <p class="said">{t("shopSignInNote")}</p>
       )}
 
-      {/* If the demo ran and the visitor is reading this screen, something
-          went wrong after it started. This says what, on the screen, rather
-          than in a console nobody has open. */}
+      {/* A trail here means the demo failed after starting. */}
       {trail.length > 0 && (
         <details class="sign-in-trail" open>
           <summary>{t("demoTrail")}</summary>

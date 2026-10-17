@@ -52,8 +52,7 @@ test("one stylist cannot be in two places, and that stops it", () => {
   );
   strictEqual(blocked(verdicts), true);
   strictEqual(verdicts[0]?.code, "staff-double-booked");
-  // The message says who and when, because "conflict" sends the receptionist
-  // hunting through the day to find out what it means.
+  // The message names who and when.
   strictEqual(verdicts[0]?.message.includes("13:00–14:00"), true);
 });
 
@@ -68,8 +67,6 @@ test("a seat already in use stops it too", () => {
 });
 
 test("a handover is not a clash", () => {
-  // Ends at 14:00, next starts at 14:00. If this were refused the shop could
-  // not book a normal day.
   const verdicts = check(
     [draft({ staffId: 1, seatId: 1, startsAt: "14:00", endsAt: "14:45" })],
     [existing({ staffId: 1, seatId: 1, startsAt: "13:00", endsAt: "14:00" })],
@@ -88,8 +85,7 @@ test("a cancelled treatment holds nothing", () => {
 });
 
 test("editing a booking does not clash with itself", () => {
-  // Moving a booking by fifteen minutes reads as a clash against its own old
-  // rows unless they are left out.
+  // Its own old rows must be excluded, or a move reads as a clash.
   const verdicts = check(
     [draft({ staffId: 1, seatId: 1, startsAt: "13:15", endsAt: "14:15" })],
     [existing({ bookingId: 7, staffId: 1, seatId: 1, startsAt: "13:00", endsAt: "14:00" })],
@@ -100,10 +96,7 @@ test("editing a booking does not clash with itself", () => {
 });
 
 test("a booking with no seat yet warns when every station is spoken for", () => {
-  // Both shampoo stations are busy at six. The guest is on the phone and the
-  // receptionist takes it anyway — somebody will be finished early, or the
-  // shampoo will happen at the chair. The system says so and gets out of the
-  // way.
+  // Both shampoo stations are busy at 18:00: warn, don't block.
   const busy: Existing[] = [10, 11].map((seatId, i) =>
     existing({
       itemId: i + 1,
@@ -139,8 +132,7 @@ test("a booking with no seat yet says nothing when there is room", () => {
 });
 
 test("a seat that is already chosen and free needs no capacity warning", () => {
-  // Nothing to say: it is free, or it is taken and refused. The warning
-  // exists for the unassigned case only.
+  // The capacity warning is only for unassigned lines.
   const verdicts = check(
     [{ seatId: 11, seatKind: "shampoo", staffId: 5, startsAt: "18:00", endsAt: "18:20" }],
     [existing({ seatId: 10, seatKind: "shampoo", staffId: 8, startsAt: "18:00", endsAt: "18:30" })],
@@ -156,8 +148,7 @@ test("outside opening hours is a warning, not a refusal", () => {
 });
 
 test("a closed day warns rather than refusing", () => {
-  // The shop opens on a Monday for a wedding party. Refusing would send them
-  // back to the spreadsheet.
+  // e.g. opening on a closed day for a wedding party.
   const shut: Room = { ...ROOM, hours: { opensAt: null, closesAt: null, closed: true } };
   const verdicts = check([draft({ startsAt: "13:00", endsAt: "13:45" })], [], shut);
   strictEqual(blocked(verdicts), false);

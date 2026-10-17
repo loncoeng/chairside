@@ -1,51 +1,34 @@
 name = "chairside"
 compatibility_date = "2026-09-23"
 
-# Published on workers.dev. Enabled by default, but leaving it implicit
-# prints a warning on every deploy.
+# Default is true, but leaving it implicit prints a warning on every deploy.
 workers_dev = true
 
-# A per-version preview URL for each deploy. Not used here, and every URL
-# that exists is one more thing published.
+# No per-version preview URLs: unused, and each one is another public endpoint.
 preview_urls = false
 
-# Anything below a [section] header belongs to that section, so these two
-# have to sit above it. Written underneath, they are silently ignored and
-# the setting never takes effect.
+# Top-level keys must sit above the first [section]; below it they are silently ignored.
 
-# The API. Static files are still served without waking this up.
+# The API. Static files are served without invoking it.
 main = "./src/worker/index.ts"
 
-# Which commit is live. Overridden at deploy time with --var BUILD:<sha>.
-#
-# Static assets carry a content hash in their filename, so waiting for a
-# particular bundle proves the new assets are being served. A Worker-only
-# change has no such signal, and a check run straight after a deploy passes
-# against the code that was there before. This is that signal.
+# Live commit, set at deploy with --var BUILD:<sha>. A Worker-only change leaves
+# the asset hashes unchanged, so the post-deploy check waits on this instead.
 [vars]
 BUILD = "dev"
 
-# SESSION_SECRET is not here. It is set with `wrangler secret put
-# SESSION_SECRET`, so it never enters the repository — and the Worker refuses
-# to sign anybody in without it rather than falling back to something
-# guessable. A shop that cannot sign in is a bad afternoon; a shop whose
-# session tokens anybody can mint is a customer list on the open internet.
+# SESSION_SECRET is set with `wrangler secret put SESSION_SECRET`. Without it the
+# Worker refuses all sign-ins instead of falling back to a guessable key.
 
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
-# Without this, an unmatched path falls to the SPA fallback and /api/room
-# comes back as the HTML page with a 200 on it — which looks like it works
-# until something tries to parse it.
+# Otherwise unmatched /api paths hit the SPA fallback and return HTML with a 200.
 run_worker_first = ["/api/*"]
 
-# The database. SQLite underneath, which is what lets the same schema run on a
-# shop PC and in the browser demo.
-#
-# database_id is an identifier, not a credential — it is useless without an API
-# token — so it belongs in the repository. Committing it is what makes a fresh
-# clone deploy against the right database instead of silently creating a second
-# one.
+# D1 is SQLite, so the same schema runs on a shop PC and in the browser demo.
+# database_id is not a credential (useless without an API token). Committing it
+# keeps a fresh clone from silently creating a second database.
 [[d1_databases]]
 binding = "DB"
 database_name = "chairside"

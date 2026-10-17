@@ -1,14 +1,5 @@
-// Does the demo have the files it will ask for?
-//
-// It did not, and nothing said so. The bundler picks sql.js's browser build,
-// that build fetches `sql-wasm-browser.wasm`, and the build script was
-// copying `sql-wasm.wasm` — the name the Node build uses. Everything
-// compiled, the deploy went green, the button said "the demo did not load"
-// and left it there.
-//
-// A type checker cannot see a filename a WebAssembly loader will construct at
-// runtime. So it is read out of the built bundle and checked against what is
-// on disk.
+// Checks that every .wasm file named in the built bundle exists in dist/.
+// The loader builds the filename at runtime, so the type checker cannot catch a mismatch.
 //
 //   node scripts/check-demo-assets.ts     (run by `npm run build`)
 
@@ -49,8 +40,7 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-// Nothing named at all is its own kind of wrong: it means the demo chunk did
-// not make it into the build.
+// No .wasm named at all means the demo chunk is missing from the build.
 if (wanted.size === 0) {
   console.error("no .wasm is named anywhere in dist/ — did the demo chunk build?");
   process.exit(1);

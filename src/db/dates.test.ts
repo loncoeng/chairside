@@ -9,7 +9,7 @@ test("a real day passes", () => {
 });
 
 test("a date-shaped string that is not a date does not", () => {
-  // The regex on its own accepted every one of these.
+  // A shape-only regex accepts all of these.
   for (const value of ["9999-99-99", "2026-13-01", "2026-00-10", "2026-02-30", "2025-02-29"]) {
     strictEqual(isDate(value), false, value);
   }

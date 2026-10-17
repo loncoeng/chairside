@@ -44,8 +44,7 @@ test("a 45 minute treatment spans three rows", () => {
 });
 
 test("something running past closing is clipped, not pushed off the grid", () => {
-  // 19:30 to 21:00 against a 20:00 close: six rows would stretch the grid
-  // and put the block outside the room.
+  // 19:30-21:00 with a 20:00 close: clip to 2 rows, not 6.
   deepStrictEqual(place({ startsAt: "19:30", endsAt: "21:00" }, 600, 1200), { row: 41, span: 2 });
 });
 
@@ -55,16 +54,13 @@ test("something shorter than a row still gets one", () => {
 });
 
 test("a twenty-minute treatment gets two rows, not one", () => {
-  // Rounded down it was drawn as fifteen minutes: a block that ends before
-  // the guest does, with two lines of text in one row's worth of space. The
-  // names came out sliced through the middle.
+  // Round up: one row would cut the text off.
   const { span } = place({ startsAt: "10:00", endsAt: "10:20" }, 600, 1200);
   strictEqual(span, 2);
 });
 
 test("a quarter-hour block holds one line, and says so", () => {
-  // The bug this replaces showed three lines in a box with room for one, so
-  // every short treatment had its guest's name cut through the middle.
+  // One row fits one line of text.
   strictEqual(linesFor(1), 1);
   strictEqual(linesFor(2), 2);
   strictEqual(linesFor(3), 3);
@@ -75,7 +71,7 @@ test("the peak counts seats in use at once, not treatments in the day", () => {
   const busy = day([
     line({ itemId: 1, seatId: 1, startsAt: "13:00", endsAt: "14:00" }),
     line({ itemId: 2, seatId: 2, startsAt: "13:30", endsAt: "14:30" }),
-    // Later, and on its own — six treatments in a day is not a peak of six.
+    // Later and alone, so it does not raise the peak.
     line({ itemId: 3, seatId: 1, startsAt: "17:00", endsAt: "17:30" }),
   ]);
 
@@ -86,8 +82,7 @@ test("the peak counts seats in use at once, not treatments in the day", () => {
 });
 
 test("a handover is not a double booking", () => {
-  // One ends exactly when the next begins. Counting the boundary twice would
-  // report the room as fuller than it can be.
+  // End time equal to the next start time is not an overlap.
   const handover = day([
     line({ itemId: 1, seatId: 1, startsAt: "13:00", endsAt: "14:00" }),
     line({ itemId: 2, seatId: 1, startsAt: "14:00", endsAt: "15:00" }),
@@ -109,8 +104,7 @@ test("a cancellation does not occupy a chair", () => {
 });
 
 test("the shampoo stations fill before the chairs do", () => {
-  // The point the whole schema is built around: two shampoo stations against
-  // four seats total, and the shampoos are the ones that run out.
+  // Shampoo stations are the bottleneck the schema is built around.
   const evening = day([
     line({ itemId: 1, seatId: 10, startsAt: "18:00", endsAt: "18:20" }),
     line({ itemId: 2, seatId: 11, startsAt: "18:00", endsAt: "18:20" }),
@@ -129,9 +123,7 @@ test("a closed day with nothing on it reports nothing rather than zeroes", () =>
 });
 
 test("a closed day that has bookings still gets a grid", () => {
-  // The shop opens on a Monday for a wedding party. The booking screen allows
-  // it, so the calendar has to show it — an earlier version printed "closed"
-  // in place of the grid and the booking disappeared.
+  // Bookings on a closed day are allowed, so the grid must still show them.
   const monday = day(
     [line({ itemId: 1, seatId: 1, startsAt: "13:00", endsAt: "13:45" })],
     { opensAt: null, closesAt: null, closed: true },

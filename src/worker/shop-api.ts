@@ -59,30 +59,30 @@ export async function shopSettings(db: Db, from: string) {
 export async function setHours(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { hours?: unknown } | null;
   const rows = Array.isArray(body?.hours) ? body.hours : null;
-  if (!rows || rows.length !== 7) return bad("7日分をまとめて送ってください。");
+  if (!rows || rows.length !== 7) return bad("hours-need-seven-days", "Send all seven days together.");
 
   const parsed: { weekday: number; opensAt: string | null; closesAt: string | null; closed: boolean }[] = [];
 
   for (const row of rows as Record<string, unknown>[]) {
     const weekday = Number(row.weekday);
-    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return bad("曜日が不正です。");
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return bad("bad-weekday", "The day of the week is not valid.");
 
     const closed = row.closed === true;
     const opensAt = typeof row.opensAt === "string" ? row.opensAt : null;
     const closesAt = typeof row.closesAt === "string" ? row.closesAt : null;
 
     if (!closed) {
-      if (!opensAt || !isTime(opensAt)) return bad("開店時刻の形式が違います。");
-      if (!closesAt || !isTime(closesAt)) return bad("閉店時刻の形式が違います。");
+      if (!opensAt || !isTime(opensAt)) return bad("bad-opening-time", "The opening time is not in HH:MM form.");
+      if (!closesAt || !isTime(closesAt)) return bad("bad-closing-time", "The closing time is not in HH:MM form.");
       // Refused rather than stored and worked around later. Every screen
       // that reads these assumes the day runs forwards.
-      if (closesAt <= opensAt) return bad("閉店が開店より前になっています。");
+      if (closesAt <= opensAt) return bad("closes-before-opens", "Closing is before opening.");
     }
 
     parsed.push({ weekday, opensAt: closed ? null : opensAt, closesAt: closed ? null : closesAt, closed });
   }
 
-  if (new Set(parsed.map((p) => p.weekday)).size !== 7) return bad("曜日が重複しています。");
+  if (new Set(parsed.map((p) => p.weekday)).size !== 7) return bad("duplicate-weekday", "A day of the week appears twice.");
 
   for (const row of parsed) {
     await db
@@ -103,7 +103,7 @@ export async function setClosure(db: Db, request: Request): Promise<Response> {
   } | null;
 
   const date = typeof body?.date === "string" ? body.date : "";
-  if (!isDate(date)) return bad("日付は YYYY-MM-DD で送ってください。");
+  if (!isDate(date)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
 
 
   if (body?.remove === true) {
@@ -156,11 +156,11 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
     leftOn?: unknown;
   } | null;
 
-  if (!body) return bad("本文が読み取れません。");
+  if (!body) return bad("unreadable-body", "The request body could not be read.");
 
   const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
   const role = typeof body.role === "string" ? body.role : "stylist";
-  if (!["owner", "stylist", "assistant"].includes(role)) return bad("役割が不正です。");
+  if (!["owner", "stylist", "assistant"].includes(role)) return bad("bad-role", "The role is not valid.");
 
   const color = typeof body.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(body.color) ? body.color : null;
   const joinedOn = typeof body.joinedOn === "string" && isDate(body.joinedOn) ? body.joinedOn : null;
@@ -169,7 +169,7 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
   const id = Number.isInteger(body.id) ? (body.id as number) : null;
 
   if (id === null) {
-    if (name === "") return bad("名前を入れてください。");
+    if (name === "") return bad("name-required", "Enter a name.");
     const [created] = await db
       .insert(staff)
       .values({ name, role: role as "owner" | "stylist" | "assistant", color, joinedOn, leftOn })
@@ -178,7 +178,7 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
   }
 
   const [exists] = await db.select({ id: staff.id }).from(staff).where(eq(staff.id, id)).limit(1);
-  if (!exists) return json({ ok: false, error: "その人は見つかりません。" }, 404);
+  if (!exists) return json({ ok: false, code: "staff-not-found", error: "That staff member was not found." }, 404);
 
   await db
     .update(staff)
@@ -233,4 +233,4 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-const bad = (message: string) => json({ ok: false, error: message }, 400);
+const bad = (code: string, message: string) => json({ ok: false, code, error: message }, 400);

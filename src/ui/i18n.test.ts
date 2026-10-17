@@ -1,7 +1,8 @@
 import { strictEqual } from "node:assert/strict";
+import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 
-import { LANGS, TEXT, say, serviceName, verdictText, weekday } from "./i18n.ts";
+import { LANGS, TEXT, errorText, say, serviceName, verdictText, weekday } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
 
 test("every string exists in every language", () => {
@@ -55,18 +56,50 @@ test("a service falls back to its Japanese name", () => {
 test("a rule is said in the reader's language", () => {
   const verdict = {
     code: "staff-double-booked",
-    message: "Renは 10:15–10:35 に別の施術が入っています。",
+    message: "Ren already has something at 10:15–10:35.",
     data: { who: "Ren", from: "10:15", to: "10:35" },
   };
   strictEqual(verdictText("en", verdict), "Ren already has something at 10:15–10:35.");
   strictEqual(verdictText("zh", verdict), "Ren 在 10:15–10:35 已有其他服務。");
+  strictEqual(verdictText("ja", verdict), "Renは 10:15–10:35 に別の施術が入っています。");
 });
 
 test("a code this build does not know falls back to what the server said", () => {
   // An older screen against a newer API says something true rather than
   // nothing at all.
-  const verdict = { code: "invented-later", message: "サーバが返した文章。" };
-  strictEqual(verdictText("en", verdict), "サーバが返した文章。");
+  const verdict = { code: "invented-later", message: "What the server said." };
+  strictEqual(verdictText("ja", verdict), "What the server said.");
+});
+
+test("a refusal is said in the reader's language", () => {
+  const reply = { ok: false, code: "wrong-credentials", error: "The ID or password is wrong." };
+  strictEqual(errorText("ja", reply, 401), "IDかパスワードが違います。");
+  strictEqual(errorText("zh", reply, 401), "帳號或密碼錯誤。");
+  strictEqual(errorText("en", reply, 401), "The ID or password is wrong.");
+});
+
+test("a refusal falls back to the server's sentence, then to the status", () => {
+  strictEqual(errorText("ja", { code: "invented-later", error: "What the server said." }, 400), "What the server said.");
+  strictEqual(errorText("ja", "<html>Bad Gateway</html>", 502), "HTTP 502");
+  strictEqual(errorText("ja", null, 500), "HTTP 500");
+});
+
+test("every code the server can send has words on the screen", () => {
+  // The codes live in src/worker and the words live here. Adding a refusal
+  // on the server and forgetting this file would put English in front of the
+  // Japanese owner, and nothing else would notice.
+  const dir = new URL("../worker/", import.meta.url);
+  const codes = new Set<string>();
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith(".ts") || name.endsWith(".test.ts")) continue;
+    const source = readFileSync(new URL(name, dir), "utf8");
+    for (const m of source.matchAll(/(?:code: |bad\()"([a-z-]+)"/g)) codes.add(m[1]!);
+  }
+
+  const missing = [...codes].filter((code) => !(`error.${code}` in TEXT));
+  strictEqual(missing.join(", "), "");
+  // And the scan is finding them at all.
+  strictEqual(codes.has("wrong-credentials"), true);
 });
 
 test("Sunday is Sunday in all three", () => {

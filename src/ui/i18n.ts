@@ -300,7 +300,7 @@ export const TEXT = {
   },
 
   // What the rules say. Built here rather than on the server, which can only
-  // write in one language. The server still sends its own Japanese sentence
+  // write in one language. The server still sends its own English sentence
   // as a fallback for anything not going through this screen.
   "verdict.staff-double-booked": {
     ja: "{who}は {from}–{to} に別の施術が入っています。",
@@ -352,6 +352,42 @@ export const TEXT = {
     zh: "這個時段 {total} 個剪髮位全部已滿。",
     en: "All {total} styling chairs are taken at that time.",
   },
+
+  // Why the server said no. Same arrangement as the rules above: the server
+  // sends a code and an English sentence, and the screen says it here.
+  "error.signed-out": { ja: "サインインしてください。", zh: "請先登入。", en: "Please sign in." },
+  "error.forbidden": { ja: "この操作は許可されていません。", zh: "您沒有執行此操作的權限。", en: "You are not allowed to do that." },
+  "error.booking-not-found": { ja: "その予約は見つかりません。", zh: "找不到該預約。", en: "That booking was not found." },
+  "error.customer-not-found": { ja: "そのお客様は見つかりません。", zh: "找不到該客人。", en: "That customer was not found." },
+  "error.unreadable-body": { ja: "本文が読み取れません。", zh: "無法讀取請求內容。", en: "The request body could not be read." },
+  "error.no-booking": { ja: "予約が指定されていません。", zh: "未指定預約。", en: "No booking was given." },
+  "error.bad-amount": { ja: "金額が不正です。", zh: "金額不正確。", en: "The amount is not valid." },
+  "error.amount-too-large": { ja: "金額が大きすぎます。", zh: "金額過大。", en: "The amount is too large." },
+  "error.bad-method": { ja: "その支払方法は使えません。", zh: "不接受該付款方式。", en: "That payment method is not accepted." },
+  "error.bad-currency": { ja: "その通貨は扱っていません。", zh: "不接受該貨幣。", en: "That currency is not accepted." },
+  "error.booking-cancelled": { ja: "取り消された予約には会計できません。", zh: "已取消的預約無法收款。", en: "A cancelled booking cannot be paid." },
+  "error.bad-date": { ja: "日付は YYYY-MM-DD で送ってください。", zh: "日期請以 YYYY-MM-DD 格式傳送。", en: "Send the date as YYYY-MM-DD." },
+  "error.name-required": { ja: "名前を入れてください。", zh: "請輸入名稱。", en: "Enter a name." },
+  "error.create-failed": { ja: "登録できませんでした。", zh: "無法登記。", en: "It could not be saved." },
+  "error.no-customer": { ja: "お客様が指定されていません。", zh: "未指定客人。", en: "No customer was given." },
+  "error.empty-record": { ja: "内容が空です。", zh: "內容是空的。", en: "The record is empty." },
+  "error.not-configured": { ja: "サーバの設定が未完了です。", zh: "伺服器尚未完成設定。", en: "The server is not set up yet." },
+  "error.too-many-attempts": { ja: "試行が多すぎます。しばらく待ってください。", zh: "嘗試次數過多，請稍後再試。", en: "Too many attempts. Wait a while and try again." },
+  "error.wrong-credentials": { ja: "IDかパスワードが違います。", zh: "帳號或密碼錯誤。", en: "The ID or password is wrong." },
+  "error.staff-not-found": { ja: "その職員は見つかりません。", zh: "找不到該員工。", en: "That staff member was not found." },
+  "error.hours-need-seven-days": { ja: "7日分をまとめて送ってください。", zh: "請一次傳送七天的資料。", en: "Send all seven days together." },
+  "error.bad-weekday": { ja: "曜日が不正です。", zh: "星期不正確。", en: "The day of the week is not valid." },
+  "error.bad-opening-time": { ja: "開店時刻の形式が違います。", zh: "開店時間格式不正確。", en: "The opening time is not in HH:MM form." },
+  "error.bad-closing-time": { ja: "閉店時刻の形式が違います。", zh: "關店時間格式不正確。", en: "The closing time is not in HH:MM form." },
+  "error.closes-before-opens": { ja: "閉店が開店より前になっています。", zh: "關店時間早於開店時間。", en: "Closing is before opening." },
+  "error.duplicate-weekday": { ja: "曜日が重複しています。", zh: "星期重複。", en: "A day of the week appears twice." },
+  "error.bad-role": { ja: "役割が不正です。", zh: "職位不正確。", en: "The role is not valid." },
+  "error.bad-start-time": { ja: "開始時刻の形式が違います。", zh: "開始時間格式不正確。", en: "The start time is not in HH:MM form." },
+  "error.no-services": { ja: "施術を1つ以上選んでください。", zh: "請至少選擇一項服務。", en: "Choose at least one treatment." },
+  "error.too-many-services": { ja: "1件の予約に入れられる施術は8つまでです。", zh: "每個預約最多只能有八項服務。", en: "A booking can hold at most eight treatments." },
+  "error.unknown-service": { ja: "メニューにない施術が含まれています。", zh: "包含不在服務項目中的服務。", en: "A treatment is not on the menu." },
+  "error.crosses-midnight": { ja: "その開始時刻だと日付をまたぎます。", zh: "以這個開始時間會跨過午夜。", en: "Starting then, it would run past midnight." },
+  "error.bad-status": { ja: "その状態は使えません。", zh: "該狀態無法使用。", en: "That status is not valid." },
 } satisfies Record<string, Dict>;
 
 export type Key = keyof typeof TEXT;
@@ -409,4 +445,19 @@ export function verdictText(
   const key = `verdict.${verdict.code}` as Key;
   if (!(key in TEXT)) return verdict.message;
   return say(lang, key, verdict.data ?? {});
+}
+
+/**
+ * Why a request failed, in the reader's language.
+ *
+ * Falls back the same way as verdictText, and then to the status code: a
+ * reply that is not ours at all — a proxy's error page, say — still says
+ * something.
+ */
+export function errorText(lang: Lang, reply: unknown, status: number): string {
+  const { code, error } = (reply ?? {}) as { code?: unknown; error?: unknown };
+  const key = `error.${String(code)}` as Key;
+  if (typeof code === "string" && key in TEXT) return say(lang, key);
+  if (typeof error === "string") return error;
+  return `HTTP ${status}`;
 }

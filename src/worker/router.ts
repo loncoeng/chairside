@@ -86,11 +86,11 @@ export async function route(
       const session = await read(secret, token ?? tokenFrom(request));
 
       if (!isOpen(url.pathname) && session === null) {
-        return json({ error: "サインインしてください。" }, 401);
+        return json({ code: "signed-out", error: "Please sign in." }, 401);
       }
 
       if (session !== null && !mayReach(session.role, url.pathname, request.method)) {
-        return json({ error: "この操作は許可されていません。" }, 403);
+        return json({ code: "forbidden", error: "You are not allowed to do that." }, 403);
       }
       if (url.pathname === "/api/room") {
         return json(await room(db));
@@ -106,7 +106,7 @@ export async function route(
         const id = Number(booking[1]);
         if (request.method === "GET") {
           const found = await getBooking(db, id);
-          if (!found) return json({ error: "その予約は見つかりません。" }, 404);
+          if (!found) return json({ code: "booking-not-found", error: "That booking was not found." }, 404);
           return json({ ...found, payments: await paymentsFor(db, id) });
         }
         if (request.method === "PATCH") {
@@ -164,7 +164,7 @@ export async function route(
           return await saveCustomer(db, request, Number(person[1]));
         }
         const found = await getCustomer(db, Number(person[1]));
-        return found ? json(found) : json({ error: "そのお客様は見つかりません。" }, 404);
+        return found ? json(found) : json({ code: "customer-not-found", error: "That customer was not found." }, 404);
       }
       if (url.pathname === "/api/day") {
         const date = url.searchParams.get("date") ?? today();

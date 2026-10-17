@@ -38,7 +38,7 @@ export function SignIn({
   /** What the demo did, if it did anything. Shown when it ended up back here. */
   trail: string[];
 }) {
-  const { t, lang, setLang } = useText();
+  const { t, lang, setLang, failure } = useText();
   const [loginId, setLoginId] = useState(demo?.loginId ?? "");
   const [password, setPassword] = useState(demo?.password ?? "");
   const [busy, setBusy] = useState(false);
@@ -68,7 +68,7 @@ export function SignIn({
         onSignedIn(reply.staff);
         return;
       }
-      setFailed(reply.error ?? `HTTP ${response.status}`);
+      setFailed(failure(reply, response.status));
     } catch (problem: unknown) {
       setFailed(String(problem));
     } finally {

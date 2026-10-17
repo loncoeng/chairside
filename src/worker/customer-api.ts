@@ -179,7 +179,7 @@ export async function getCustomer(db: Db, id: number) {
  */
 export async function saveCustomer(db: Db, request: Request, id: number | null): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!body || typeof body !== "object") return json({ ok: false, error: "本文が読み取れません。" }, 400);
+  if (!body || typeof body !== "object") return json({ ok: false, code: "unreadable-body", error: "The request body could not be read." }, 400);
 
   const field = (key: string, limit: number): string | null | undefined => {
     if (!(key in body)) return undefined;
@@ -203,14 +203,14 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
   // from today.
   for (const date of [firstVisitRaw, birthday]) {
     if (date && !isDate(date)) {
-      return json({ ok: false, error: "日付は YYYY-MM-DD で送ってください。" }, 400);
+      return json({ ok: false, code: "bad-date", error: "Send the date as YYYY-MM-DD." }, 400);
     }
   }
 
   // A guest with no name cannot be found again, and every screen that lists
   // them would show a blank.
   if (id === null ? !name : name === null) {
-    return json({ ok: false, error: "名前を入れてください。" }, 400);
+    return json({ ok: false, code: "name-required", error: "Enter a name." }, 400);
   }
 
   const values = {
@@ -229,7 +229,7 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
       .insert(customers)
       .values({ name: name as string, ...values })
       .returning({ id: customers.id });
-    if (!created) return json({ ok: false, error: "登録できませんでした。" }, 500);
+    if (!created) return json({ ok: false, code: "create-failed", error: "It could not be saved." }, 500);
     customerId = created.id;
   } else {
     const [exists] = await db
@@ -237,7 +237,7 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
       .from(customers)
       .where(eq(customers.id, id))
       .limit(1);
-    if (!exists) return json({ ok: false, error: "そのお客様は見つかりません。" }, 404);
+    if (!exists) return json({ ok: false, code: "customer-not-found", error: "That customer was not found." }, 404);
     if (Object.keys(values).length > 0) {
       await db.update(customers).set(values).where(eq(customers.id, id));
     }
@@ -274,14 +274,14 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     recordedOn?: unknown;
   } | null;
 
-  if (!body) return json({ ok: false, error: "本文が読み取れません。" }, 400);
+  if (!body) return json({ ok: false, code: "unreadable-body", error: "The request body could not be read." }, 400);
 
   const customerId = Number.isInteger(body.customerId) ? (body.customerId as number) : null;
-  if (customerId === null) return json({ ok: false, error: "お客様が指定されていません。" }, 400);
+  if (customerId === null) return json({ ok: false, code: "no-customer", error: "No customer was given." }, 400);
 
   const recordedOn = typeof body.recordedOn === "string" ? body.recordedOn : "";
   if (!isDate(recordedOn)) {
-    return json({ ok: false, error: "日付は YYYY-MM-DD で送ってください。" }, 400);
+    return json({ ok: false, code: "bad-date", error: "Send the date as YYYY-MM-DD." }, 400);
   }
 
   const text = (value: unknown) =>
@@ -294,7 +294,7 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
   // An empty record is not a record. Writing one would put a date in the
   // history with nothing behind it.
   if (formula === null && note === null && caution === null) {
-    return json({ ok: false, error: "内容が空です。" }, 400);
+    return json({ ok: false, code: "empty-record", error: "The record is empty." }, 400);
   }
 
   const [exists] = await db
@@ -302,7 +302,7 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     .from(customers)
     .where(eq(customers.id, customerId))
     .limit(1);
-  if (!exists) return json({ ok: false, error: "そのお客様は見つかりません。" }, 404);
+  if (!exists) return json({ ok: false, code: "customer-not-found", error: "That customer was not found." }, 404);
 
   const [created] = await db
     .insert(records)

@@ -419,7 +419,7 @@ function CustomerForm({
   onSaved: (reply: Saved) => void;
   onCancel: () => void;
 }) {
-  const { t } = useText();
+  const { t, failure } = useText();
   const [form, setForm] = useState<Details>(initial);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
@@ -439,7 +439,7 @@ function CustomerForm({
       });
       const reply = (await response.json()) as { ok?: boolean; error?: string } & Partial<Saved>;
       if (reply.ok !== true || typeof reply.customerId !== "number") {
-        setFailed(reply.error ?? `HTTP ${response.status}`);
+        setFailed(failure(reply, response.status));
         return;
       }
       onSaved({ customerId: reply.customerId, samePhone: reply.samePhone ?? [] });

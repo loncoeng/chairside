@@ -23,7 +23,7 @@ type Person = {
 type Settings = { hours: Hours[]; closures: Closure[]; staff: Person[] };
 
 export function Shop() {
-  const { t, weekday } = useText();
+  const { t, weekday, failure } = useText();
   const [data, setData] = useState<Settings | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export function Shop() {
       });
       const reply = (await response.json()) as Record<string, unknown>;
       if (reply.ok !== true) {
-        setFailed(typeof reply.error === "string" ? reply.error : `HTTP ${response.status}`);
+        setFailed(failure(reply, response.status));
         return null;
       }
       setRevision((n) => n + 1);

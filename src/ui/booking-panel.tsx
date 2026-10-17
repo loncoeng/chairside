@@ -100,7 +100,7 @@ export function BookingPanel({
   onChanged: () => void;
   onClose: () => void;
 }) {
-  const { t, lang, verdict: sayVerdict } = useText();
+  const { t, lang, verdict: sayVerdict, failure } = useText();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -179,7 +179,7 @@ export function BookingPanel({
         onChanged();
         return;
       }
-      setFailed(reply.error ?? `HTTP ${response.status}`);
+      setFailed(failure(reply, response.status));
     } catch (problem: unknown) {
       setFailed(String(problem));
     } finally {
@@ -211,7 +211,7 @@ export function BookingPanel({
 
       setVerdicts(reply.verdicts ?? []);
       setNeedsConfirmation(reply.needsConfirmation === true);
-      if (reply.error) setFailed(reply.error);
+      if (reply.error) setFailed(failure(reply, response.status));
     } catch (problem: unknown) {
       setFailed(String(problem));
     } finally {

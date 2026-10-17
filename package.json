@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "npm run check && node scripts/build-demo-db.ts && vite build && node scripts/check-demo-assets.ts",
     "check": "npm run types && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test": "npm run demo:db && tsx --test \"src/**/*.test.ts\"",
     "deploy": "npm run build && wrangler deploy",
     "seed": "wrangler d1 execute chairside --remote --file seed/demo.sql && wrangler d1 execute chairside --remote --file seed/holidays.sql && wrangler d1 execute chairside --remote --file seed/demo-no-logins.sql && wrangler d1 execute chairside --remote --file seed/demo-clear.sql && wrangler d1 execute chairside --remote --file seed/demo-customers.sql && wrangler d1 execute chairside --remote --file seed/demo-bookings.sql && wrangler d1 execute chairside --remote --file seed/demo-items.sql && wrangler d1 execute chairside --remote --file seed/demo-events.sql && wrangler d1 execute chairside --remote --file seed/demo-payments.sql && wrangler d1 execute chairside --remote --file seed/demo-customer-details.sql",
     "types": "wrangler types",

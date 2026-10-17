@@ -34,13 +34,9 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # Build first, then test. src/ui/app.test.ts mounts the real app and
-      # serves the real demo database and WebAssembly out of public/, which is
-      # where the build puts them — run the other way round and that test has
-      # nothing to serve.
-      #
-      # `npm run build` runs the type check itself, so there is no separate
-      # step for it.
+      # The build is here for its own sake: it runs the type check and proves
+      # the bundle still builds. The tests no longer depend on it — `npm test`
+      # makes the demo database and WebAssembly it serves out of public/.
       - name: Build
         run: npm run build
       - name: Tests

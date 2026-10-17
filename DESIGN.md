@@ -1,7 +1,7 @@
 # Design
 
-Booking and customer records for one hair salon in Macau, replacing a
-spreadsheet that had grown a few macros.
+Booking and customer records for one hair salon in Macau — an invented one,
+built as if to replace a spreadsheet that had grown a few macros.
 
 **It is not a general booking system.** That ground is already held by mature
 open-source projects, and arriving late only produces a thinner version of

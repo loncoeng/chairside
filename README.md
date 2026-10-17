@@ -3,7 +3,9 @@
 Booking and customer records for one hair salon in Macau — nine styling
 chairs, three shampoo stations, and the three currencies a salon there takes.
 
-Replacing a spreadsheet that had grown a few macros.
+The salon is invented, and no shop runs on this yet. It is built as if to
+replace the kind of spreadsheet a shop like that really keeps — one that has
+grown a few macros — and the numbers below are that imagined shop's.
 
 [**Try it**](https://chairside.loncoeng.workers.dev) — press "Open the demo" on
 the first screen and it runs entirely inside your browser. Nothing you do is
@@ -18,7 +20,7 @@ Search GitHub for `appointment-booking` and you get 652 repositories;
 mature. Arriving late with another general one produces a thinner version of
 work already done well.
 
-Narrowing to **one shop** buys something the general ones cannot have: every
+Narrowing to **one shop**, even an imagined one, buys something the general ones cannot have: every
 feature left out can be named, with the reason. That list is in
 [DESIGN.md](DESIGN.md), and it is the more interesting half of this
 repository.
@@ -88,6 +90,8 @@ npm run dev
 
 `npm run dev` serves the interface on its own; the API needs the Worker, so
 `npx wrangler dev` runs both together against a local copy of the database.
+
+`npm test` runs the tests, and makes the demo database they need on the way.
 
 ## The demo, and the instance
 

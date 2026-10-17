@@ -1,9 +1,5 @@
-// Taking a booking.
-//
-// The shape of this form follows how it actually happens: somebody is on the
-// phone, the receptionist picks a time, a stylist and what they are having,
-// and everything else is filled in afterwards. Fields that can wait are not
-// asked for here — a seat is decided on the day, and the price when they pay.
+// New booking form: time, stylist, guest and services only.
+// Seat is assigned on the day and the price is set at payment.
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type { Person } from "./types.ts";
@@ -17,19 +13,13 @@ export type Service = {
   nameEn: string | null;
   durationMin: number;
   seatKind: "styling" | "shampoo" | null;
-  /** What it costs when the stylist makes no difference. */
+  /** Price when it doesn't depend on the stylist. */
   price: number | null;
-  /** What it costs with each grade, where it does. */
+  /** Price per stylist grade, when it does. */
   byGrade: Record<string, number> | null;
 };
 
-/**
- * What this treatment costs with this person.
- *
- * A cut is 750 with the owner and 300 with a junior. Showing the menu price
- * regardless would put a number on the screen that is wrong for most of the
- * people who could do the work.
- */
+/** Price for a stylist grade, falling back to the flat price. */
 export function priceFor(service: Service, grade: string | null | undefined): number | null {
   if (grade && service.byGrade && grade in service.byGrade) return service.byGrade[grade]!;
   return service.price;
@@ -40,7 +30,7 @@ export type Customer = { id: number; name: string; searchKey: string | null };
 type Verdict = {
   level: "stop" | "warn";
   code: string;
-  /** English, from the server. Used only for a code this build cannot name. */
+  /** English fallback from the server, used only for unknown codes. */
   message: string;
   data?: Record<string, string | number>;
 };
@@ -84,17 +74,14 @@ export function BookingForm({
   const byId = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
   const minutes = chosen.reduce((sum, id) => sum + (byId.get(id)?.durationMin ?? 0), 0);
 
-  // Priced for whoever is selected. The same cut is 750 or 300 depending on
-  // it, and the guest is told the figure on the phone.
+  // Price for the selected stylist's grade.
   const grade = staff.find((p) => p.id === staffId)?.grade ?? null;
   const total = chosen.reduce((sum, id) => {
     const service = byId.get(id);
     return sum + (service ? (priceFor(service, grade) ?? 0) : 0);
   }, 0);
 
-  // Any edit invalidates the answer the server gave about the previous
-  // version. Leaving the warnings on screen would let somebody confirm a
-  // booking they had since changed.
+  // Clear stale warnings on edit so a changed booking can't be confirmed against them.
   useEffect(() => {
     setVerdicts([]);
     setNeedsConfirmation(false);
@@ -218,13 +205,10 @@ export function BookingForm({
                 onClick={() => toggle(service.id)}
                 aria-pressed={order >= 0}
               >
-                {/* The order is shown because it decides the times: the lines
-                    run back to back from the start, shampoo first. */}
+                {/* Order decides the times: lines run back to back from the start, shampoo first. */}
                 {order >= 0 && <span class="menu-order">{order + 1}</span>}
                 <span class="menu-name">{serviceName(lang, service)}</span>
                 <span class="menu-min">{t("minutes", { n: service.durationMin })}</span>
-                {/* The price for the stylist chosen above, not the menu's
-                    nominal one. */}
                 <span class="menu-price">{priceFor(service, grade)?.toLocaleString("en-US")}</span>
               </button>
             );
@@ -274,9 +258,7 @@ export function BookingForm({
           {t("cancel")}
         </button>
 
-        {/* Two buttons rather than one that changes meaning. Confirming a
-            warning is a decision, and it should not be made by pressing the
-            same button twice without noticing. */}
+        {/* A separate "book anyway" button so warnings aren't accepted by pressing twice. */}
         {needsConfirmation && !stopped ? (
           <button type="button" class="primary" disabled={sending} onClick={() => send(true)}>
             {t("submitAnyway")}

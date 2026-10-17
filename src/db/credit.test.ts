@@ -11,8 +11,7 @@ const line = (over: Partial<Line> & Pick<Line, "sortOrder">): Line => ({
 });
 
 test("a shampoo then a cut belongs to whoever did the cut", () => {
-  // The bug this replaces: the shampoo is first, the assistant does it, and
-  // the assistant ended the month with three times any stylist's takings.
+  // Crediting the first line would give the assistant's shampoo the whole bill.
   const cut = creditedStaff([
     line({ sortOrder: 0, staffId: 8, seatKind: "shampoo" }),
     line({ sortOrder: 1, staffId: 2, seatKind: "styling" }),
@@ -31,13 +30,12 @@ test("the order the lines arrive in does not matter", () => {
 });
 
 test("a wash on its own belongs to whoever did it", () => {
-  // Somebody who comes in only for a shampoo was served by that person and
-  // nobody else. Returning null here would lose the takings entirely.
+  // Returning null here would lose the takings.
   strictEqual(creditedStaff([line({ sortOrder: 0, staffId: 8, seatKind: "shampoo" })]), 8);
 });
 
 test("the first styling line wins, not the longest", () => {
-  // Shampoo, cut, then a treatment. The cut is what they came for.
+  // Shampoo, cut, then a treatment.
   const who = creditedStaff([
     line({ sortOrder: 0, staffId: 8, seatKind: "shampoo" }),
     line({ sortOrder: 1, staffId: 3, seatKind: "styling" }),
@@ -57,8 +55,7 @@ test("a line with nobody against it is skipped", () => {
 });
 
 test("a booking with nobody against any line credits nobody", () => {
-  // Rather than picking somebody. An unattributed bill shows up as "—" on
-  // the screen, which is true; guessing would put money on a payslip.
+  // No guessing. The UI shows an unattributed bill as a dash.
   strictEqual(creditedStaff([line({ sortOrder: 0, staffId: null })]), null);
   strictEqual(creditedStaff([]), null);
 });

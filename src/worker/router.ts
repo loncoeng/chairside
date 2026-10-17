@@ -1,9 +1,4 @@
-// Every path the API answers, and nothing about where it runs.
-//
-// Kept apart from the Worker so the browser demo can use the same table. A
-// second copy of "which path does what" would drift the first time an
-// endpoint was added, and the demo would answer 404 for a screen that works
-// in production.
+// API routes. Separate from the Worker so the browser demo shares the same table.
 
 import { asc, eq, isNull, max, min } from "drizzle-orm";
 import type { Database as Db } from "../db/database.ts";
@@ -28,13 +23,8 @@ import { currencyList, paymentsFor, revenue, takePayment } from "./money-api.ts"
 import { setClosure, setHours, setStaff, shopSettings } from "./shop-api.ts";
 
 /**
- * The API.
- *
- * **This is the only file that names D1.** Everything it calls takes a
- * drizzle SQLite database and does not care which one — see ../db/database.ts
- * — which is what makes the same code run on a shop PC and in the browser
- * demo. src/db/portable.test.ts runs these very functions on sql.js so the
- * claim cannot rot quietly.
+ * Handles one API request. Takes any drizzle SQLite database (../db/database.ts),
+ * so it runs on D1, a shop PC, or sql.js in the browser demo.
  */
 export async function route(
   db: Db,
@@ -42,36 +32,21 @@ export async function route(
   build: string,
   secret?: string,
   /**
-   * The session token, when the caller cannot put it on the request.
-   *
-   * The Worker never passes this: the browser sends a Cookie header and
-   * tokenFrom reads it. The browser demo has to, because **`Cookie` is a
-   * forbidden request header** — a page may not set one on a Request it
-   * builds, and the browser drops it without a word. (Node keeps it, which is
-   * how this shipped twice.)
-   *
-   * It changes where the token comes from and nothing about what is done with
-   * it: read() checks the signature and the expiry either way, and a token
-   * handed in here that does not verify gets exactly as far as one that
-   * arrived in a header.
+   * Session token for callers that cannot send a Cookie header. The browser
+   * demo needs this: `Cookie` is a forbidden request header and browsers drop
+   * it silently (Node does not). Verified exactly like a cookie token.
    */
   token?: string | null,
 ): Promise<Response> {
     const url = new URL(request.url);
 
     try {
-      // Which commit is answering. Asked for by the deploy check, which
-      // otherwise cannot tell new code from old.
+      // Live commit, polled by the deploy check.
       if (url.pathname === "/api/version") {
         return json({ build });
       }
 
-      // --- Everything below this line needs somebody signed in ------------
-      //
-      // The check is here rather than in each handler. A permission you have
-      // to remember to write is a permission somebody forgets on the next
-      // endpoint, and the endpoint that forgot it is a customer list on the
-      // open internet.
+      // Auth is checked once here, not per handler, so a new endpoint can't forget it.
 
       if (url.pathname === "/api/session") {
         if (request.method === "POST") return await signIn(db, request, secret);
@@ -95,12 +70,11 @@ export async function route(
       if (url.pathname === "/api/room") {
         return json(await room(db));
       }
-      // The endpoints that write.
       if (url.pathname === "/api/bookings" && request.method === "POST") {
         return await createBooking(db, request, session?.staffId ?? null);
       }
 
-      // /api/bookings/123 — read one, or change it.
+      // /api/bookings/:id
       const booking = /^\/api\/bookings\/(\d+)$/.exec(url.pathname);
       if (booking) {
         const id = Number(booking[1]);
@@ -117,9 +91,7 @@ export async function route(
       if (url.pathname === "/api/services") {
         return json(await menu(db));
       }
-      // The picker on the booking form wants every name; the customers
-      // screen wants a search. Two shapes, two paths — one endpoint that
-      // changed behaviour by query string would be worse to read.
+      // Full list for the booking form picker; /api/people is the searchable list.
       if (url.pathname === "/api/customers") {
         return json(await customerList(db));
       }
@@ -174,33 +146,22 @@ export async function route(
         return json(await day(db, date));
       }
     } catch (error) {
-      // The screen tells the guest something is wrong either way; this is so
-      // that what went wrong is visible in the logs rather than guessed at.
       console.error(error);
       return json({ error: "the database did not answer" }, 500);
     }
 
-    // Reached only for /api/*: run_worker_first in wrangler.toml sends
-    // everything else to the static files without waking this up.
+    // Only /api/* reaches the Worker (run_worker_first in wrangler.toml).
     return json({ error: "not found" }, 404);
 }
 
-/**
- * Today in the shop's time.
- *
- * Macau does not observe daylight saving, so a fixed +8 is correct and stays
- * correct. Workers run in UTC, and defaulting to the runtime's date would put
- * the calendar on yesterday for the whole morning.
- */
+/** Today in Macau (UTC+8, no DST). Workers run in UTC. */
 function today(): string {
   return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 /**
- * The shape of the room: which seats exist, and who is currently here.
- *
- * Staff who have left keep `left_on` set and drop out here, but stay in the
- * table — past bookings still point at them.
+ * Active seats and current staff. Staff with `left_on` set are excluded here
+ * but kept in the table, since past bookings reference them.
  */
 async function room(db: Db) {
   const [allSeats, present] = await Promise.all([
@@ -226,11 +187,8 @@ async function room(db: Db) {
 }
 
 /**
- * One day: every treatment, and what the day itself is.
- *
- * Opening hours, a one-off closure and a public holiday are three different
- * things and are kept apart. A closed Monday is a rule; a closure is a
- * decision; a holiday is information — the shop may well open on one.
+ * One day's treatments plus its hours, closure and holidays. These are kept
+ * separate: a shop may open on a public holiday.
  */
 async function day(db: Db, date: string) {
   const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
@@ -280,15 +238,11 @@ async function day(db: Db, date: string) {
       .select({ region: holidays.region, name: holidays.name })
       .from(holidays)
       .where(eq(holidays.date, date)),
-    // How far the imported list reaches. A year past the end of it should
-    // say so rather than showing a clean calendar that means "no holidays"
-    // when it means "nobody has imported that year".
+    // Last imported holiday date, so the UI can tell "no holidays" from "not imported".
     db.select({ to: max(holidays.date) }).from(holidays),
   ]);
 
-  // Only when there is nothing to show. It is two aggregates over an indexed
-  // column, but running it on every weekday of a busy month is work nobody
-  // asked for.
+  // Only computed for empty days.
   const span = lines.length === 0 ? await bookedRange(db) : null;
 
   return {
@@ -303,12 +257,7 @@ async function day(db: Db, date: string) {
   };
 }
 
-/**
- * The first and last dates that have anything booked.
- *
- * Sent only when the requested day is empty, so that the screen can say where
- * the data is instead of showing a blank grid and leaving it at that.
- */
+/** First and last booked dates, sent on an empty day so the UI can point to the data. */
 async function bookedRange(db: Db) {
   const [row] = await db
     .select({ from: min(bookings.date), to: max(bookings.date) })
@@ -317,13 +266,8 @@ async function bookedRange(db: Db) {
 }
 
 /**
- * Every reply the API makes.
- *
- * The headers are here rather than on each handler, for the same reason the
- * session check is: one that has to be remembered is one that gets forgotten
- * on the next endpoint. `no-store` matters more than usual — these replies
- * carry names, phone numbers and what was done to somebody's hair, and a
- * shared browser on the shop's PC should not keep them.
+ * JSON response with shared headers. `no-store` keeps customer data out of the
+ * cache on a shared shop PC.
  */
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

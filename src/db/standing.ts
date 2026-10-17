@@ -1,17 +1,6 @@
-// What a customer's bookings add up to.
-//
-// Pulled out of the query so it can be tested. Whether the numbers are right
-// matters more than almost anything else here: "cancels at short notice" is
-// something a shop might say to a guest, and a count that is quietly wrong is
-// worse than no count at all.
+// A customer's booking history summary. Kept out of the query so it can be tested.
 
-/**
- * How close to the appointment a cancellation counts as short notice.
- *
- * A day. Not a universal truth — a shop that books three weeks out might set
- * it higher — but it is the line between "they let us know" and "that slot is
- * gone", which is the distinction the number exists to make.
- */
+/** A cancellation less than this many hours before the appointment is short notice. */
 const SHORT_NOTICE_HOURS = 24;
 
 export type Standing = {
@@ -19,21 +8,16 @@ export type Standing = {
   visits: number;
   cancelled: number;
   noShow: number;
-  /** How many times a booking of theirs was moved. */
+  /** Total "moved" events across all their bookings. */
   moves: number;
-  /** Cancellations made within a day of the appointment. */
+  /** Cancellations made under SHORT_NOTICE_HOURS before the appointment. */
   shortNotice: number;
   lastVisitOn: string | null;
 };
 
 /**
- * What the bookings add up to.
- *
- * Cancellations are counted from the booking's current state rather than from
- * every event that ever said "cancelled" — somebody taps the wrong button and
- * puts it back, and that is not a cancellation. Moves are counted from the
- * events, because a booking that was moved three times looks identical to one
- * that was not.
+ * Cancellations come from current status, so a cancel that was undone doesn't
+ * count. Moves come from events, since the booking row doesn't record them.
  */
 export function standingOf(
   theirBookings: { id: number; date: string; startsAt: string; status: string }[],
@@ -44,8 +28,7 @@ export function standingOf(
 
   for (const event of events) {
     if (event.kind === "moved") moves++;
-    // The last time it was cancelled, which is the one that stuck if the
-    // booking is cancelled now.
+    // Keep the latest cancel event; it is the one in effect.
     if (event.kind === "status" && event.after === "cancelled") {
       cancelledAt.set(event.bookingId, Math.max(cancelledAt.get(event.bookingId) ?? 0, event.at));
     }
@@ -67,9 +50,7 @@ export function standingOf(
 
     cancelled++;
 
-    // How much notice it gave. The appointment is in the shop's +8; the event
-    // is a unix time, so both are turned into the same thing before they are
-    // compared.
+    // Appointment is local time (+08:00); event `at` is unix seconds.
     const at = cancelledAt.get(booking.id);
     if (at === undefined) continue;
 

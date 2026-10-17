@@ -1,9 +1,4 @@
-// The shop's own settings: when it opens, when it does not, and who works
-// there.
-//
-// Small screens, rarely used, and the place where a mistake is quietest. An
-// opening hour typed wrong does not throw anything — it just means bookings
-// stop being offered at six, and nobody notices for a week.
+// Shop settings: opening hours, closures and staff.
 
 import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 
@@ -13,7 +8,7 @@ import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
 
-/** Everything the settings screen shows at once. */
+/** All data for the settings screen. */
 export async function shopSettings(db: Db, from: string) {
   const [hours, shut, people] = await Promise.all([
     db
@@ -25,8 +20,7 @@ export async function shopSettings(db: Db, from: string) {
       })
       .from(businessHours)
       .orderBy(asc(businessHours.weekday)),
-    // Only from today. A shop that closed for a day in March does not need
-    // to scroll past it every time it closes for one in October.
+    // Upcoming closures only.
     db
       .select({ id: closures.id, date: closures.date, reason: closures.reason })
       .from(closures)
@@ -49,13 +43,7 @@ export async function shopSettings(db: Db, from: string) {
   return { hours, closures: shut, staff: people };
 }
 
-/**
- * The week's pattern.
- *
- * Sent whole, all seven days, rather than a day at a time. The shop thinks
- * "we open at ten except Sunday", and seven separate saves is seven chances
- * to leave it half changed.
- */
+/** Replaces the weekly hours. All seven days must be sent together. */
 export async function setHours(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { hours?: unknown } | null;
   const rows = Array.isArray(body?.hours) ? body.hours : null;
@@ -74,8 +62,7 @@ export async function setHours(db: Db, request: Request): Promise<Response> {
     if (!closed) {
       if (!opensAt || !isTime(opensAt)) return bad("bad-opening-time", "The opening time is not in HH:MM form.");
       if (!closesAt || !isTime(closesAt)) return bad("bad-closing-time", "The closing time is not in HH:MM form.");
-      // Refused rather than stored and worked around later. Every screen
-      // that reads these assumes the day runs forwards.
+      // Every reader assumes closesAt > opensAt (no overnight hours).
       if (closesAt <= opensAt) return bad("closes-before-opens", "Closing is before opening.");
     }
 
@@ -94,7 +81,7 @@ export async function setHours(db: Db, request: Request): Promise<Response> {
   return json({ ok: true });
 }
 
-/** Close for a day, or open one back up. */
+/** Adds, updates or (with `remove`) deletes a closure. */
 export async function setClosure(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     date?: unknown;
@@ -128,9 +115,7 @@ export async function setClosure(db: Db, request: Request): Promise<Response> {
     await db.insert(closures).values({ date, reason });
   }
 
-  // Bookings on the day are left alone on purpose. A closure is the shop's
-  // decision and the guests are somebody's to ring; deleting their
-  // appointments here would make that call impossible to make.
+  // Existing bookings are kept so the shop can contact the guests; only the count is returned.
   const standing = await db
     .select({ id: bookings.id })
     .from(bookings)
@@ -140,11 +125,8 @@ export async function setClosure(db: Db, request: Request): Promise<Response> {
 }
 
 /**
- * Add somebody, change them, or record that they have left.
- *
- * **Nobody is deleted.** Removing a stylist takes them out of bookings that
- * already happened and stops per-stylist takings adding up. Leaving is a date
- * on the row, which is why `left_on` exists.
+ * Creates or updates a staff member. Staff are never deleted (past bookings and
+ * per-stylist takings reference them); set `leftOn` instead.
  */
 export async function setStaff(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
@@ -191,9 +173,7 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
     })
     .where(eq(staff.id, id));
 
-  // What is still booked with somebody who has left. Not moved automatically:
-  // who takes over is the shop's call, and guessing would put a guest with a
-  // stylist they did not ask for.
+  // Bookings still assigned after leftOn. Returned, not reassigned: the shop decides who takes over.
   const pending =
     leftOn === null
       ? []
@@ -217,7 +197,7 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
   return json({ ok: true, staffId: id, stillBooked: pending });
 }
 
-/** Everyone still here, for the pickers. */
+/** Current staff, for pickers. */
 export async function activeStaff(db: Db) {
   return await db
     .select({ id: staff.id, name: staff.name, role: staff.role, color: staff.color })

@@ -1,13 +1,6 @@
-// Writes seed/logins.sql: the demo's accounts, with hashed passwords.
-//
-// The passwords are in this file and printed on the demo's sign-in screen.
-// That is correct rather than careless: the database they open is invented,
-// and in the demo it lives in the visitor's own browser. Hiding them would
-// only mean nobody could get in.
-//
-// **A shop running this for real does not apply this file.** It sets its own,
-// which is why the seed leaves login_id and password_hash NULL for everybody
-// and this is a separate step.
+// Writes seed/logins.sql: demo accounts with hashed passwords.
+// The passwords are public (shown on the demo sign-in screen); the demo data is fictional.
+// Real deployments do not apply this file; the main seed leaves login_id and password_hash NULL.
 //
 //   node scripts/make-logins.ts
 
@@ -15,7 +8,7 @@ import { writeFileSync } from "node:fs";
 
 import { hashPassword } from "../src/db/session.ts";
 
-/** Who can sign in, and as what. Three roles, so all three can be tried. */
+/** One account per role. */
 const ACCOUNTS: { id: number; loginId: string; password: string; who: string }[] = [
   { id: 1, loginId: "aoi", password: "chairside-demo", who: "Aoi — owner" },
   { id: 2, loginId: "ren", password: "chairside-demo", who: "Ren — stylist" },

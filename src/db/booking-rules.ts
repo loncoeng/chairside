@@ -1,43 +1,24 @@
-// What a booking is allowed to be.
-//
-// Two kinds of answer, and the difference is the whole design:
-//
-//   stop   the booking cannot be true. One person cannot be in two places.
-//   warn   the booking is unusual. The room is fuller than it normally goes.
-//
-// A booking is taken with the guest waiting — on the phone, or standing at
-// the desk. A system that refuses at that moment is a system the shop stops
-// using, and the receptionist knows more about the state of the room today
-// than a table of capacities does. So only the impossible is refused, and
-// everything else is said out loud and then allowed.
-//
-// This runs on the server. The screen shows the same messages, but the check
-// that counts is the one next to the database.
+// Booking validation, run on the server.
+//   stop: impossible (e.g. one stylist in two places); the booking is refused.
+//   warn: unusual (e.g. over capacity); shown, but the booking is allowed.
 
 export type Verdict = {
   level: "stop" | "warn";
   code: string;
   /**
-   * English, and a fallback.
-   *
-   * The screen builds its own wording from `code` and `data`, because the
-   * shop works in three languages and a sentence assembled on the server can
-   * only be in one of them. This stays so that anything not going through the
-   * screen — curl, a log line, a future integration — still reads.
+   * English fallback for logs and API clients. The UI localises from `code`
+   * and `data` instead.
    */
   message: string;
-  /** The parts of the message, for a client that wants to say it its own way. */
+  /** Message parameters for clients that build their own wording. */
   data?: Record<string, string | number>;
 };
 
 /** A treatment being placed, before it has an id. */
 export type Draft = {
   /**
-   * Which seat, if one has been chosen.
-   *
-   * NULL is normal, not missing data: a booking taken a week out says "a
-   * shampoo then a cut", and which station that turns out to be is decided
-   * on the day. The seat kind still matters, so it is carried separately.
+   * null when no seat is chosen yet, which is normal: the station is often
+   * decided on the day. `seatKind` is still set.
    */
   seatId: number | null;
   seatKind: "styling" | "shampoo" | null;
@@ -67,10 +48,7 @@ const at = (hhmm: string): number => {
   return (h ?? 0) * 60 + (m ?? 0);
 };
 
-/**
- * Half-open. A treatment ending at 14:00 and one starting at 14:00 do not
- * overlap — that is a handover, and it happens every hour of every day.
- */
+/** Half-open intervals: one ending at 14:00 and one starting at 14:00 don't overlap. */
 const clash = (a: Draft, b: Draft): boolean => at(a.startsAt) < at(b.endsAt) && at(b.startsAt) < at(a.endsAt);
 
 /** Treatments that no longer occupy anything. */
@@ -104,7 +82,7 @@ export function check(
     }
   }
 
-  // --- Cannot be true ------------------------------------------------------
+  // --- stop ---------------------------------------------------------------
 
   for (const draft of drafts) {
     if (draft.staffId === null) continue;
@@ -132,8 +110,7 @@ export function check(
     }
   }
 
-  // The lines of one booking against each other. A guest cannot be shampooed
-  // and cut at the same moment either.
+  // Lines of the same booking must not overlap each other.
   for (let i = 0; i < drafts.length; i++) {
     for (let j = i + 1; j < drafts.length; j++) {
       if (clash(drafts[i]!, drafts[j]!)) {
@@ -146,7 +123,7 @@ export function check(
     }
   }
 
-  // --- Unusual, but the shop decides --------------------------------------
+  // --- warn ---------------------------------------------------------------
 
   if (room.hours.closed) {
     verdicts.push({
@@ -174,12 +151,8 @@ export function check(
     }
   }
 
-  // Capacity, for treatments that have not been given a seat yet.
-  //
-  // Once a seat is chosen there is nothing to warn about: it is either free,
-  // or taken and refused above. The case that needs saying is a booking taken
-  // without pinning a station — which is how most of them are taken — at an
-  // hour when every station of that kind is already spoken for.
+  // Capacity check, only for lines without a seat. A chosen seat is either free
+  // or already refused above. Sampled every 5 minutes.
   for (const draft of drafts) {
     if (draft.seatId !== null || draft.seatKind === null) continue;
 
@@ -211,7 +184,7 @@ export function check(
   return dedupe(verdicts);
 }
 
-/** The same problem found on three lines is one problem, not three. */
+/** Drops repeats of the same verdict from different lines. */
 function dedupe(verdicts: Verdict[]): Verdict[] {
   const seen = new Set<string>();
   return verdicts.filter((v) => {

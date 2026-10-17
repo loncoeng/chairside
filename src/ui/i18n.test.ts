@@ -6,8 +6,7 @@ import { LANGS, TEXT, errorText, say, serviceName, verdictText, weekday } from "
 import type { Lang } from "./i18n.ts";
 
 test("every string exists in every language", () => {
-  // A missing translation renders as a blank rather than an error, and nobody
-  // reviewing a diff reads three columns looking for the gap.
+  // A missing translation renders blank, not as an error.
   const missing: string[] = [];
 
   for (const [key, entry] of Object.entries(TEXT)) {
@@ -21,8 +20,7 @@ test("every string exists in every language", () => {
 });
 
 test("a translation keeps the placeholders the Japanese has", () => {
-  // Dropping {who} from a translation loses the name and leaves a sentence
-  // that reads fine and says nothing useful.
+  // e.g. dropping {who} loses the name silently.
   const wrong: string[] = [];
   const holders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(",");
 
@@ -42,7 +40,7 @@ test("values are filled in", () => {
 });
 
 test("a placeholder with nothing to fill it is left visible", () => {
-  // Blanking it would produce a complete sentence that is quietly untrue.
+  // Blanking it would leave a plausible but wrong sentence.
   strictEqual(say("en", "busiestAt").includes("{at}"), true);
 });
 
@@ -65,8 +63,7 @@ test("a rule is said in the reader's language", () => {
 });
 
 test("a code this build does not know falls back to what the server said", () => {
-  // An older screen against a newer API says something true rather than
-  // nothing at all.
+  // Older UI against a newer API.
   const verdict = { code: "invented-later", message: "What the server said." };
   strictEqual(verdictText("ja", verdict), "What the server said.");
 });
@@ -85,9 +82,7 @@ test("a refusal falls back to the server's sentence, then to the status", () => 
 });
 
 test("every code the server can send has words on the screen", () => {
-  // The codes live in src/worker and the words live here. Adding a refusal
-  // on the server and forgetting this file would put English in front of the
-  // Japanese owner, and nothing else would notice.
+  // Codes from src/worker must have entries here, or the server's English shows.
   const dir = new URL("../worker/", import.meta.url);
   const codes = new Set<string>();
   for (const name of readdirSync(dir)) {
@@ -98,7 +93,7 @@ test("every code the server can send has words on the screen", () => {
 
   const missing = [...codes].filter((code) => !(`error.${code}` in TEXT));
   strictEqual(missing.join(", "), "");
-  // And the scan is finding them at all.
+  // Sanity check that the scan finds codes.
   strictEqual(codes.has("wrong-credentials"), true);
 });
 

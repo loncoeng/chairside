@@ -1,29 +1,17 @@
 // Writes seed/holidays.sql from Google's public holiday calendars.
+// Run by hand about once a year. The output is committed so deploys and offline
+// on-premise builds don't depend on the feed.
 //
-// Run by hand, once a year or so. The result is committed, so the shop's
-// instance has no dependency on anybody's feed being up at deploy time — and
-// the on-premise build, which may have no internet at all, gets the same
-// dates.
-//
-// Why a feed rather than a library:
-//
-//   date-holidays  covers 207 countries and has no Macau.
-//   Nager.Date     has no Macau either, and returns six entries for China
-//                  against a real figure near fifteen.
-//
-// Macau's own days are the ones that matter here — S.A.R. Establishment Day,
-// the Feast of the Immaculate Conception, All Souls' Day — and a library that
-// quietly omits them would have the shop open on the twentieth of December.
+// A feed instead of a library: date-holidays and Nager.Date have no Macau, and
+// Nager.Date returns about 6 China holidays out of roughly 15.
 //
 //   node scripts/import-holidays.ts
 
 import { writeFileSync } from "node:fs";
 
 /**
- * The three regions the shop's guests keep.
- *
- * Macau's identifier is `en.mo`, not `en.macau` — that one answers 500, as
- * does `en.macao`. Found by trying; there is no list.
+ * Macau, Hong Kong and mainland China. Macau's id is `en.mo`; `en.macau` and
+ * `en.macao` return 500. Google publishes no list of ids.
  */
 const FEEDS: { region: "MO" | "HK" | "CN"; id: string }[] = [
   { region: "MO", id: "en.mo" },
@@ -36,12 +24,7 @@ const url = (id: string) =>
 
 type Holiday = { region: string; date: string; name: string };
 
-/**
- * The dates and names out of an iCal file.
- *
- * Only what is needed: a date-valued DTSTART and a SUMMARY. Times, recurrence
- * and time zones do not arise — a public holiday is a day.
- */
+/** Minimal iCal parse: date-valued DTSTART and SUMMARY only (no times, recurrence or zones). */
 function parse(region: string, ics: string): Holiday[] {
   const out: Holiday[] = [];
 
@@ -76,9 +59,8 @@ for (const feed of FEEDS) {
 
   const found = parse(feed.region, await response.text());
 
-  // One row per region and date, which is what the table's unique index
-  // allows. Some days carry two entries — "New Year's Eve" and "New Year's
-  // Eve Afternoon" — and dropping one of them would lose the half day.
+  // The unique index allows one row per region and date, so names on the same day are
+  // merged (e.g. "New Year's Eve" and "New Year's Eve Afternoon").
   const merged = new Map<string, string[]>();
   for (const holiday of found) {
     const names = merged.get(holiday.date) ?? [];

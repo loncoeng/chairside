@@ -1,12 +1,5 @@
-# What Dependabot watches.
-#
-# The actions below are pinned by commit, which is what stops a tag being
-# repointed at something else. The cost is that a pinned action never updates
-# itself, including for its own security fixes — so Dependabot opens the pull
-# request that moves the pin, and the pin stops being a way of going stale.
-#
-# Monthly rather than weekly: these move slowly, and a pull request nobody reads
-# is worse than no pull request.
+# Actions are pinned by SHA and never update themselves, so Dependabot moves the pins.
+# Monthly: these change slowly.
 
 version: 2
 updates:

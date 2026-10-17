@@ -1,8 +1,4 @@
-// Where the screen starts.
-//
-// Stage one is not connected to a database. Something deployed and working
-// comes first, and the features go on top of it. Building the whole thing and
-// deploying at the end leaves nothing behind if it stalls halfway.
+// UI entry point.
 
 import { render } from "preact";
 

@@ -1,6 +1,4 @@
-/* Built for the shop's PC first and a phone second, but responsive from the
-   first screen rather than retrofitted. Going back over ninety pages to add
-   it later costs far more than doing it now. */
+/* Desktop first, responsive down to phone width. */
 
 :root {
   --ground: #F4F3EF;
@@ -36,10 +34,7 @@
 * { box-sizing: border-box; }
 
 body {
-  /* Japanese wraps at phrase boundaries rather than mid-word. Without this
-     a sentence breaks anywhere, including inside a word, which reads as a
-     typo. Browsers that do not know the value wrap as they always did, so
-     there is nothing to lose by asking. */
+  /* Wrap Japanese at phrase boundaries. Unsupported browsers ignore it. */
   word-break: auto-phrase;
   margin: 0;
   background: var(--ground);
@@ -74,13 +69,8 @@ h2 {
   border-bottom: 1px solid var(--rule);
 }
 
-/* `ch` is the width of a zero. Japanese and Chinese glyphs are about twice
-   that, so 46ch wrapped at roughly 23 characters and the summary came out
-   three short lines in a very wide column. `em` tracks the font size and
-   measures the same for all three languages. */
-/* A readable line length. Around 45 characters is the usual advice for
-   Japanese, and `em` is the font's own size, so all three languages wrap at
-   about the same count. Not applied to a one-sentence notice. */
+/* About 45 characters per line. Uses `em`, not `ch`: CJK glyphs are about
+   2ch wide, so `ch` would wrap Japanese and Chinese at half the length. */
 .lede { color: var(--ink-soft); margin: 0 0 1.25rem; max-width: 45em; }
 
 .rows { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -153,9 +143,7 @@ h2 {
 
 code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }
 
-/* The database not answering is a state the screen has to show, not hide.
-   Borrowing a warm colour from the palette rather than pure red keeps it
-   readable in both themes. */
+/* Accent colour rather than pure red, so it reads in both themes. */
 .failed {
   border: 1px solid var(--accent);
   background: var(--accent-soft);
@@ -173,9 +161,8 @@ code { font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-soft); }
   word-break: break-word;
 }
 
-/* --- The day -------------------------------------------------------------
-   The calendar is twelve columns wide and cannot be squeezed into the
-   reading width the rest of the page uses. */
+/* --- Day view ------------------------------------------------------------
+   The calendar needs more than the reading width used elsewhere. */
 
 main.wide { max-width: 84rem; }
 
@@ -223,8 +210,7 @@ button.link {
   font-size: 0.9rem;
 }
 
-/* How full it gets. The peak is what matters; an idle morning does nothing
-   for the guest who arrives at six. */
+/* Peak seat usage. */
 .peak {
   list-style: none;
   display: flex;
@@ -252,9 +238,7 @@ button.link {
   font-size: 0.75rem;
 }
 
-/* The grid itself. Horizontal scroll on a narrow screen rather than columns
-   squeezed to nothing — a five-millimetre column is not a booking you can
-   read. */
+/* Scrolls horizontally on narrow screens instead of squeezing columns. */
 .cal-scroll {
   overflow-x: auto;
   border: 1px solid var(--rule);
@@ -271,7 +255,7 @@ button.link {
 
 .cal-corner { grid-row: 1; grid-column: 1; }
 
-/* Which group the columns underneath belong to. */
+/* Seat kind header spanning its columns. */
 .cal-group {
   position: sticky;
   top: 0;
@@ -335,10 +319,8 @@ button.link {
 .cal-by { color: var(--ink-faint); font-size: 0.68rem; margin-top: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-nom { color: var(--accent); margin-right: 1px; }
 
-/* How many lines a block shows is decided in layout.ts from its height, and
-   the ones that do not fit are not rendered at all. Hiding them here instead
-   would still let a third line push the first one out of view — the clipping
-   this replaces looked like a rendering fault rather than too much text. */
+/* Line count per block comes from linesFor() in layout.ts; lines that don't
+   fit are not rendered, rather than hidden here. */
 .cal-block.rows-1 { padding-top: 0; padding-bottom: 0; }
 .cal-block.rows-1 .cal-who { line-height: 1.15; }
 .cal-block > span { min-height: 0; }
@@ -358,7 +340,7 @@ button.link {
 .cal-closed-why { margin: 0 0 0.35rem; font-weight: 600; color: var(--accent); }
 .cal-closed .lede { margin: 0; max-width: none; }
 
-/* --- Taking a booking ---------------------------------------------------- */
+/* --- Booking form -------------------------------------------------------- */
 
 button.primary {
   background: var(--accent);
@@ -368,9 +350,7 @@ button.primary {
 button.primary:hover:not(:disabled) { filter: brightness(1.08); color: #FFF; }
 button.primary:disabled { opacity: 0.45; }
 
-/* Above the calendar rather than over it: the grid is what the receptionist
-   is reading from while they take the booking, and a panel on top of it hides
-   the answer to the question being asked on the phone. */
+/* Placed above the calendar, not over it, so the grid stays visible. */
 .sheet {
   border: 1px solid var(--rule);
   border-left: 3px solid var(--accent);
@@ -440,9 +420,7 @@ button.primary:disabled { opacity: 0.45; }
 .menu-item.is-on { border-color: var(--accent); background: var(--accent-soft); }
 .menu-min { color: var(--ink-faint); font-size: 0.75rem; }
 
-/* The number is the order the lines run in, which is what decides the times:
-   shampoo first, then the cut. Without it, picking two services and getting
-   them in the other order looks like a bug. */
+/* Order badge: services run back to back in this order, shampoo first. */
 .menu-order {
   background: var(--accent);
   color: #FFF;
@@ -472,8 +450,7 @@ button.primary:disabled { opacity: 0.45; }
   white-space: nowrap;
 }
 
-/* Refused and merely unusual do not look alike. One is the end of the
-   matter; the other is a sentence the shop reads and then decides on. */
+/* Stop (refused) and warn (needs confirmation) are styled differently. */
 .verdict.is-stop { border-color: #B4553F; }
 .verdict.is-stop .verdict-tag { background: #B4553F; color: #FFF; }
 .verdict.is-warn { border-color: var(--accent); background: var(--accent-soft); }
@@ -499,7 +476,7 @@ button.primary:disabled { opacity: 0.45; }
 
 .cal-head-unassigned { color: var(--ink-faint); }
 
-/* The language switch, in the corner. */
+/* Language switch. */
 header {
   display: flex;
   align-items: flex-start;
@@ -530,10 +507,9 @@ header {
   font-weight: 600;
 }
 
-/* --- One booking --------------------------------------------------------- */
+/* --- Booking panel ------------------------------------------------------- */
 
-/* The grid's blocks are buttons now, so the browser's own button styling has
-   to be undone rather than worked around. */
+/* Calendar blocks are buttons; reset the default button styles. */
 button.cal-block {
   font: inherit;
   text-align: left;
@@ -574,7 +550,7 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
   padding-left: 0.6rem;
 }
 
-/* The four things the desk actually does, as buttons rather than a menu. */
+/* Status buttons. */
 .moves { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 
 .moves .move {
@@ -590,8 +566,7 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 
 .moves .move:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 
-/* The one it is already on is shown, not hidden — otherwise the row of
-   buttons gives no clue which state the booking is in. */
+/* Current status stays visible, styled as selected. */
 .moves .move.is-on {
   background: var(--accent-soft);
   border-color: var(--accent);
@@ -601,22 +576,19 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 
 .moves .move:disabled:not(.is-on) { opacity: 0.4; cursor: default; }
 
-/* Folded away. Moving a booking is the rarer job, and an open form of time
-   pickers above the four buttons puts the common case second. */
+/* Collapsed by default; rescheduling is less common. */
 .reschedule { border-top: 1px solid var(--rule); padding-top: 0.6rem; }
 .reschedule summary { font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; }
 .reschedule summary:hover { color: var(--accent); }
 .reschedule > .field-row { margin-top: 0.7rem; }
 
-/* --- What has happened to a booking -------------------------------------- */
+/* --- Booking history ----------------------------------------------------- */
 
 .history { border-top: 1px solid var(--rule); padding-top: 0.6rem; }
 .history summary { font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; }
 .history summary:hover { color: var(--accent); }
 
-/* Said on the summary line, so it is visible without opening anything. A
-   guest who reschedules constantly should be obvious to whoever is covering
-   the desk today, not only to somebody who went looking. */
+/* Move count on the summary line, visible without expanding. */
 .history-count {
   margin-left: 0.6rem;
   color: var(--accent);
@@ -666,8 +638,7 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
   white-space: nowrap;
 }
 
-/* The list beside the person, because looking one up and reading them is one
-   job. On a phone the list stacks above. */
+/* List beside detail; stacked on phones. */
 .people { display: grid; grid-template-columns: minmax(12rem, 18rem) 1fr; gap: 1.5rem; }
 
 @media (max-width: 48rem) {
@@ -702,8 +673,7 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 .person-phone { color: var(--ink-soft); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .person h4 { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--ink-soft); font-weight: 600; }
 
-/* Anything that belongs to the person rather than a visit. Loud on purpose —
-   a tender scalp read three screens down is a tender scalp nobody read. */
+/* Per-person cautions, deliberately prominent. */
 .cautions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 
 .cautions li {
@@ -765,9 +735,7 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
   gap: 1.5rem;
 }
 
-/* A month of takings, as a shape.
-   Twenty-six horizontal bars were a list you scroll. A month is read left to
-   right, so the days run that way and the height carries the number. */
+/* Daily takings as vertical bars, one per day. */
 .chart { position: relative; padding-top: 0.5rem; }
 
 .chart-days {
@@ -790,12 +758,10 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
   border-radius: 2px 2px 0 0;
 }
 
-/* Saturdays and Sundays are the busy ones here, and seeing that in the shape
-   is most of what this chart is for. */
+/* Weekends (the busy days) in a different colour. */
 .chart-day.is-weekend .chart-fill { background: var(--styling); }
 
-/* A day the shop was shut is not a day it earned nothing. The column stays so
-   the month keeps its shape, and the rule underneath says which it was. */
+/* Days with no takings keep their column, marked with a baseline rule. */
 .chart-day.is-shut .chart-stack { border-bottom: 2px solid var(--rule); }
 .chart-day.is-shut .chart-label { color: var(--ink-faint); opacity: 0.55; }
 
@@ -812,8 +778,7 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 .chart-label em { display: block; font-style: normal; font-size: 0.55rem; color: var(--ink-faint); }
 .chart-day.is-weekend .chart-label em { color: var(--styling); }
 
-/* Where the average sits, so a day can be read against the month rather than
-   against the busiest day in it. */
+/* Monthly average line. */
 .chart-mean {
   position: absolute;
   left: 0;
@@ -851,11 +816,10 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 
 .rows-n { text-align: right; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .rows-value { text-align: right; font-variant-numeric: tabular-nums; }
-/* One sentence rather than a paragraph, so keeping it on a line reads better
-   than holding it to a reading width. On a narrow screen it wraps normally. */
+/* One-sentence note: no reading-width limit. */
 .money-note { font-size: 0.8rem; max-width: none; }
 
-/* The till, inside a booking. */
+/* Payment section in the booking panel. */
 .till { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
 .paid-lines { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
 .paid-lines li { display: flex; gap: 0.6rem; align-items: baseline; font-variant-numeric: tabular-nums; }
@@ -871,8 +835,7 @@ button.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offse
 
 .paid-method { color: var(--ink-faint); font-size: 0.8rem; }
 
-/* Which region a holiday belongs to. The three differ, and the difference is
-   who walks in — the mainland's Golden Week runs a week past Macau's. */
+/* Holiday region tags. MO, HK and CN holidays differ (e.g. mainland Golden Week runs longer). */
 ul.holiday-note { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; font-size: 0.85rem; }
 ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
 
@@ -883,7 +846,7 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
 
 .holiday-note.is-unknown { color: var(--ink-faint); font-size: 0.8rem; }
 
-/* --- The shop's settings -------------------------------------------------- */
+/* --- Shop settings ------------------------------------------------------- */
 
 .shop { display: flex; flex-direction: column; gap: 2rem; max-width: 46rem; }
 .shop h3 { margin: 0 0 0.7rem; font-size: 1rem; }
@@ -943,7 +906,7 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
 .team li.is-gone .team-name { color: var(--ink-faint); }
 .team li.is-gone button.link { margin-left: 0.5rem; }
 
-/* --- The demo ------------------------------------------------------------ */
+/* --- Demo ---------------------------------------------------------------- */
 
 .demo-toggle {
   font: inherit;
@@ -967,9 +930,7 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
   color: var(--accent);
 }
 
-/* Said once, at the top, and it stays there. Somebody who books an
-   appointment in the demo should never wonder whether a real shop is now
-   expecting them. */
+/* Persistent banner so demo bookings aren't mistaken for real ones. */
 .demo-banner {
   border: 1px solid var(--accent);
   background: var(--accent-soft);
@@ -979,13 +940,12 @@ ul.holiday-note li { display: flex; align-items: baseline; gap: 0.4rem; }
   font-size: 0.85rem;
 }
 
-/* The counts sit on one line. They are short in all three languages, and the
-   reading-width limit that suits prose was breaking them in half. */
+/* Short count lines: no reading-width limit. */
 .person .lede,
 section[aria-labelledby="room"] .lede { max-width: none; }
 
 
-/* A number on its own does not say what it is for. */
+/* Labelled phone number. */
 .person-phone { display: inline-flex; align-items: baseline; gap: 0.4rem; }
 
 .person-phone-label {
@@ -1000,21 +960,19 @@ section[aria-labelledby="room"] .lede { max-width: none; }
 .person-phone a { color: var(--ink-soft); text-decoration: none; }
 .person-phone a:hover { color: var(--accent); }
 
-/* The list scrolls on its own and the person stays put.
-   Choosing somebody near the bottom used to mean scrolling all the way back
-   up to read them. */
+/* List scrolls independently; detail stays in view. */
 @media (min-width: 48rem) {
   .people { align-items: start; }
   .people-list ul { max-height: 62vh; overflow-y: auto; }
   .people-detail { position: sticky; top: 1rem; }
 }
 
-/* The price for the stylist chosen above, not the menu's nominal one. */
+/* Price for the selected stylist's grade. */
 .menu-price { color: var(--accent); font-variant-numeric: tabular-nums; }
 .menu-item.is-on .menu-price { font-weight: 600; }
 .menu-total b { color: var(--accent); margin-left: 0.5rem; font-variant-numeric: tabular-nums; }
 
-/* What they charge, beside what they may do. */
+/* Price grade, shown next to role. */
 .team .grade {
   font-size: 0.72rem;
   color: var(--accent);
@@ -1023,12 +981,10 @@ section[aria-labelledby="room"] .lede { max-width: none; }
   padding: 0 0.35rem;
 }
 
-/* A booking with nobody on file against it. Said, rather than left as a
-   dash — a hyphen with no explanation reads as a bug, and did. */
+/* Booking with no customer: shown as a label, not a bare dash. */
 .cal-anon { color: var(--ink-faint); font-weight: 400; }
 
-/* The legend for the star. A mark nobody can decode is a mark that is not
-   there, and on a phone there is no hover to explain it. */
+/* Star legend (phones have no hover title). */
 .peak-key {
   display: flex;
   align-items: center;
@@ -1038,7 +994,7 @@ section[aria-labelledby="room"] .lede { max-width: none; }
 
 .peak-key .cal-nom { font-size: 0.9em; }
 
-/* Adding and correcting a guest. */
+/* Customer form. */
 .people-add { width: 100%; margin-bottom: 0.8rem; }
 .person-edit { margin-left: auto; }
 .person-address { margin: 0; color: var(--ink-soft); font-size: 0.85rem; white-space: pre-line; display: flex; gap: 0.4rem; align-items: baseline; }
@@ -1052,15 +1008,12 @@ section[aria-labelledby="room"] .lede { max-width: none; }
   padding: 0 0.5rem;
 }
 
-/* --- Signing in ---------------------------------------------------------- */
+/* --- Sign-in ------------------------------------------------------------- */
 
 .sign-in {
   max-width: 22rem;
   margin: 0 auto;
-  /* Enough to breathe and no more. The first version reserved 12vh at the top
-     and 4rem at the bottom, which on a desktop window was most of a scroll's
-     worth of nothing — the page moved a little and the only thing above the
-     fold was empty. */
+  /* Small padding keeps the form above the fold on desktop. */
   padding: clamp(1rem, 3vh, 2rem) 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -1096,7 +1049,7 @@ section[aria-labelledby="room"] .lede { max-width: none; }
   color: var(--ink-soft);
 }
 
-/* The invitation at the top of the first screen. */
+/* Demo invitation on the first screen. */
 .sign-in-invite {
   border: 1px solid var(--rule);
   border-radius: 8px;
@@ -1134,7 +1087,7 @@ section[aria-labelledby="room"] .lede { max-width: none; }
 .sign-in-trail ol { margin: 0.4rem 0 0; padding-left: 1.4rem; }
 .sign-in-trail li { margin: 0.15rem 0; font-family: ui-monospace, monospace; }
 
-/* Who is signed in, and the way out. */
+/* Signed-in user and sign-out button. */
 .whoami { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--ink-soft); }
 .whoami button {
   font: inherit;

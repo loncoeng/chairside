@@ -1,6 +1,4 @@
-# Ships whatever lands on main to Cloudflare.
-#
-# Tests are not copied in here; test.yml is called, so the two cannot drift.
+# Deploys main to Cloudflare. Calls test.yml rather than copying its steps.
 #
 # Required secrets:
 #   CLOUDFLARE_API_TOKEN    Workers Scripts:Edit and D1:Edit
@@ -13,15 +11,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Never two at once. Cancelling one mid-flight leaves it unclear which
-# version is live.
+# One at a time, never cancelled: a cancelled deploy leaves the live version unclear.
 concurrency:
   group: deploy
   cancel-in-progress: false
 
-# The token this job is given. Without this block it gets the repository's
-# default, which is wider than anything here needs: nothing writes back to the
-# repository, and a step that is compromised should not be able to.
+# Read-only token instead of the wider repo default: nothing here writes back,
+# and a compromised step shouldn't be able to.
 permissions:
   contents: read
 
@@ -44,55 +40,32 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      # Before the code that expects the tables, not after. A deploy that
-      # lands first would run against a database it does not match.
-      #
-      # Applying an already-applied migration is a no-op: wrangler keeps its
-      # own record in the database, so re-running this on every push is safe.
-      # The command asks for confirmation interactively; on a non-interactive
-      # terminal it skips the question and still takes a backup first.
+      # Migrate before deploying the code that needs the tables. Idempotent (wrangler
+      # records applied migrations). Non-interactive runs skip the prompt but still back up.
       - name: Bring the database up to date
         run: npx wrangler d1 migrations apply chairside --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # Sample rows, for the public instance only. INSERT OR IGNORE with the
-      # ids written out, so running it on every deploy adds nothing the
-      # second time. A shop would never apply this file.
-      # The shop's own settings — the room, the menu, the hours. Small, and
-      # applied every time so a correction here reaches the instance.
+      # Demo shop settings (room, menu, hours), public instance only. INSERT OR IGNORE
+      # with explicit ids, so re-running every deploy is safe.
       - name: Put the sample rows in
         run: |
           npx wrangler d1 execute chairside --remote --file seed/demo.sql
-          # Public holidays for the three regions. Reference data rather than
-          # sample data: a shop running this would apply it too.
+          # Public holidays for the three regions. Reference data, not sample data.
           npx wrangler d1 execute chairside --remote --file seed/holidays.sql
-          # Addresses and birthdays for the sample guests. Fills only empty
-          # fields, so re-applying it changes nothing and keeps any edit made
-          # through the screen.
+          # Sample guest addresses and birthdays. Fills empty fields only, so UI edits survive.
           npx wrangler d1 execute chairside --remote --file seed/demo-customer-details.sql
-          # seed/logins.sql is deliberately NOT applied here. It goes into the
-          # browser demo's database instead (scripts/build-demo-db.ts), where the
-          # password can be printed on screen because that database is invented
-          # and lives in the visitor's browser.
-          #
-          # So the live instance has no account anybody can sign into. What a
-          # visitor wrote there would be waiting for the next visitor — and the
-          # next visitor might be a shop being shown the thing.
+          # seed/logins.sql is not applied here, only to the browser demo DB
+          # (scripts/build-demo-db.ts). The live instance has no public login.
           npx wrangler d1 execute chairside --remote --file seed/demo-no-logins.sql
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # Three months of bookings is about a megabyte and sixteen thousand
-      # rows. Re-applying that on every push spends a sixth of a day's free
-      # writes to change nothing, so it only runs when the count on file and
-      # the count in the database disagree.
-      # Three months of bookings is about a megabyte and sixteen thousand
-      # rows. Re-applying that on every push spends a sixth of a day's free
-      # writes to change nothing, so it only runs when the count on file and
-      # the count in the database disagree.
+      # ~1 MB / 16,000 rows. Re-applying costs a sixth of a day's free D1 writes,
+      # so it runs only when the expected and actual booking counts differ.
       - name: Put the sample months in, if they are not there
         run: |
           want=$(cat seed/demo-bookings.count)
@@ -105,13 +78,9 @@ jobs:
             exit 0
           fi
 
-          # One file per table, applied in turn. All of it in a single call
-          # reset the database's Durable Object outright — the limit is on
-          # how much one call carries, not on any one statement.
-          # The clear goes first. bookings.customer_id has no cascade on it —
-          # on purpose, so that removing a customer cannot silently take their
-          # history with them — which means the bookings have to be gone
-          # before the guests they point at can be.
+          # One file per call: a single large call resets D1's Durable Object (per-call size limit).
+          # Clear first. bookings.customer_id has no cascade (deleting a customer must not
+          # drop their history), so bookings go before customers.
           for part in demo-clear demo-customers demo-bookings demo-items demo-events demo-payments demo-customer-details; do
             echo "applying ${part}"
             npx wrangler d1 execute chairside --remote --file "seed/${part}.sql"
@@ -120,20 +89,9 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # The signing key, if this repository has one on file. Before the
-      # deploy, not after: putting a secret on a Worker makes a new version
-      # of it, and two versions in a row leave the edge answering from both
-      # for a minute. The check below caught exactly that — /api/people came
-      # back 401 from the new code while /api/people/1 came back 200 from the
-      # old, one request apart.
-      #
-      # Without a key the Worker refuses every sign-in with a 503 rather than
-      # letting anybody in — see src/db/session.ts. Keeping it here as well as
-      # on the Worker means a Worker rebuilt from scratch gets it back on the
-      # next push.
-      #
-      # On a Worker that does not exist yet this has nothing to attach to, so
-      # a failure here is reported and stepped over; the next push sets it.
+      # Before deploy: setting a secret creates a Worker version, and two versions back to
+      # back leave the edge serving both for about a minute. Without a key, sign-in returns
+      # 503 (src/db/session.ts). Fails harmlessly on a Worker's first deploy.
       - name: Put the signing key in place
         run: |
           if [ -z "$SESSION_SECRET" ]; then
@@ -153,24 +111,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # Check that what was shipped actually answers. Without this, a deploy
-      # that put nothing reachable on the internet is recorded as a success.
-      #
-      # The order here is deliberate. The doors are tried locked first: if
-      # this step only ever asked with a session in hand, the day the gate
-      # stops working it would still go green.
+      # Verify the live deploy. Unauthenticated requests go first so a broken auth gate fails the run.
       - name: Does it answer
         run: |
           base=https://chairside.loncoeng.workers.dev
 
-          # Ask until the answer is the one expected, rather than asking once.
-          #
-          # A new version of a Worker reaches the edge over a few seconds, and
-          # not everywhere at the same moment. The first run of this step read
-          # 401 from /api/people and 200 from /api/people/1 one request apart:
-          # two adjacent requests, two versions of the code. A check that
-          # treats the first unexpected answer as a finding reports that as a
-          # hole in the gate, which it was not.
+          # Retry: a new version reaches edge locations over several seconds, so adjacent
+          # requests can hit different versions.
           expect() {
             want=$1; shift
             for try in 1 2 3 4 5 6; do
@@ -186,13 +133,8 @@ jobs:
             return 1
           }
 
-          # Wait for this commit by name, and then keep asking: one colo
-          # answering with the new build does not mean the rest have it.
-          #
-          # Asking the Worker rather than looking at the bundle filename: a
-          # change that touches only the API leaves the assets byte-identical,
-          # and a check that watched the bundle would pass against the old
-          # code without noticing.
+          # Wait until /api/version reports this commit 6 times in a row (one colo is not all).
+          # The bundle hash alone misses API-only changes.
           bundle=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)
           echo "waiting for ${GITHUB_SHA} and $bundle"
 
@@ -215,16 +157,13 @@ jobs:
             exit 1
           fi
 
-          # Locked. Every one of these returned customer names, phone numbers
-          # and treatment notes to anybody who asked, before the sign-in
-          # existed. They are named here so that they cannot go back to it
-          # without this failing.
+          # These expose customer data and must reject requests without a session.
           for path in "/api/people" "/api/people/1" "/api/customers" "/api/room" "/api/day?date=2026-09-23" "/api/revenue?month=2026-09" "/api/shop"; do
             printf 'GET %-32s with no session -> ' "$path"
             expect 401 "$base$path" || exit 1
           done
 
-          # Writing, too. A gate that only covers reading is not a gate.
+          # Writes too.
           printf 'POST %-31s with no session -> ' "/api/records"
           expect 401 -X POST -H 'content-type: application/json' \
             -d '{"customerId":1,"body":"probe"}' "$base/api/records" || exit 1
@@ -239,16 +178,13 @@ jobs:
 
           echo "the doors are locked"
 
-          # The demo's published account must not open the live instance.
-          # seed/logins.sql is not applied to D1, and this is what says so.
+          # The demo's published password must not work here (seed/logins.sql is not applied).
           printf 'POST %-31s demo password -> ' "/api/session"
           expect 401 -X POST -H 'content-type: application/json' \
             -d '{"loginId":"aoi","password":"chairside-demo"}' "$base/api/session" || exit 1
           echo "the published password does not open the live instance"
 
-          # Now with a session of our own. There is no password to sign in with,
-          # so the check signs a token using the key it already holds — the same
-          # issue() the Worker calls, not a second implementation of it.
+          # No live password exists, so mint tokens with SESSION_SECRET via the Worker's own issue().
           if [ -z "$SESSION_SECRET" ]; then
             echo
             echo "No SESSION_SECRET on file, so this check cannot make a session."
@@ -258,9 +194,7 @@ jobs:
           owner=$(node scripts/mint-session.ts 1 owner)
           stylist=$(node scripts/mint-session.ts 2 stylist)
 
-          # run_worker_first sends /api/* to the Worker. If that is wrong, the
-          # SPA fallback returns the HTML page with a 200 on it, so the body
-          # is checked, not just the status.
+          # Check the body, not just the status: a broken run_worker_first returns the SPA HTML with 200.
           code=$(curl -s -o /tmp/api -w '%{http_code}' --max-time 20 -H "cookie: chairside_session=$owner" "$base/api/room" || true)
           echo "GET /api/room -> HTTP $code"
           head -c 300 /tmp/api; echo
@@ -269,8 +203,7 @@ jobs:
             exit 1
           fi
 
-          # 12 seats and 8 on the team, from seed/demo.sql. Empty arrays are
-          # still valid JSON and would pass a check that only looked at shape.
+          # 12 seats + 8 staff from seed/demo.sql; empty arrays would pass a shape-only check.
           rows=$(grep -o '"id"' /tmp/api | wc -l)
           echo "rows returned (seats + staff): $rows"
           if [ "$rows" -lt 20 ]; then
@@ -279,9 +212,7 @@ jobs:
           fi
           echo "the database answers"
 
-          # And the calendar. /api/day is what stage three is about, and an
-          # empty day is a valid reply — so the sample week is asked for by
-          # name rather than trusting whatever "today" happens to be.
+          # Use a fixed sample date: an empty day is a valid reply.
           code=$(curl -s -o /tmp/day -w '%{http_code}' --max-time 20 -H "cookie: chairside_session=$owner" "$base/api/day?date=2026-09-23" || true)
           echo "GET /api/day -> HTTP $code"
           lines=$(grep -o '"itemId"' /tmp/day | wc -l)
@@ -293,8 +224,7 @@ jobs:
           fi
           echo "the calendar answers"
 
-          # A stylist is not the owner. The role gate lives in one table
-          # (src/db/permissions.ts) and this is the live proof it is wired in.
+          # Role gate (src/db/permissions.ts): stylists can't see revenue.
           printf 'GET  %-31s as a stylist  -> ' "/api/revenue"
           expect 403 -H "cookie: chairside_session=$stylist" "$base/api/revenue?month=2026-09" || exit 1
           echo "the roles hold"

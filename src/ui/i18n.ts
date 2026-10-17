@@ -1,28 +1,17 @@
-// Three languages, because the shop works in three.
-//
-// Japanese for the owner, Traditional Chinese for most of the guests and the
-// local staff, English for everyone else. Macau writes Traditional, not
-// Simplified, and getting that wrong is the kind of detail people notice
-// immediately.
-//
-// Menu names are not in here. Those are rows the shop types in — services has
-// name_ja, name_zh and name_en — and a dictionary in the code could not hold
-// a service invented after it shipped.
+// UI strings in Japanese, Chinese and English. Macau writes Traditional Chinese, not Simplified.
+// Menu names live in the services table (name_ja, name_zh, name_en), not here.
 
 export const LANGS = ["ja", "zh", "en"] as const;
 export type Lang = (typeof LANGS)[number];
 
-/** What the switch in the corner says. Each in its own language. */
+/** Language switch labels, each in its own language. */
 export const LANG_LABEL: Record<Lang, string> = { ja: "日本語", zh: "繁體", en: "EN" };
 
 type Dict = Record<Lang, string>;
 
 /**
- * Every string the interface says.
- *
- * Flat, and with the same keys in all three — a test checks that, because a
- * missing translation shows up as a blank on screen rather than an error, and
- * nobody reviewing a pull request reads three columns for the gap.
+ * All UI strings. A test checks every key has all three languages, since a
+ * missing translation renders as a blank rather than an error.
  */
 export const TEXT = {
   tagline: {
@@ -53,10 +42,7 @@ export const TEXT = {
   unassigned: { ja: "未定", zh: "未定", en: "Unassigned" },
   busiestAt: { ja: "ピークは {at}", zh: "{at} 最繁忙", en: "busiest at {at}" },
   full: { ja: "満席", zh: "已滿", en: "Full" },
-  // The counts, and nothing else. Why the two kinds of seat are counted
-  // apart is an argument, and an argument belongs in DESIGN.md — the screen
-  // repeating it wrapped onto three lines and said nothing the numbers had
-  // not already said.
+  // Why the two seat kinds are counted apart: see DESIGN.md.
   roomSummary: {
     ja: "セット面 {styling} 台、シャンプー台 {shampoo} 台、在籍 {staff} 名",
     zh: "剪髮位 {styling} 個、洗頭位 {shampoo} 個、在職 {staff} 人",
@@ -73,12 +59,10 @@ export const TEXT = {
   stylist: { ja: "スタイリスト", zh: "髮型師", en: "stylist" },
   assistant: { ja: "アシスタント", zh: "助理", en: "assistant" },
 
-  // Days that are not ordinary
+  // Closed days
   closedDay: { ja: "定休日", zh: "休息日", en: "Closed" },
   closure: { ja: "臨時休業", zh: "臨時休息", en: "Closed today" },
-  // A whole sentence, shown or not shown. The fragments this replaced were
-  // glued onto whatever came before them, which only worked for one of the
-  // four combinations.
+  // A whole sentence, not a fragment appended to another label.
   bookedAnyway: { ja: "予約が入っています。", zh: "仍有預約。", en: "There are bookings." },
 
   // Taking a booking
@@ -91,9 +75,7 @@ export const TEXT = {
   menu: { ja: "メニュー", zh: "服務", en: "Menu" },
   totalMinutes: { ja: "合計 {n} 分", zh: "共 {n} 分鐘", en: "{n} min total" },
   minutes: { ja: "{n}分", zh: "{n}分", en: "{n}m" },
-  // A guest who asked for that stylist by name. It is on the calendar as a
-  // star, in the takings as a share, and in a real salon it decides
-  // commission — so it is worth a word rather than a symbol.
+  // Guest asked for this stylist by name (affects commission).
   nominated: { ja: "指名", zh: "指定髮型師", en: "Requested by name" },
   note: { ja: "メモ", zh: "備註", en: "Note" },
   cancel: { ja: "やめる", zh: "取消", en: "Cancel" },
@@ -114,20 +96,18 @@ export const TEXT = {
   reschedule: { ja: "時間・担当を変える", zh: "更改時間或髮型師", en: "Change the time or stylist" },
   applyChange: { ja: "変更する", zh: "套用變更", en: "Apply" },
 
-  // What happened to this booking
+  // Booking history
   history: { ja: "変更の記録", zh: "更改記錄", en: "What has happened" },
   movedTimes: { ja: "この予約は {n} 回変更されています", zh: "這個預約已更改 {n} 次", en: "Moved {n} times" },
-  // Not 予約済み or 予約完了: both are the names of statuses — booked and
-  // done — so the log would read "予約済み" and then "予約済み → 完了".
-  // English had the same collision with "Booked".
+  // Not 予約済み or 予約完了: those are status names, so the log would read
+  // "予約済み" then "予約済み → 完了". Same for "Booked" in English.
   "event.created": { ja: "予約を登録", zh: "建立預約", en: "Created" },
   "event.status": { ja: "{before} → {after}", zh: "{before} → {after}", en: "{before} → {after}" },
   "event.moved": { ja: "{before} から {after} へ変更", zh: "由 {before} 改為 {after}", en: "Moved from {before} to {after}" },
   "event.restaffed": { ja: "担当を {before} から {after} へ変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
   "event.edited": { ja: "内容を変更", zh: "內容已更改", en: "Edited" },
 
-  // What a stylist charges. Not the same as what they do — somebody can be
-  // promoted without their permissions changing.
+  // Price grades. Separate from role: a promotion doesn't change permissions.
   "grade.owner": { ja: "オーナー", zh: "店主", en: "Owner" },
   "grade.stylist1": { ja: "スタイリスト①", zh: "髮型師 I", en: "Stylist I" },
   "grade.stylist2": { ja: "スタイリスト②", zh: "髮型師 II", en: "Stylist II" },
@@ -200,8 +180,7 @@ export const TEXT = {
   byMethod: { ja: "支払方法", zh: "付款方式", en: "By method" },
   byService: { ja: "メニュー別（件数）", zh: "服務別（次數）", en: "By service (count)" },
   noTakings: { ja: "この月の会計はまだありません。", zh: "這個月還沒有帳單。", en: "Nothing taken this month yet." },
-  // What the number means. Why it is worked out that way is in
-  // src/db/credit.ts, where anybody changing it will already be.
+  // The reasoning is in src/db/credit.ts.
   takingsNote: {
     ja: "売上は担当したスタイリストに付きます（シャンプーのみの来店はアシスタント）。",
     zh: "營業額歸於負責的髮型師（只洗頭的客人歸於助理）。",
@@ -262,8 +241,7 @@ export const TEXT = {
     zh: "已設為離職。之後仍有 {n} 個預約，請在預約畫面更改負責人。",
     en: "Marked as left. {n} bookings still stand — change who takes them on the booking screen.",
   },
-  // Two facts. This used to argue its own case, which is of no use to somebody
-  // who wants to know what to press. The reasoning is in DESIGN.md.
+  // Reasoning in DESIGN.md.
   nobodyDeleted: {
     ja: "スタッフは削除できません。退職は日付で記録します。",
     zh: "員工不能刪除，離職以日期記錄。",
@@ -299,9 +277,7 @@ export const TEXT = {
     en: "For the people who work in the shop. This public demo has no account that opens it.",
   },
 
-  // What the rules say. Built here rather than on the server, which can only
-  // write in one language. The server still sends its own English sentence
-  // as a fallback for anything not going through this screen.
+  // Rule verdicts. The server also sends an English message as a fallback.
   "verdict.staff-double-booked": {
     ja: "{who}は {from}–{to} に別の施術が入っています。",
     zh: "{who} 在 {from}–{to} 已有其他服務。",
@@ -353,8 +329,7 @@ export const TEXT = {
     en: "All {total} styling chairs are taken at that time.",
   },
 
-  // Why the server said no. Same arrangement as the rules above: the server
-  // sends a code and an English sentence, and the screen says it here.
+  // API errors, keyed by the server's error code.
   "error.signed-out": { ja: "サインインしてください。", zh: "請先登入。", en: "Please sign in." },
   "error.forbidden": { ja: "この操作は許可されていません。", zh: "您沒有執行此操作的權限。", en: "You are not allowed to do that." },
   "error.booking-not-found": { ja: "その予約は見つかりません。", zh: "找不到該預約。", en: "That booking was not found." },
@@ -392,7 +367,7 @@ export const TEXT = {
 
 export type Key = keyof typeof TEXT;
 
-/** Weekday initials, in the form each language actually uses. */
+/** Short weekday names, Sunday first. */
 const WEEKDAYS: Record<Lang, string[]> = {
   ja: ["日", "月", "火", "水", "木", "金", "土"],
   zh: ["日", "一", "二", "三", "四", "五", "六"],
@@ -402,11 +377,8 @@ const WEEKDAYS: Record<Lang, string[]> = {
 export const weekday = (lang: Lang, n: number): string => WEEKDAYS[lang][n] ?? "";
 
 /**
- * A string, with {placeholders} filled in.
- *
- * A placeholder with nothing to fill it is left as it is rather than blanked,
- * so a missing value looks wrong on screen instead of reading as a complete
- * sentence that happens to be untrue.
+ * Look up a string and fill its {placeholders}. Unfilled placeholders are left
+ * as is so a missing value is visible on screen.
  */
 export function say(lang: Lang, key: Key, values: Record<string, string | number> = {}): string {
   const template = TEXT[key][lang];
@@ -415,13 +387,7 @@ export function say(lang: Lang, key: Key, values: Record<string, string | number
   );
 }
 
-/**
- * Which name a service goes by.
- *
- * Falls back to Japanese: the shop types that one in first, and the other two
- * may simply not have been filled in yet. A blank where a service name should
- * be is worse than the wrong language.
- */
+/** Service name in `lang`, falling back to Japanese (the only required name). */
 export function serviceName(
   lang: Lang,
   service: { nameJa: string; nameZh: string | null; nameEn: string | null },
@@ -431,13 +397,7 @@ export function serviceName(
   return service.nameJa;
 }
 
-/**
- * What a rule said, in the reader's language.
- *
- * Falls back to the server's own sentence for a code this build does not know
- * about — an older screen against a newer API still says something true,
- * rather than nothing at all.
- */
+/** Localized verdict. Unknown codes fall back to the server's English message. */
 export function verdictText(
   lang: Lang,
   verdict: { code: string; message: string; data?: Record<string, string | number> },
@@ -448,11 +408,8 @@ export function verdictText(
 }
 
 /**
- * Why a request failed, in the reader's language.
- *
- * Falls back the same way as verdictText, and then to the status code: a
- * reply that is not ours at all — a proxy's error page, say — still says
- * something.
+ * Localized error message. Falls back to the server's message, then to the
+ * HTTP status (e.g. a proxy error page).
  */
 export function errorText(lang: Lang, reply: unknown, status: number): string {
   const { code, error } = (reply ?? {}) as { code?: unknown; error?: unknown };

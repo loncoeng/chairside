@@ -1,14 +1,5 @@
-// Dates, at the edge of the API.
-//
-// src/db/dates.test.ts proves isDate knows that 2026-02-30 is not a day. This
-// file proves every endpoint that takes a date actually asks it — and, just as
-// importantly, that it asks the right way round.
-//
-// Both matter. Replacing the old `/^\d{4}-\d{2}-\d{2}$/` checks with isDate in
-// one sweep dropped the `!` on three of them, which turns "refuse a bad date"
-// into "refuse every date" — a shape of mistake no unit test on isDate itself
-// can see. So the real handlers are called here, through the real router, with
-// one date that is a day and three that only look like one.
+// Checks every date-taking endpoint calls isDate, and with the right polarity
+// (a missing `!` refuses every date). Uses the real router.
 
 import { strictEqual } from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -23,7 +14,7 @@ import { route } from "./router.ts";
 const SQL = await initSqlJs();
 const SECRET = "a-secret-for-the-tests-only";
 
-/** Enough of a shop to answer. */
+/** Minimal shop fixture. */
 function database() {
   const raw = new SQL.Database();
   for (const name of readdirSync("migrations").filter((n) => n.endsWith(".sql")).sort()) {
@@ -51,7 +42,7 @@ function database() {
   return drizzle(raw);
 }
 
-/** A day that exists, and three strings that look like one and are not. */
+/** One real date and three invalid ones. */
 const GOOD = "2026-09-23";
 const BAD = ["2026-02-30", "2026-13-01", "2026-09-31"];
 
@@ -98,7 +89,7 @@ test("a day that does not exist is refused wherever a date is taken", async () =
 });
 
 test("and a day that does exist is not", async () => {
-  // The half of this that a check written the wrong way round still passes.
+  // Catches an inverted check.
   const db = database();
 
   strictEqual((await ask(db, "/api/day?date=" + GOOD, null, "GET")).status, 200);

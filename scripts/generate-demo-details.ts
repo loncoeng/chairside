@@ -1,23 +1,13 @@
-// Writes seed/demo-customer-details.sql: an address and a birthday for most
-// of the sample guests.
+// Writes addresses and birthdays for the sample guests to seed/demo-customer-details.sql.
+// Separate from generate-demo-bookings.ts so extra random draws don't shift its bookings.
+// All streets and buildings are fictional (示範街, Rua da Amostra, 樣板花園).
+// UPDATEs only fill empty fields, so edits made in the app survive each deploy.
 //
-// Kept apart from generate-demo-bookings.ts on purpose. That script draws
-// every booking from one fixed random sequence, and drawing anything extra
-// from it would move three months of bookings to add a column.
-//
-// **Every street and building here is made up.** 示範街, Rua da Amostra,
-// 樣板花園 — names chosen to read as a sample at a glance, so that nobody
-// mistakes one for a real address or goes looking for it.
-//
-// UPDATEs rather than INSERTs, and only where the field is still empty. The
-// public instance applies this on every deploy; a detail somebody corrected
-// through the screen stays corrected.
-//
-// Run it with `npm run demo:details`. The output is committed.
+// Run with `npm run demo:details`. The output is committed.
 
 import { writeFileSync } from "node:fs";
 
-/** The twelve in demo.sql, and the generated guests after them. */
+/** The twelve guests from demo.sql, then the generated ones (101+). */
 const IDS = [
   ...Array.from({ length: 12 }, (_, i) => i + 1),
   ...Array.from({ length: 240 }, (_, i) => i + 101),
@@ -37,10 +27,7 @@ const PT_STREETS = ["Rua da Amostra", "Travessa do Exemplo", "Avenida Fictícia"
 const PT_BUILDINGS = ["Edf. Modelo", "Edf. Exemplo", "Jardim Fictício"];
 const FLATS = ["A", "B", "C", "D", "E", "F"];
 
-/**
- * Mostly Macau, some Hong Kong and the mainland — the same spread as the
- * dialling codes on the phone numbers.
- */
+/** Mostly Macau, some Hong Kong and mainland China, matching the phone numbers. */
 function address(): string {
   const roll = random();
   const no = between(1, 188);
@@ -63,8 +50,7 @@ const quote = (s: string | null) => (s === null ? "NULL" : `'${s.replaceAll("'",
 
 const lines: string[] = [];
 for (const id of IDS) {
-  // Not everybody gives either. A sample where every field is filled looks
-  // like a form, not like a salon's records.
+  // Leave some fields empty for realism.
   const a = random() < 0.75 ? address() : null;
   const b = random() < 0.65 ? birthday() : null;
   if (a === null && b === null) continue;

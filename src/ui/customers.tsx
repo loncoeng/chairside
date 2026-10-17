@@ -1,8 +1,4 @@
-// Customers.
-//
-// A list you search, and one person at a time. What makes this worth having
-// over a spreadsheet is the second half of the page: what their bookings add
-// up to, and what was done to their hair last time.
+// Customer list with search, and a detail view with booking stats, records and history.
 
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
@@ -71,7 +67,7 @@ const nameIn = (
   return line.serviceJa ?? "—";
 };
 
-/** What the form edits. The same shape for a new guest and an old one. */
+/** Customer form fields, for both new and existing customers. */
 type Details = {
   name: string;
   searchKey: string;
@@ -101,7 +97,7 @@ export function Customers({
 }: {
   openId: number | null;
   onOpen: (id: number | null) => void;
-  /** Somebody was added or renamed; the booking form's picker is stale. */
+  /** Called after an add or rename, since the booking form's customer list is now stale. */
   onChanged?: () => void;
 }) {
   const { t } = useText();
@@ -109,7 +105,7 @@ export function Customers({
   const [list, setList] = useState<Summary[]>([]);
   const [failed, setFailed] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  // Bumped after a save, so the list and the open person are read again.
+  // Bumped after a save to refetch the list and the open customer.
   const [revision, setRevision] = useState(0);
   const [said, setSaid] = useState<Saved | null>(null);
 
@@ -123,8 +119,7 @@ export function Customers({
 
   useEffect(() => {
     const stop = new AbortController();
-    // Waits for typing to stop. Without it every keystroke is a query, and
-    // D1's free allowance is counted in rows read.
+    // Debounce: D1's free tier is metered in rows read.
     const timer = setTimeout(() => {
       fetch(`/api/people?q=${encodeURIComponent(query)}`, { signal: stop.signal })
         .then(async (r) => {
@@ -304,8 +299,6 @@ function PersonDetail({
     <article class="person">
       <header class="person-head">
         <h3>{person.name}</h3>
-        {/* Labelled. A run of digits on its own is a number, and a number on
-            its own does not say what it is for. */}
         {person.phone && (
           <span class="person-phone">
             <span class="person-phone-label">{t("phone")}</span>
@@ -321,8 +314,7 @@ function PersonDetail({
         <p class="person-address">
           <span class="person-phone-label">{t("birthday")}</span>
           {person.birthday}
-          {/* The month is what a salon acts on: a birthday offer, a word at
-              the desk. Said in words so it does not rely on colour alone. */}
+          {/* Birthday month flag, in text so it doesn't rely on colour alone. */}
           {person.birthday.slice(5, 7) === todayInShop().slice(5, 7) && (
             <span class="birthday-month">{t("birthdayThisMonth")}</span>
           )}
@@ -336,9 +328,7 @@ function PersonDetail({
         </p>
       )}
 
-      {/* Anything on the person rather than a single visit comes first, and
-          stays visible. A tender scalp read three screens down is a tender
-          scalp nobody read. */}
+      {/* Cautions apply to the person, not one visit, so they go near the top. */}
       {person.cautions.length > 0 && (
         <ul class="cautions">
           {person.cautions.map((r) => (
@@ -352,8 +342,7 @@ function PersonDetail({
       <dl class="standing">
         <Stat label={t("visits")} value={s.visits} />
         <Stat label={t("lastVisit")} value={s.lastVisitOn ?? "—"} />
-        {/* Shown only when there is something to show. A row of zeroes reads
-            as an accusation nobody made. */}
+        {/* Shown only when non-zero. */}
         {s.moves > 0 && <Stat label={t("moves")} value={s.moves} warn />}
         {s.cancelled > 0 && <Stat label={t("cancelledCount")} value={s.cancelled} warn />}
         {s.shortNotice > 0 && <Stat label={t("shortNotice")} value={s.shortNotice} warn />}
@@ -399,12 +388,7 @@ function PersonDetail({
   );
 }
 
-/**
- * Adding a guest and correcting one are the same form.
- *
- * Only the name is required. The rest is often not known on the first call,
- * and a form that insists on an address gets "-" typed into it.
- */
+/** Add or edit a customer. Only the name is required; the rest is often unknown at first. */
 function CustomerForm({
   title,
   id,
@@ -413,7 +397,7 @@ function CustomerForm({
   onCancel,
 }: {
   title: string;
-  /** Absent for a new guest. */
+  /** Undefined for a new customer. */
   id?: number;
   initial: Details;
   onSaved: (reply: Saved) => void;

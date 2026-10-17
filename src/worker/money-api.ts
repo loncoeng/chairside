@@ -1,15 +1,6 @@
-// Money.
-//
-// Two rules decide the shape of this file.
-//
-// **The rate is copied onto the payment, not looked up.** The shop sets its
-// own rates — most in Macau work at 1:1:1, some at 1:1.03 — and changing that
-// policy next month must not move takings that already happened. A record of
-// money received is not a calculation to be redone.
-//
-// **Taking payment finishes the visit.** There is no separate "paid" state.
-// The shop asked for one button rather than two, and a status that only ever
-// follows another status is a status nobody sets on purpose.
+// Payments and revenue. The exchange rate is copied onto each payment (shops set
+// their own, e.g. 1:1:1 or 1:1.03) so later rate changes don't alter past takings.
+// Taking payment marks the booking done; there is no separate "paid" status.
 
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 
@@ -30,7 +21,7 @@ import type { Database as Db } from "../db/database.ts";
 
 
 
-/** What the shop takes, and at what rate. */
+/** Accepted currencies and their rates. */
 export async function currencyList(db: Db) {
   return await db
     .select({ code: currencies.code, rateToBase: currencies.rateToBase })
@@ -39,7 +30,7 @@ export async function currencyList(db: Db) {
     .orderBy(asc(currencies.sortOrder));
 }
 
-/** What has been paid against one booking. */
+/** Payments for one booking. */
 export async function paymentsFor(db: Db, bookingId: number) {
   return await db
     .select({
@@ -55,12 +46,7 @@ export async function paymentsFor(db: Db, bookingId: number) {
     .orderBy(asc(payments.paidAt));
 }
 
-/**
- * Take payment, and finish the visit.
- *
- * The rate is read from the shop's settings here and written onto the row, so
- * what is stored is what was true at the till.
- */
+/** Records a payment at the current rate and marks the booking done. */
 export async function takePayment(
   db: Db,
   request: Request,
@@ -79,9 +65,7 @@ export async function takePayment(
   if (bookingId === null) return json({ ok: false, code: "no-booking", error: "No booking was given." }, 400);
 
   const amount = typeof body.amount === "number" ? body.amount : NaN;
-  // Zero is not a payment, and a negative one is a refund — which is a
-  // different thing and does not exist yet. Saying so beats storing a number
-  // the revenue screen would quietly subtract.
+  // Refunds (negative amounts) are not supported yet.
   if (!Number.isFinite(amount) || amount <= 0) return json({ ok: false, code: "bad-amount", error: "The amount is not valid." }, 400);
   if (amount > 1_000_000) return json({ ok: false, code: "amount-too-large", error: "The amount is too large." }, 400);
 
@@ -115,7 +99,7 @@ export async function takePayment(
     bookingId,
     amount,
     currency: currency.code,
-    // Copied, not referenced. See the note at the top of this file.
+    // Copied, not referenced. See the file header.
     rateToBase: currency.rateToBase,
     method: method as Method,
   });
@@ -135,15 +119,8 @@ export async function takePayment(
 }
 
 /**
- * A month's takings.
- *
- * Read out of the database and added up here rather than in SQL. The bill
- * belongs to the stylist, not to whoever did the first treatment, and that is
- * a rule with a test behind it (see ../db/credit.ts) rather than a join
- * condition nobody can check.
- *
- * Everything is converted with the rate stored on each payment, so a month
- * read today and the same month read next year come out the same.
+ * A month's takings, summed in JS rather than SQL so staff credit can use the
+ * tested rule in ../db/credit.ts. Converts with each payment's stored rate.
  */
 export async function revenue(db: Db, month: string) {
   const from = `${month}-01`;
@@ -231,9 +208,7 @@ export async function revenue(db: Db, month: string) {
     byStaff.set(who, credit);
   }
 
-  // How often each thing on the menu was done. Not money: one bill covers
-  // several treatments, and dividing it between them would be inventing a
-  // price the guest never saw.
+  // Counts only, not money: one bill covers several treatments.
   const byService = new Map<
     number | null,
     { nameJa: string | null; nameZh: string | null; nameEn: string | null; n: number }

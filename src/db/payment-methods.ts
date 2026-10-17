@@ -1,6 +1,4 @@
-// What the shop takes, in one list. It was written out twice — in the API and
-// in the till — and they drifted the day the Macau wallets were added: the
-// server accepted MPay and the dropdown never offered it.
+// Accepted payment methods. Shared by the API and the till UI so they can't drift.
 
 export const METHODS = ["cash", "card", "mpay", "boc", "wechat", "alipay"] as const;
 

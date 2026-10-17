@@ -1,13 +1,5 @@
-// Signing in.
-//
-// Written against Web Crypto, which the Worker runtime and every browser both
-// have, so the demo runs the same code as the shop rather than a version of
-// it that skips the interesting part.
-//
-// **Nothing here fails open.** A missing secret, a malformed token, an
-// expired one and a forged one all come back the same way: nobody is signed
-// in. The version of this that returns "probably fine" when the secret is
-// unset is the version that ships with the secret unset.
+// Password hashing and signed session tokens, on Web Crypto (Workers and browsers).
+// Fails closed: a missing secret or a bad, expired or forged token means no session.
 
 const ROUNDS = 100_000;
 const SESSION_HOURS = 12;
@@ -23,12 +15,7 @@ const fromBase64Url = (value: string): Uint8Array => {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 };
 
-/**
- * Compare without leaking how far the comparison got.
- *
- * `a === b` on a token returns sooner for a wrong first character than for a
- * wrong last one, and that difference is measurable over enough attempts.
- */
+/** Constant-time comparison, so timing doesn't reveal how many bytes matched. */
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let differences = 0;
@@ -57,13 +44,7 @@ export async function hashPassword(password: string): Promise<string> {
   return `pbkdf2$${ROUNDS}$${toBase64Url(salt)}$${toBase64Url(hash)}`;
 }
 
-/**
- * Whether a password matches what is stored.
- *
- * Somebody with no password set cannot sign in — not "signs in with an empty
- * one". That is the difference between an account that is not ready and an
- * account anybody can use.
- */
+/** Whether a password matches the stored hash. No stored hash means no sign-in. */
 export async function checkPassword(password: string, stored: string | null): Promise<boolean> {
   if (!stored) return false;
 
@@ -74,7 +55,7 @@ export async function checkPassword(password: string, stored: string | null): Pr
   return sameBytes(await derive(password, fromBase64Url(salt)), fromBase64Url(hash));
 }
 
-// --- The session itself ----------------------------------------------------
+// --- Sessions ---------------------------------------------------------------
 
 export type Session = { staffId: number; role: string; expiresAt: number };
 
@@ -89,15 +70,9 @@ async function signer(secret: string): Promise<CryptoKey> {
 }
 
 /**
- * A token the shop's browser keeps.
- *
- * `<staffId>.<role>.<expiry>.<signature>` — readable, and useless to change,
- * because the signature covers the rest of it. A row is not looked up on
- * every request: the role is in the token, and it lasts twelve hours.
- *
- * The trade is that a demotion takes up to twelve hours to bite. For a shop
- * of eight people that is the right side of the trade; for anything larger it
- * would not be.
+ * Token `<staffId>.<role>.<expiry>.<signature>`, HMAC over the rest. The role
+ * is not re-read from the database, so a role change can take up to
+ * SESSION_HOURS (12) to apply. Expiry is in milliseconds.
  */
 export async function issue(secret: string, staffId: number, role: string): Promise<string> {
   const expiresAt = Date.now() + SESSION_HOURS * 3600 * 1000;
@@ -107,15 +82,11 @@ export async function issue(secret: string, staffId: number, role: string): Prom
 }
 
 /**
- * Who a token says is signed in, or null for every kind of no.
- *
- * Wrapped, because `atob` throws on anything that is not base64 and a
- * malformed cookie would otherwise come back as a 500 rather than a 401. An
- * exception is a worse answer than a refusal: it says the server broke, when
- * what happened is that somebody sent rubbish.
+ * The session a token carries, or null if it is invalid. Wrapped in try because
+ * `atob` throws on non-base64, which would otherwise be a 500 instead of a 401.
  */
 export async function read(secret: string | undefined, token: string | null): Promise<Session | null> {
-  // No secret configured means nobody is signed in, rather than everybody.
+  // No secret configured: nobody is signed in.
   if (!secret || !token) return null;
 
   try {
@@ -144,7 +115,7 @@ export async function read(secret: string | undefined, token: string | null): Pr
 
 export const COOKIE = "chairside_session";
 
-/** The session cookie out of a request's Cookie header. */
+/** Session token from the request's Cookie header. */
 export function tokenFrom(request: Request): string | null {
   const header = request.headers.get("cookie");
   if (!header) return null;
@@ -156,13 +127,7 @@ export function tokenFrom(request: Request): string | null {
   return null;
 }
 
-/**
- * How the cookie is set.
- *
- * HttpOnly so a script cannot read it, Secure so it never crosses plain HTTP,
- * SameSite=Strict so another site cannot make the browser send it — this app
- * is opened directly and never linked into from anywhere.
- */
+/** SameSite=Strict is safe because the app is never opened via a link from another site. */
 export const setCookie = (token: string): string =>
   `${COOKIE}=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${SESSION_HOURS * 3600}`;
 

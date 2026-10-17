@@ -1,13 +1,10 @@
-// Who a bill belongs to: whoever did the first treatment in a styling chair,
-// not whoever went first. Crediting the first line puts the month on the
-// assistant, because the first line is nearly always the shampoo.
-//
-// DESIGN.md, "A bill belongs to the stylist, not to whoever went first".
+// A bill is credited to whoever did the first styling-chair line. The first line
+// is usually the assistant's shampoo. See DESIGN.md.
 
 export type Line = {
   staffId: number | null;
   sortOrder: number;
-  /** What kind of seat the service needs. NULL when it needs none. */
+  /** Seat the service needs; null when it needs none. */
   seatKind: "styling" | "shampoo" | null;
 };
 
@@ -19,7 +16,6 @@ export function creditedStaff(lines: Line[]): number | null {
   const chair = inOrder.find((line) => line.seatKind === "styling" && line.staffId !== null);
   if (chair) return chair.staffId;
 
-  // No styling line: a wash, a treatment, a head spa. Whoever did the first
-  // thing did the whole visit.
+  // No styling line (wash, treatment, head spa): credit the first staffed line.
   return inOrder.find((line) => line.staffId !== null)?.staffId ?? null;
 }

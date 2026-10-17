@@ -1,5 +1,4 @@
-// Stage three: the day. The room from stage two is still here, further down,
-// because the calendar only makes sense once you know what the columns are.
+// App shell: sign-in, navigation, and the day view with the room summary below.
 
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { Calendar, Peak } from "./calendar.tsx";
@@ -29,11 +28,7 @@ async function get<T>(path: string, signal: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-/**
- * The language lives here so that everything under it can read it, and the
- * screen itself is a separate component — a hook cannot read a context its
- * own component provides.
- */
+/** Provides the language. Screen is separate because a hook cannot read a context its own component provides. */
 export function App() {
   const [lang, setLangState] = useState<Lang>(initialLang);
 
@@ -43,8 +38,7 @@ export function App() {
       setLang: (next: Lang) => {
         setLangState(next);
         rememberLang(next);
-        // So that a screen reader and the browser's own furniture agree with
-        // what is on the page.
+        // Keep <html lang> in sync for screen readers and the browser.
         document.documentElement.lang = next === "zh" ? "zh-Hant" : next;
       },
     }),
@@ -59,12 +53,8 @@ export function App() {
 }
 
 /**
- * Which screen, kept in the address bar.
- *
- * "#/people/3" rather than component state, so that reloading stays where you
- * were and the browser's back button does what it looks like it does. A hash
- * rather than a path, because the static assets are served by filename and a
- * real route would need the server to know about every screen.
+ * Current screen from the hash (e.g. "#/people/3"), so reload and Back work.
+ * A hash, not a path, because static assets are served by filename.
  */
 function readHash(): {
   view: "day" | "people" | "money" | "shop";
@@ -88,13 +78,9 @@ function Screen() {
   const [demo, setDemo] = useState<"off" | "loading" | "on" | "failed">("off");
   // undefined while the app is asking; null when nobody is signed in.
   const [me, setMe] = useState<Signed | null | undefined>(undefined);
-  // Kept and shown. "The demo did not load" with nothing after it sends
-  // whoever is looking to the developer tools, and this failed on a missing
-  // file whose name was in the error all along.
+  // Error message shown with the demo failure.
   const [demoWhy, setDemoWhy] = useState<string | null>(null);
-  // What the demo did, step by step, shown on the first screen if it ends up
-  // back there. Three rounds of this were spent guessing at a failure only a
-  // browser produced, from a screen that said nothing about it.
+  // Demo step log, shown on the sign-in screen to debug browser-only failures.
   const [trail, setTrail] = useState<string[]>([]);
   const note = useCallback((what: string) => setTrail((was) => [...was, what]), []);
   const [date, setDate] = useState(todayInShop);
@@ -102,27 +88,17 @@ function Screen() {
   const [day, setDay] = useState<Load<Day>>({ status: "loading" });
   const [services, setServices] = useState<Service[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  // Bumped when somebody is added or renamed on the customers screen, so the
-  // booking form's picker does not offer last hour's list.
+  // Bumped on customer add/rename so the booking form's picker refetches.
   const [peopleRevision, setPeopleRevision] = useState(0);
   const [booking, setBooking] = useState(false);
   const [picked, setPicked] = useState<Line | null>(null);
-  // Bumped after a booking goes in, to pull the day again.
+  // Bumped after a booking change to refetch the day.
   const [revision, setRevision] = useState(0);
 
-  /**
-   * What the data below belongs to: who is signed in, and to which database.
-   *
-   * Null means nobody, and every fetch waits. Without this the room was asked
-   * for once on mount — before anybody had signed in — came back 401, and was
-   * never asked for again, so the calendar stayed broken after a successful
-   * sign-in. Now the same sign-in that fills `me` refetches everything.
-   */
-  //
-  // Keyed on which database is answering, not on the demo's three states: the
-  // moment between pressing the button and the demo being ready is not a
-  // different data source, and treating it as one sent a session check out
-  // that came back after the sign-in had already happened.
+  // Data fetches key on `session` (user + database). Null means signed out and
+  // nothing is fetched; a fetch before sign-in gets 401 and would never retry.
+  // `source` ignores the demo's "loading" state, which is not a new database
+  // and would send a stale session check.
   const source = demo === "on" ? "demo" : "server";
   const session = me == null ? null : `${me.id}:${source}`;
 
@@ -150,8 +126,7 @@ function Screen() {
         setServices(menu);
         setCustomers(people);
       })
-      // The form is the only thing that needs these. Failing to load them
-      // should not take the calendar down with it.
+      // Only the form needs these; a failure must not break the calendar.
       .catch(() => undefined);
     return () => stop.abort();
   }, [peopleRevision, session]);
@@ -170,23 +145,15 @@ function Screen() {
     return () => stop.abort();
   }, [date, revision, session]);
 
-  // Who is signed in, asked once on load and again whenever the data source
-  // changes — switching the demo on is switching to a different database with
-  // a different set of accounts.
-  //
-  // **The answer is dropped if this effect has been replaced.** A check that
-  // went out before there was a session to send comes back 401 a moment later,
-  // and without this it signed the visitor back out after they were already
-  // in: the booking screen appeared and the sign-in screen took its place.
-  // Only the failure path used to look at `aborted`, and a 401 is not a
-  // failure — it is an answer.
+  // Session check, rerun when the data source changes (the demo has its own accounts).
+  // Both paths must check `aborted`: a stale check returns 401, which is an
+  // answer, not a failure, and would sign the visitor out after sign-in.
   useEffect(() => {
     const stop = new AbortController();
     fetch("/api/session", { signal: stop.signal })
       .then(async (r) => {
         const staff = r.ok ? ((await r.json()) as { staff?: Signed }).staff ?? null : null;
-        // Only worth saying when it is the demo answering and the answer was
-        // no: that is the shape every version of this bug has taken.
+        // Log only demo rejections, the case worth debugging.
         if (source === "demo" && staff === null) note(`session recheck: HTTP ${r.status}`);
         return staff;
       })
@@ -209,18 +176,9 @@ function Screen() {
   const go = useCallback((days: number) => setDate((d) => shiftDate(d, days)), []);
 
   /**
-   * The large button on the first screen: load the demo, then sign into it.
-   *
-   * One press rather than two. It still goes through the real sign-in — the
-   * same POST /api/session the shop makes, answered by the same router — so
-   * nothing here is a way round the login. It just knows the password, which
-   * is printed on the screen anyway.
-   *
-   * **Every state change waits until the asking is done.** Flipping `demo` to
-   * "on" first set the effects above running against a database nobody had
-   * signed into yet, and their answers arrived after the sign-in and undid it.
-   * Ordering it this way leaves no moment when the demo is on and there is no
-   * session to go with it.
+   * Load the demo and sign in through the real POST /api/session. State changes
+   * wait until sign-in completes: setting demo "on" earlier runs the effects
+   * against an unsigned database and their 401s undo the sign-in.
    */
   const openDemo = useCallback(async () => {
     setDemo("loading");
@@ -241,8 +199,7 @@ function Screen() {
       if (!reply.ok || !reply.staff) throw new Error(`HTTP ${response.status}`);
       who = reply.staff;
     } catch (problem: unknown) {
-      // The demo is left running if it loaded, so the sign-in form below can
-      // be used by hand with the details it prints. Only the reason is shown.
+      // Leave the demo running so the sign-in form can still be used by hand.
       setDemoWhy(String(problem));
       setDemo("failed");
       return;
@@ -288,9 +245,6 @@ function Screen() {
           <p class="tagline">{t("tagline")}</p>
         </div>
 
-        {/* Three buttons rather than a dropdown. There are only three, they
-            are short, and a guest at the desk can see which one is on without
-            opening anything. */}
         <nav class="views" aria-label="View">
           <a href="#/" class={route.view === "day" ? "is-on" : undefined}>
             {t("navDay")}
@@ -298,9 +252,7 @@ function Screen() {
           <a href="#/people" class={route.view === "people" ? "is-on" : undefined}>
             {t("navPeople")}
           </a>
-          {/* Hidden rather than shown-and-refused. The server refuses either
-              way; a menu item that always says no is a menu item that wastes
-              somebody's time twice a day. */}
+          {/* Hidden for non-owners. The server enforces it too. */}
           {owner && (
             <>
               <a href="#/money" class={route.view === "money" ? "is-on" : undefined}>
@@ -313,10 +265,7 @@ function Screen() {
           )}
         </nav>
 
-        {/* Only a way out. The demo is opened from the first screen, which is
-            where somebody who has not signed in actually is — and a shop
-            running this for real should not have a button that swaps its
-            database for an invented one. */}
+        {/* Exit only. The demo is entered from the sign-in screen. */}
         {demo === "on" && (
           <button type="button" class="demo-toggle is-on" onClick={leaveDemo}>
             {t("demoLeave")}
@@ -473,9 +422,7 @@ function Screen() {
               <ul class="holiday-note">
                 {day.value.holidays.map((h) => (
                   <li key={h.region}>
-                    {/* Which region, because the three differ and the
-                        difference is who walks in. The mainland's Golden Week
-                        runs a week past Macau's two days. */}
+                    {/* Regions differ: mainland Golden Week runs a week past Macau's two days. */}
                     <span class={`region is-${h.region}`}>{t(`region.${h.region}`)}</span>
                     {h.name}
                   </li>
@@ -483,9 +430,7 @@ function Screen() {
               </ul>
             )}
 
-            {/* An empty holiday row means "none that day" only while the list
-                reaches that far. Past the end of it, it means nobody has
-                imported the year. */}
+            {/* Past holidaysKnownTo, no holidays means the year is not imported. */}
             {day.value.holidaysKnownTo && date > day.value.holidaysKnownTo && (
               <p class="holiday-note is-unknown">
                 {t("holidaysUnknown", { to: day.value.holidaysKnownTo })}
@@ -498,17 +443,14 @@ function Screen() {
               seats={room.value.seats}
               services={services}
               onPick={(line) => {
-                // Only one panel at a time. Taking a booking and editing a
-                // different one at once is two answers to the same question.
+                // One panel at a time.
                 setBooking(false);
                 setPicked(line);
               }}
               picked={picked?.bookingId ?? null}
             />
 
-            {/* Sample data sits on a fixed week, so a visitor arriving later
-                lands on an empty day. Saying where the data is beats showing
-                an empty grid and leaving them to guess. */}
+            {/* On an empty day, link to the dates that have bookings. */}
             {day.value.lines.length > 0 || !day.value.bookedRange?.from ? null : (
               <p class="lede">
                 {t("nothingBooked")}{" "}

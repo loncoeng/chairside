@@ -1,8 +1,4 @@
-// Takings.
-//
-// A month at a time, because that is the unit a shop thinks in: the rent is
-// monthly, the stylists are paid monthly, and a good Tuesday means nothing on
-// its own.
+// Monthly takings report.
 
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
@@ -28,13 +24,7 @@ type Revenue = {
 
 const mop = (value: number) => Math.round(value).toLocaleString("en-US");
 
-/**
- * Every day of the month, whether it took anything or not.
- *
- * The API only returns days with takings. Drawing just those puts a closed
- * Monday next to a Tuesday with no gap between them, and a month with one bad
- * week looks identical to a month that was busy throughout.
- */
+/** Every day of the month, zero-filled. The API returns only days with takings. */
 function everyDay(month: string, taken: { date: string; total: number; n: number }[]) {
   const found = new Map(taken.map((d) => [d.date, d]));
   const [y, m] = month.split("-").map(Number) as [number, number];
@@ -86,8 +76,7 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
 
   const days = data ? everyDay(month, data.byDay) : [];
   const busiest = Math.max(1, ...days.map((d) => d.total));
-  // Averaged over the days that took something. Dividing by the whole month
-  // would drag the line down by every Monday the shop was shut.
+  // Average over days with takings only, so closed days don't drag it down.
   const open = days.filter((d) => d.n > 0);
   const average = open.length === 0 ? 0 : open.reduce((sum, d) => sum + d.total, 0) / open.length;
 
@@ -135,14 +124,7 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
             </div>
           </dl>
 
-          {/* Columns rather than a chart library. Thirty numbers of the
-              same kind need a shape, not axes and a legend — and nothing
-              here is worth 90KB of JavaScript to a shop on a five-year-old
-              PC.
-
-              Vertical, because a month is read left to right and twenty-six
-              horizontal bars are a list you scroll rather than a shape you
-              see. */}
+          {/* Plain CSS columns instead of a chart library (~90KB of JS). */}
           <section>
             <h4>{t("byDay")}</h4>
             <div class="chart">
@@ -201,8 +183,7 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
                   <li key={c.currency}>
                     <span>{c.currency}</span>
                     <span class="rows-n">{c.n}</span>
-                    {/* What was handed over, in what it was handed over in.
-                        The converted figure is in the total above. */}
+                    {/* Amount in the currency received; the converted figure is in the total. */}
                     <span class="rows-value">{mop(c.amount)}</span>
                   </li>
                 ))}

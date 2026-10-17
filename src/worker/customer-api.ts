@@ -1,13 +1,5 @@
-// Customers, and what the shop knows about them.
-//
-// The interesting part is not the name and the phone number. It is what the
-// bookings add up to: somebody who has moved their appointment five times
-// this year, or who cancels the morning of, is a fact the desk can feel but
-// cannot prove — and cannot hand over to whoever is covering tomorrow.
-//
-// So the counts are computed from booking_events rather than stored on the
-// customer. A stored counter is a second copy of the truth, and the two drift
-// the first time a row is corrected.
+// Customer endpoints. Move/cancel counts are computed from booking_events,
+// not stored on the customer, so they can't drift.
 
 import { and, asc, desc, eq, inArray, like, ne, or, sql } from "drizzle-orm";
 
@@ -25,18 +17,9 @@ import {
 import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
-/**
- * The list, with an optional search.
- *
- * Searches the name and the second spelling both, because a guest written in
- * kanji is looked up by whoever is at the desk, and that is not always the
- * person who typed the name in. The phone number is searched too: it is what
- * the shop has in front of them when the phone rings.
- */
+/** Customer list (max 50). The search matches name, alternate spelling (searchKey) and phone. */
 export async function listCustomers(db: Db, query: string) {
-  // `%` and `_` are wildcards in LIKE, so a search for either of them matched
-  // everything — type an underscore and the whole book came back. Escaped
-  // here rather than stripped, because a name really can contain one.
+  // Escape LIKE wildcards (`%`, `_`) with `!` rather than strip them; names can contain them.
   const q = query.trim().replace(/[!%_]/g, (c) => `!${c}`);
   const base = db
     .select({
@@ -64,10 +47,7 @@ export async function listCustomers(db: Db, query: string) {
   return rows;
 }
 
-/**
- * One customer: who they are, how they have behaved, and what was done to
- * their hair.
- */
+/** One customer with standing, recent bookings and treatment records. */
 export async function getCustomer(db: Db, id: number) {
   const [person] = await db
     .select({
@@ -86,8 +66,7 @@ export async function getCustomer(db: Db, id: number) {
 
   if (!person) return null;
 
-  // Newest first: what happened last time is what the desk wants before the
-  // guest sits down.
+  // Newest first.
   const theirBookings = await db
     .select({
       id: bookings.id,
@@ -160,22 +139,15 @@ export async function getCustomer(db: Db, id: number) {
     standing: standingOf(theirBookings, events),
     bookings: theirBookings.map((b) => ({ ...b, lines: byBooking.get(b.id) ?? [] })),
     records: theirRecords,
-    /** Anything on the person rather than a single visit, newest first. */
+    /** Records with a caution, newest first. */
     cautions: theirRecords.filter((r) => r.caution && r.caution.trim() !== ""),
   };
 }
 
 /**
- * Add somebody, or change who they are on file.
- *
- * `id` null is a new guest. Otherwise every field sent replaces what is there
- * and a field left out stays as it was, so a screen that only knows the phone
- * number cannot blank the address by not mentioning it.
- *
- * A phone number already on somebody else is **said, not refused**. Couples
- * share one, and a mother books for her daughter from her own; but more often
- * it is the same guest typed in twice, and the desk should see that before
- * the history splits across two names.
+ * Creates (`id` null) or updates a customer. Omitted fields are left unchanged.
+ * A phone number shared with another customer is returned in `samePhone`,
+ * not refused (families share numbers; it also flags duplicates).
  */
 export async function saveCustomer(db: Db, request: Request, id: number | null): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
@@ -198,17 +170,13 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
 
   const firstVisitRaw = field("firstVisitOn", 10);
   const birthday = field("birthday", 10);
-  // isDate rather than a shape match: 2026-02-30 is the right shape and not a
-  // day, and it would sit in the row until some screen tried to subtract it
-  // from today.
+  // isDate, not a shape match: 2026-02-30 has the right shape.
   for (const date of [firstVisitRaw, birthday]) {
     if (date && !isDate(date)) {
       return json({ ok: false, code: "bad-date", error: "Send the date as YYYY-MM-DD." }, 400);
     }
   }
 
-  // A guest with no name cannot be found again, and every screen that lists
-  // them would show a blank.
   if (id === null ? !name : name === null) {
     return json({ ok: false, code: "name-required", error: "Enter a name." }, 400);
   }
@@ -263,7 +231,7 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
   return json({ ok: true, customerId, samePhone }, id === null ? 201 : 200);
 }
 
-/** Add a record against a visit. */
+/** Adds a treatment record for a customer, optionally tied to a booking. */
 export async function addRecord(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     customerId?: unknown;
@@ -291,8 +259,6 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
   const note = text(body.note);
   const caution = text(body.caution);
 
-  // An empty record is not a record. Writing one would put a date in the
-  // history with nothing behind it.
   if (formula === null && note === null && caution === null) {
     return json({ ok: false, code: "empty-record", error: "The record is empty." }, 400);
   }

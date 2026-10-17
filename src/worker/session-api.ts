@@ -1,8 +1,5 @@
-// Signing in and out.
-//
-// The password is checked against the row; the reply carries a signed token
-// in a cookie and nothing else. No row is looked up again on later requests —
-// the token says who and what role, and it lasts twelve hours.
+// Sign in/out. Issues a signed cookie token (staff id + role, 12 hours); later
+// requests trust the token without a DB lookup.
 
 import { and, eq, isNull } from "drizzle-orm";
 
@@ -11,14 +8,9 @@ import { checkPassword, clearCookie, issue, setCookie } from "../db/session.ts";
 import type { Database as Db } from "../db/database.ts";
 
 /**
- * How many attempts one address gets, and over what.
- *
- * Held in the isolate, so it is per-instance rather than global — a
- * determined attacker spread across enough of Cloudflare's edge would get
- * more than five. It costs nothing and stops the obvious thing, which is
- * somebody running a word list at one Worker. A real limit would be a
- * Durable Object, and that is a decision for a shop that has been attacked
- * rather than one that has not.
+ * Failed sign-ins allowed per IP per window. In-memory per isolate, so not a
+ * global limit (that would need a Durable Object); it stops a word list run
+ * against one instance.
  */
 const ATTEMPTS = 5;
 const WINDOW_MS = 10 * 60 * 1000;
@@ -27,8 +19,7 @@ const recent = new Map<string, number[]>();
 function tooMany(who: string): boolean {
   const now = Date.now();
   const tries = (recent.get(who) ?? []).filter((at) => now - at < WINDOW_MS);
-  // Dropped rather than left as an empty array. An isolate that answers for
-  // hours would otherwise keep a key for every address that ever asked.
+  // Delete empty entries so a long-lived isolate doesn't keep every IP.
   if (tries.length === 0) recent.delete(who);
   else recent.set(who, tries);
   return tries.length >= ATTEMPTS;
@@ -41,8 +32,7 @@ function record(who: string): void {
 }
 
 export async function signIn(db: Db, request: Request, secret: string | undefined): Promise<Response> {
-  // Without a secret nothing can be signed, so nothing is. Better a shop that
-  // cannot sign in than one whose tokens anybody can mint.
+  // No secret: refuse sign-in rather than issue forgeable tokens.
   if (!secret) {
     return json({ ok: false, code: "not-configured", error: "The server is not set up yet." }, 503);
   }
@@ -69,15 +59,13 @@ export async function signIn(db: Db, request: Request, secret: string | undefine
       passwordHash: staff.passwordHash,
     })
     .from(staff)
-    // Somebody who has left cannot sign in. The row stays — past bookings
-    // point at it — but the door closes with the leaving date.
+    // Staff who have left cannot sign in.
     .where(and(eq(staff.loginId, loginId), isNull(staff.leftOn)))
     .limit(1);
 
   const ok = await checkPassword(password, person?.passwordHash ?? null);
 
-  // The same answer whether the name is wrong or the password is. Saying
-  // which hands over half the pair.
+  // Same reply for unknown ID and wrong password.
   if (!person || !ok) {
     record(who);
     return json({ ok: false, code: "wrong-credentials", error: "The ID or password is wrong." }, 401);
@@ -112,7 +100,7 @@ export function signOut(): Response {
   });
 }
 
-/** Who is signed in, for a screen that has just loaded. */
+/** The signed-in staff member. */
 export async function whoAmI(db: Db, staffId: number): Promise<Response> {
   const [person] = await db
     .select({ id: staff.id, name: staff.name, role: staff.role, grade: staff.grade })

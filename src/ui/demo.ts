@@ -1,30 +1,12 @@
-// The demo: the whole shop, running inside the visitor's browser.
-//
-// SQLite is compiled to WebAssembly, the database arrives as one file, and
-// the API answers from memory — the same router, the same queries, the same
-// rules. Nothing is a second implementation, which is the only way a demo
-// stays true to the thing it demonstrates.
-//
-// What that buys:
-//
-//   It costs nothing to run.       No requests reach Cloudflare at all.
-//   Nobody can spoil it.           Every visitor has their own copy.
-//   Taking a booking really works. The rules fire, because they are the
-//                                  rules — not a script pretending.
-//
-// Everything here loads on demand. A shop using this for real never fetches
-// any of it, and neither does a visitor who does not ask.
+// Browser demo: the real router and queries running on sql.js (SQLite in WASM),
+// one private copy per visitor. Loaded on demand only.
 
 import { todayInShop } from "./types.ts";
 import type { Database } from "../db/database.ts";
 
 /**
- * Where the built database sits. Produced by scripts/build-demo-db.ts.
- *
- * Compressed, because Cloudflare compresses by content type and does not
- * know what a .sqlite is — it went over the wire at its full 640KB. Unpacked
- * here with DecompressionStream, which every browser this app already needs
- * has had for years.
+ * Built by scripts/build-demo-db.ts. Gzipped because Cloudflare does not
+ * compress .sqlite (640KB otherwise); unpacked with DecompressionStream.
  */
 const DB_FILE = "/demo.sqlite.gz";
 
@@ -32,41 +14,28 @@ let ready: Promise<Database> | null = null;
 let realFetch: typeof fetch | null = null;
 
 /**
- * The session token, carried by hand and nowhere near a header.
- *
- * A page cannot put `Cookie` on a Request it builds, or `Set-Cookie` on a
- * Response — both names are forbidden and the browser drops them in silence,
- * while Node keeps them. So the token is a plain string, handed to route() as
- * an argument; read() still checks the signature and the expiry.
- *
- * DESIGN.md, "Cookies do not work inside a page, in either direction".
+ * Session token, passed to route() as an argument. `Cookie` and `Set-Cookie`
+ * are forbidden headers: browsers drop them silently from a Request/Response
+ * built in the page (Node does not). read() still checks signature and expiry.
+ * See DESIGN.md, "Cookies do not work inside a page, in either direction".
  */
 let demoToken: string | null = null;
 
-/** The account the demo signs in with. Invented, and printed on the screen. */
+/** Demo account. Invented and shown on screen. */
 export const DEMO_LOGIN = { loginId: "aoi", password: "chairside-demo" };
 
-/**
- * The demo's signing secret.
- *
- * In the page, in plain sight, and that is correct: the database it protects
- * is invented and lives in this browser. Forging a token here grants access
- * to a copy of nothing, belonging to the person doing the forging.
- */
+/** Public on purpose: it only protects invented data in the visitor's own browser. */
 const DEMO_SECRET = "demo-only-secret";
 
-/** A day is this many seconds; the file stores times in seconds, not milliseconds. */
+/** Seconds per day. The file stores timestamps in seconds, not milliseconds. */
 const DAY = 86_400;
 
 const asDate = (text: string): number => Date.parse(`${text}T00:00:00Z`);
 
 /**
- * How far to move the sample so the visitor's own today is a working day.
- *
- * Always a whole number of weeks: the shop shuts on Mondays and the sample
- * has nothing booked on one, so any other shift lands a Tuesday's work on the
- * closed day. It aims a week past today, and returns 0 when the sample is
- * already ahead — it never moves anything backwards.
+ * Days to shift the sample so it reaches a week past today. Always whole weeks:
+ * the shop is closed on Mondays, so any other shift puts bookings on a closed
+ * day. Returns 0 when the sample is already ahead (never shifts backwards).
  */
 export function weeksToShift(lastDay: string, today: string): number {
   const behind = (asDate(today) - asDate(lastDay)) / (DAY * 1000) + 7;
@@ -75,16 +44,9 @@ export function weeksToShift(lastDay: string, today: string): number {
 }
 
 /**
- * Move the sample forward, in place.
- *
- * The file is built once and the world keeps going. A demo opened a month
- * later opened on an empty calendar, which reads as "this does not work"
- * rather than "this data is from September". Everything moves together, so
- * who comes back, who cancels late and what each visit cost are all still the
- * same rows — nothing is regenerated and no rule is re-run.
- *
- * **Holidays do not move.** They are real days in a real calendar: 國慶日 is
- * the first of October whatever this demo does.
+ * Shift all sample dates forward in place so the calendar is not empty.
+ * Rows move together; nothing is regenerated. Holidays are real dates and
+ * do not move (國慶日 stays on October 1).
  */
 export function moveToNow(raw: {
   run: (sql: string) => void;
@@ -97,8 +59,7 @@ export function moveToNow(raw: {
   if (days === 0) return;
 
   const seconds = days * DAY;
-  // date(x, '+N days') leaves NULL alone, which is what a guest with no first
-  // visit on file and a member of staff who has not left both need.
+  // date(NULL, '+N days') stays NULL (no first visit, staff not left).
   raw.run(`
     UPDATE bookings SET date = date(date, '+${days} days'), created_at = created_at + ${seconds};
     UPDATE booking_events SET at = at + ${seconds};
@@ -111,19 +72,9 @@ export function moveToNow(raw: {
 }
 
 /**
- * What the demo's cookie should be after this exchange, or undefined to leave
- * it as it was.
- *
- * Separate from the shim and exported so it can be tested, because the bug it
- * exists for cannot be reproduced in Node: the browser drops `Set-Cookie`
- * from a Response the page built, and Node does not. A test that read the
- * header would pass here and fail there — which is what happened. So nothing
- * here reads that header at all, and src/ui/demo.test.ts proves the demo
- * signs in with no `Set-Cookie` anywhere in the exchange.
- *
- * The token is signed with the same issue() the router uses, and every later
- * request is still checked by the real read(). What is stepped around is a
- * browser rule about one header, not the session.
+ * New demo token after this exchange: a token, null (signed out), or undefined
+ * (unchanged). Never reads `Set-Cookie`, which browsers drop from page-built
+ * Responses but Node keeps; demo.test.ts covers this. Signed with issue().
  */
 export async function keepSession(
   method: string,
@@ -132,8 +83,7 @@ export async function keepSession(
 ): Promise<string | null | undefined> {
   if (pathname !== "/api/session") return undefined;
 
-  // Signing out. The router clears the cookie by sending an empty one, which
-  // is the same header the browser will not let it send.
+  // Sign-out. The router's empty Set-Cookie would be dropped by the browser.
   if (method === "DELETE") return null;
   if (method !== "POST") return undefined;
   if (!response.ok) return undefined;
@@ -147,16 +97,10 @@ export async function keepSession(
   const role = reply.staff?.role;
   if (typeof id !== "number" || typeof role !== "string") return null;
 
-  // The token itself, not a cookie line. Nothing here ever becomes a header.
   return await issue(DEMO_SECRET, id, role);
 }
 
-/**
- * Load SQLite, load the shop, and answer the API from here on.
- *
- * Idempotent: turning the demo on twice does not load it twice, and the
- * original fetch is kept so it can be handed back.
- */
+/** Load the demo and answer /api/* from it. Idempotent; keeps the real fetch for stopDemo(). */
 export async function startDemo(onProgress?: (what: string) => void): Promise<void> {
   if (ready === null) {
     ready = build(onProgress);
@@ -166,9 +110,7 @@ export async function startDemo(onProgress?: (what: string) => void): Promise<vo
   if (realFetch === null) {
     realFetch = globalThis.fetch.bind(globalThis);
 
-    // The screens call fetch("/api/..."). Rather than threading a data source
-    // through every component, the demo answers those calls where they are
-    // made — so no screen has to know which mode it is in.
+    // Patch fetch so screens need no knowledge of demo mode.
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = input instanceof Request ? input : new Request(new URL(String(input), location.origin), init);
       const { pathname } = new URL(request.url);
@@ -179,8 +121,7 @@ export async function startDemo(onProgress?: (what: string) => void): Promise<vo
 
       const { route } = await import("../worker/router.ts");
 
-      // The request goes through untouched, and the session is handed over
-      // beside it. Setting a Cookie header here is what the browser refuses.
+      // Token goes as an argument: a Cookie header set here would be dropped.
       const response = await route(db, request, "demo", DEMO_SECRET, demoToken);
 
       const kept = await keepSession(request.method, pathname, response);
@@ -191,7 +132,7 @@ export async function startDemo(onProgress?: (what: string) => void): Promise<vo
   }
 }
 
-/** Hand the network back. Used when the demo is switched off. */
+/** Restore the real fetch. */
 export function stopDemo(): void {
   if (realFetch !== null) {
     globalThis.fetch = realFetch;
@@ -202,18 +143,14 @@ export function stopDemo(): void {
 async function build(onProgress?: (what: string) => void): Promise<Database> {
   onProgress?.("engine");
 
-  // Both of these are dynamic so they land in their own chunk. Together they
-  // are about half a megabyte over the wire, and somebody who only wants to
-  // read the calendar should not pay for it.
+  // Dynamic imports keep ~0.5MB out of the main bundle.
   const [{ default: initSqlJs }, { drizzle }] = await Promise.all([
     import("sql.js"),
     import("drizzle-orm/sql-js"),
   ]);
 
   const SQL = await initSqlJs({
-    // Served beside the page rather than from a CDN: one origin, no third
-    // party, and it still works if that CDN is blocked — which, for a page
-    // aimed partly at readers in the mainland, is not hypothetical.
+    // Same origin instead of a CDN, which may be blocked in mainland China.
     locateFile: (file: string) => `/${file}`,
   });
 
@@ -227,12 +164,9 @@ async function build(onProgress?: (what: string) => void): Promise<Database> {
   const bytes = new Uint8Array(await new Response(unpacked).arrayBuffer());
   const raw = new SQL.Database(bytes);
 
-  // Foreign keys are off by default in SQLite and the schema leans on them:
-  // cancelling relies on cascades, and the references without one are there
-  // to stop a delete rather than to follow it.
+  // Off by default in SQLite. Needed for cascades and to block deletes.
   raw.run("PRAGMA foreign_keys = ON");
 
-  // Today should be a working day, however long ago this file was built.
   moveToNow(raw);
 
   onProgress?.("ready");

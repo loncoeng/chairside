@@ -40,7 +40,7 @@ export type Customer = { id: number; name: string; searchKey: string | null };
 type Verdict = {
   level: "stop" | "warn";
   code: string;
-  /** Japanese, from the server. Used only for a code this build cannot name. */
+  /** English, from the server. Used only for a code this build cannot name. */
   message: string;
   data?: Record<string, string | number>;
 };
@@ -68,7 +68,7 @@ export function BookingForm({
   onBooked: () => void;
   onClose: () => void;
 }) {
-  const { t, lang, verdict: sayVerdict } = useText();
+  const { t, lang, verdict: sayVerdict, failure } = useText();
   const [startsAt, setStartsAt] = useState("10:00");
   const [staffId, setStaffId] = useState<number | null>(staff[0]?.id ?? null);
   const [customerId, setCustomerId] = useState<number | null>(null);
@@ -136,7 +136,7 @@ export function BookingForm({
 
       setVerdicts(reply.verdicts ?? []);
       setNeedsConfirmation(reply.needsConfirmation === true);
-      if (reply.error) setError(reply.error);
+      if (reply.error) setError(failure(reply, response.status));
       if (!reply.verdicts && !reply.error) setError(`HTTP ${response.status}`);
     } catch (problem: unknown) {
       setError(String(problem));

@@ -18,7 +18,7 @@ export type Verdict = {
   level: "stop" | "warn";
   code: string;
   /**
-   * Japanese, and a fallback.
+   * English, and a fallback.
    *
    * The screen builds its own wording from `code` and `data`, because the
    * shop works in three languages and a sentence assembled on the server can
@@ -89,7 +89,7 @@ export function check(
   const nameOf = new Map(room.seats.map((s) => [s.id, s.name]));
 
   if (drafts.length === 0) {
-    verdicts.push({ level: "stop", code: "empty", message: "施術が1つも入っていません。" });
+    verdicts.push({ level: "stop", code: "empty", message: "Nothing has been chosen." });
     return verdicts;
   }
 
@@ -98,7 +98,7 @@ export function check(
       verdicts.push({
         level: "stop",
         code: "backwards",
-        message: `終了時刻が開始時刻より前です（${draft.startsAt}→${draft.endsAt}）。`,
+        message: `It ends before it starts (${draft.startsAt}→${draft.endsAt}).`,
         data: { from: draft.startsAt, to: draft.endsAt },
       });
     }
@@ -113,7 +113,7 @@ export function check(
       verdicts.push({
         level: "stop",
         code: "staff-double-booked",
-        message: `${busy.staffName ?? "担当者"}は ${busy.startsAt}–${busy.endsAt} に別の施術が入っています。`,
+        message: `${busy.staffName ?? "The stylist"} already has something at ${busy.startsAt}–${busy.endsAt}.`,
         data: { who: busy.staffName ?? "", from: busy.startsAt, to: busy.endsAt },
       });
     }
@@ -126,7 +126,7 @@ export function check(
       verdicts.push({
         level: "stop",
         code: "seat-taken",
-        message: `${nameOf.get(draft.seatId) ?? "この席"}は ${taken.startsAt}–${taken.endsAt} に使用中です。`,
+        message: `${nameOf.get(draft.seatId) ?? "That seat"} is in use at ${taken.startsAt}–${taken.endsAt}.`,
         data: { seat: nameOf.get(draft.seatId) ?? "", from: taken.startsAt, to: taken.endsAt },
       });
     }
@@ -140,7 +140,7 @@ export function check(
         verdicts.push({
           level: "stop",
           code: "self-overlap",
-          message: "同じ予約の中で時間が重なっています。",
+          message: "Two treatments in this booking overlap.",
         });
       }
     }
@@ -152,12 +152,12 @@ export function check(
     verdicts.push({
       level: "warn",
       code: "closed-day",
-      message: "定休日です。入れる場合は確認してください。",
+      message: "The shop is closed that day. Check before taking it.",
     });
   }
 
   if (room.closure) {
-    verdicts.push({ level: "warn", code: "closure", message: "臨時休業の日です。" });
+    verdicts.push({ level: "warn", code: "closure", message: "The shop is closed that day." });
   }
 
   const { opensAt, closesAt } = room.hours;
@@ -168,7 +168,7 @@ export function check(
       verdicts.push({
         level: "warn",
         code: "outside-hours",
-        message: `営業時間外にかかります（${opensAt}–${closesAt}）。`,
+        message: `This falls outside opening hours (${opensAt}–${closesAt}).`,
         data: { opensAt, closesAt },
       });
     }
@@ -201,8 +201,8 @@ export function check(
         code: `over-capacity-${kind}`,
         message:
           kind === "shampoo"
-            ? `この時間はシャンプー台 ${total} 台がすべて埋まっています。`
-            : `この時間はセット面 ${total} 台がすべて埋まっています。`,
+            ? `All ${total} shampoo stations are taken at that time.`
+            : `All ${total} styling chairs are taken at that time.`,
         data: { total },
       });
     }

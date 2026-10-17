@@ -73,21 +73,21 @@ export async function takePayment(
     method?: unknown;
   } | null;
 
-  if (!body) return json({ ok: false, error: "本文が読み取れません。" }, 400);
+  if (!body) return json({ ok: false, code: "unreadable-body", error: "The request body could not be read." }, 400);
 
   const bookingId = Number.isInteger(body.bookingId) ? (body.bookingId as number) : null;
-  if (bookingId === null) return json({ ok: false, error: "予約が指定されていません。" }, 400);
+  if (bookingId === null) return json({ ok: false, code: "no-booking", error: "No booking was given." }, 400);
 
   const amount = typeof body.amount === "number" ? body.amount : NaN;
   // Zero is not a payment, and a negative one is a refund — which is a
   // different thing and does not exist yet. Saying so beats storing a number
   // the revenue screen would quietly subtract.
-  if (!Number.isFinite(amount) || amount <= 0) return json({ ok: false, error: "金額が不正です。" }, 400);
-  if (amount > 1_000_000) return json({ ok: false, error: "金額が大きすぎます。" }, 400);
+  if (!Number.isFinite(amount) || amount <= 0) return json({ ok: false, code: "bad-amount", error: "The amount is not valid." }, 400);
+  if (amount > 1_000_000) return json({ ok: false, code: "amount-too-large", error: "The amount is too large." }, 400);
 
   const method = body.method === undefined ? "cash" : body.method;
   if (!isMethod(method)) {
-    return json({ ok: false, error: "その支払方法は使えません。" }, 400);
+    return json({ ok: false, code: "bad-method", error: "That payment method is not accepted." }, 400);
   }
 
   const code = typeof body.currency === "string" ? body.currency : "";
@@ -98,7 +98,7 @@ export async function takePayment(
     .where(eq(currencies.code, code))
     .limit(1);
 
-  if (!currency) return json({ ok: false, error: "その通貨は扱っていません。" }, 400);
+  if (!currency) return json({ ok: false, code: "bad-currency", error: "That currency is not accepted." }, 400);
 
   const [booking] = await db
     .select({ id: bookings.id, status: bookings.status })
@@ -106,9 +106,9 @@ export async function takePayment(
     .where(eq(bookings.id, bookingId))
     .limit(1);
 
-  if (!booking) return json({ ok: false, error: "その予約は見つかりません。" }, 404);
+  if (!booking) return json({ ok: false, code: "booking-not-found", error: "That booking was not found." }, 404);
   if (booking.status === "cancelled" || booking.status === "no_show") {
-    return json({ ok: false, error: "取り消された予約には会計できません。" }, 409);
+    return json({ ok: false, code: "booking-cancelled", error: "A cancelled booking cannot be paid." }, 409);
   }
 
   await db.insert(payments).values({

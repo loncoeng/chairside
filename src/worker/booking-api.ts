@@ -99,22 +99,22 @@ export async function createBooking(
   byStaffId: number | null,
 ): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Proposal | null;
-  if (!body || typeof body !== "object") return bad("本文が読み取れません。");
+  if (!body || typeof body !== "object") return bad("unreadable-body", "The request body could not be read.");
 
   const date = typeof body.date === "string" ? body.date : "";
-  if (!isDate(date)) return bad("日付は YYYY-MM-DD で送ってください。");
+  if (!isDate(date)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
 
   // Two digits either side is not enough: "25:99" passes that and then gets
   // refused further down for crossing midnight, which tells whoever typed it
   // the wrong thing about what they did wrong.
   const startsAt = typeof body.startsAt === "string" ? body.startsAt : "";
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("開始時刻の形式が違います。");
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("bad-start-time", "The start time is not in HH:MM form.");
 
   const serviceIds = Array.isArray(body.serviceIds)
     ? body.serviceIds.filter((id): id is number => Number.isInteger(id))
     : [];
-  if (serviceIds.length === 0) return bad("施術を1つ以上選んでください。");
-  if (serviceIds.length > 8) return bad("1件の予約に入れられる施術は8つまでです。");
+  if (serviceIds.length === 0) return bad("no-services", "Choose at least one treatment.");
+  if (serviceIds.length > 8) return bad("too-many-services", "A booking can hold at most eight treatments.");
 
 
   const chosen = await db
@@ -123,7 +123,7 @@ export async function createBooking(
     .where(inArray(services.id, serviceIds));
 
   const byId = new Map(chosen.map((s) => [s.id, s]));
-  if (serviceIds.some((id) => !byId.has(id))) return bad("メニューにない施術が含まれています。");
+  if (serviceIds.some((id) => !byId.has(id))) return bad("unknown-service", "A treatment is not on the menu.");
 
   const staffId = intOrNull(body.staffId);
 
@@ -151,7 +151,7 @@ export async function createBooking(
 
   // A booking that runs past midnight is not a long appointment, it is a
   // typo. Refusing here keeps the day's arithmetic from wrapping.
-  if (cursor >= 24 * 60) return bad("その開始時刻だと日付をまたぎます。");
+  if (cursor >= 24 * 60) return bad("crosses-midnight", "Starting then, it would run past midnight.");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
   const verdicts = check(drafts, existing, room);
@@ -184,7 +184,7 @@ export async function createBooking(
     })
     .returning({ id: bookings.id });
 
-  if (!created) return json({ error: "予約を作成できませんでした。" }, 500);
+  if (!created) return json({ code: "create-failed", error: "It could not be saved." }, 500);
 
   await db.insert(bookingItems).values(
     plan.map((line, index) => ({
@@ -291,7 +291,7 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-const bad = (message: string) => json({ ok: false, error: message }, 400);
+const bad = (code: string, message: string) => json({ ok: false, code, error: message }, 400);
 
 /** The statuses a booking can be moved to. */
 const STATUSES = ["booked", "arrived", "done", "cancelled", "no_show"] as const;
@@ -373,16 +373,16 @@ export async function updateBooking(
   byStaffId: number | null,
 ): Promise<Response> {
   const body = (await request.json().catch(() => null)) as (Proposal & { status?: unknown }) | null;
-  if (!body || typeof body !== "object") return bad("本文が読み取れません。");
+  if (!body || typeof body !== "object") return bad("unreadable-body", "The request body could not be read.");
 
   const current = await getBooking(db, id);
-  if (!current) return json({ ok: false, error: "その予約は見つかりません。" }, 404);
+  if (!current) return json({ ok: false, code: "booking-not-found", error: "That booking was not found." }, 404);
 
   // --- Just the status -----------------------------------------------------
 
   if (typeof body.status === "string") {
     if (!(STATUSES as readonly string[]).includes(body.status)) {
-      return bad("その状態は使えません。");
+      return bad("bad-status", "That status is not valid.");
     }
 
     // Any status to any status, on purpose. Somebody at the desk taps the
@@ -410,17 +410,17 @@ export async function updateBooking(
   // --- A reschedule --------------------------------------------------------
 
   const startsAt = typeof body.startsAt === "string" ? body.startsAt : current.startsAt;
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("開始時刻の形式が違います。");
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("bad-start-time", "The start time is not in HH:MM form.");
 
   const date = typeof body.date === "string" ? body.date : current.date;
-  if (!isDate(date)) return bad("日付は YYYY-MM-DD で送ってください。");
+  if (!isDate(date)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
 
   const serviceIds = Array.isArray(body.serviceIds)
     ? body.serviceIds.filter((sid): sid is number => Number.isInteger(sid))
     : current.items.map((item) => item.serviceId).filter((sid): sid is number => sid !== null);
 
-  if (serviceIds.length === 0) return bad("施術を1つ以上選んでください。");
-  if (serviceIds.length > 8) return bad("1件の予約に入れられる施術は8つまでです。");
+  if (serviceIds.length === 0) return bad("no-services", "Choose at least one treatment.");
+  if (serviceIds.length > 8) return bad("too-many-services", "A booking can hold at most eight treatments.");
 
   const chosen = await db
     .select({ id: services.id, durationMin: services.durationMin, seatKind: services.seatKind })
@@ -428,7 +428,7 @@ export async function updateBooking(
     .where(inArray(services.id, serviceIds));
 
   const byId = new Map(chosen.map((s) => [s.id, s]));
-  if (serviceIds.some((sid) => !byId.has(sid))) return bad("メニューにない施術が含まれています。");
+  if (serviceIds.some((sid) => !byId.has(sid))) return bad("unknown-service", "A treatment is not on the menu.");
 
   /**
    * Who does each treatment.
@@ -477,7 +477,7 @@ export async function updateBooking(
     cursor = to;
   }
 
-  if (cursor >= 24 * 60) return bad("その開始時刻だと日付をまたぎます。");
+  if (cursor >= 24 * 60) return bad("crosses-midnight", "Starting then, it would run past midnight.");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
   // Its own rows are left out, or moving a booking reads as a clash with the

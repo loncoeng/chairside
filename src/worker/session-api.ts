@@ -44,12 +44,12 @@ export async function signIn(db: Db, request: Request, secret: string | undefine
   // Without a secret nothing can be signed, so nothing is. Better a shop that
   // cannot sign in than one whose tokens anybody can mint.
   if (!secret) {
-    return json({ ok: false, error: "サーバの設定が未完了です。" }, 503);
+    return json({ ok: false, code: "not-configured", error: "The server is not set up yet." }, 503);
   }
 
   const who = request.headers.get("cf-connecting-ip") ?? "unknown";
   if (tooMany(who)) {
-    return json({ ok: false, error: "試行が多すぎます。しばらく待ってください。" }, 429);
+    return json({ ok: false, code: "too-many-attempts", error: "Too many attempts. Wait a while and try again." }, 429);
   }
 
   const body = (await request.json().catch(() => null)) as {
@@ -80,7 +80,7 @@ export async function signIn(db: Db, request: Request, secret: string | undefine
   // which hands over half the pair.
   if (!person || !ok) {
     record(who);
-    return json({ ok: false, error: "IDかパスワードが違います。" }, 401);
+    return json({ ok: false, code: "wrong-credentials", error: "The ID or password is wrong." }, 401);
   }
 
   const token = await issue(secret, person.id, person.role);
@@ -122,7 +122,7 @@ export async function whoAmI(db: Db, staffId: number): Promise<Response> {
 
   return person
     ? json({ ok: true, staff: person })
-    : json({ ok: false, error: "その職員は見つかりません。" }, 401);
+    : json({ ok: false, code: "staff-not-found", error: "That staff member was not found." }, 401);
 }
 
 function json(body: unknown, status = 200): Response {

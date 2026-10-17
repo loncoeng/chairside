@@ -11,7 +11,7 @@
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
 
-import { LANGS, say, verdictText, weekday } from "./i18n.ts";
+import { LANGS, errorText, say, verdictText, weekday } from "./i18n.ts";
 import type { Key, Lang } from "./i18n.ts";
 
 const STORAGE_KEY = "chairside.lang";
@@ -70,5 +70,6 @@ export function useText() {
     weekday: (n: number) => weekday(lang, n),
     verdict: (v: { code: string; message: string; data?: Record<string, string | number> }) =>
       verdictText(lang, v),
+    failure: (reply: unknown, status: number) => errorText(lang, reply, status),
   };
 }

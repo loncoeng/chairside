@@ -25,6 +25,16 @@ feature left out can be named, with the reason. That list is in
 [DESIGN.md](DESIGN.md), and it is the more interesting half of this
 repository.
 
+## If your shop is not this one
+
+It will not be. The seats, the currencies, the holidays that move the
+bookings and the rule for whose name goes on a bill all belong to this
+imagined salon. Most of them are settings rather than code: seats and their
+kinds, currencies and their rates, and the holiday calendars are rows in the
+database. The bill rule is one function with its own tests
+([`src/db/credit.ts`](src/db/credit.ts)). Fitting all of it to a real shop
+means going through it with the people who run it, and that is work I take on.
+
 ## What shapes the schema
 
 **Counting the room first.** Nine styling chairs, three shampoo stations,

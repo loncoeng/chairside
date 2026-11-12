@@ -1,8 +1,9 @@
 name = "chairside"
 compatibility_date = "2026-09-23"
 
-# Default is true, but leaving it implicit prints a warning on every deploy.
-workers_dev = true
+# Off: the demo lives at the custom domain below, and a second address is
+# another public endpoint. Explicit, since leaving it implicit prints a warning.
+workers_dev = false
 
 # No per-version preview URLs: unused, and each one is another public endpoint.
 preview_urls = false

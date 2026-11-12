@@ -1,4 +1,4 @@
--- Sample rows for the public instance at chairside.loncoeng.workers.dev.
+-- Sample rows for the public instance at chairside.loncoeng.dev.
 --
 -- Invented. No name here belongs to a real person, and no shop is described.
 -- The counts are the only thing taken from life: nine styling chairs, three

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import type { Person } from "./types.ts";
 import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
+import { GuestPicker } from "./guest-picker.tsx";
 
 export type Service = {
   id: number;
@@ -25,7 +26,7 @@ export function priceFor(service: Service, grade: string | null | undefined): nu
   return service.price;
 }
 
-export type Customer = { id: number; name: string; searchKey: string | null };
+export type Customer = { id: number; name: string; searchKey: string | null; phone: string | null };
 
 type Verdict = {
   level: "stop" | "warn";
@@ -168,20 +169,10 @@ export function BookingForm({
           </select>
         </label>
 
-        <label class="field">
+        <div class="field grow">
           <span>{t("guest")}</span>
-          <select
-            value={customerId ?? ""}
-            onChange={(e) => setCustomerId(Number((e.target as HTMLSelectElement).value) || null)}
-          >
-            <option value="">{t("noGuest")}</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <GuestPicker customers={customers} value={customerId} onChange={setCustomerId} />
+        </div>
       </div>
 
       <fieldset class="menu">

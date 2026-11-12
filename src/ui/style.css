@@ -1100,3 +1100,36 @@ section[aria-labelledby="room"] .lede { max-width: none; }
   cursor: pointer;
 }
 .whoami button:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Guest search on the booking form. */
+.guest-picker { position: relative; }
+.guest-picker input { width: 100%; box-sizing: border-box; }
+.guest-matches {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  margin: 0.2rem 0 0;
+  padding: 0.2rem;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+  max-height: 18rem;
+  overflow-y: auto;
+}
+.guest-matches li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.guest-matches li.is-on { background: var(--accent-soft); color: var(--accent); }
+.guest-matches li.guest-none { cursor: default; color: var(--ink-soft); font-size: 0.82rem; }
+.guest-sub { color: var(--ink-faint); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.guest-chosen { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.25rem 0; font-size: 0.9rem; }
+.guest-chosen .guest-name { font-weight: 600; }

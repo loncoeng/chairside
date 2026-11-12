@@ -59,7 +59,12 @@ export async function menu(db: Db) {
 /** Customer list for the booking form picker. */
 export async function customerList(db: Db) {
   return await db
-    .select({ id: customers.id, name: customers.name, searchKey: customers.searchKey })
+    .select({
+      id: customers.id,
+      name: customers.name,
+      searchKey: customers.searchKey,
+      phone: customers.phone,
+    })
     .from(customers)
     .orderBy(asc(customers.name));
 }

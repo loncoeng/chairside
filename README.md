@@ -7,7 +7,7 @@ The salon is invented, and no shop runs on this yet. It is built as if to
 replace the kind of spreadsheet a shop like that really keeps — one that has
 grown a few macros — and the numbers below are that imagined shop's.
 
-[**Try it**](https://chairside.loncoeng.workers.dev) — press "Open the demo" on
+[**Try it**](https://chairside.loncoeng.dev) — press "Open the demo" on
 the first screen and it runs entirely inside your browser. Nothing you do is
 visible to anybody else, and a reload puts it back.
 

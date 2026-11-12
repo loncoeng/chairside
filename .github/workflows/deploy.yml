@@ -114,7 +114,7 @@ jobs:
       # Verify the live deploy. Unauthenticated requests go first so a broken auth gate fails the run.
       - name: Does it answer
         run: |
-          base=https://chairside.loncoeng.workers.dev
+          base=https://chairside.loncoeng.dev
 
           # Retry: a new version reaches edge locations over several seconds, so adjacent
           # requests can hit different versions.

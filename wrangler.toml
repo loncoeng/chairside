@@ -9,6 +9,10 @@ preview_urls = false
 
 # Top-level keys must sit above the first [section]; below it they are silently ignored.
 
+# Attached once in the dashboard. Declared here as well so a deploy keeps it
+# rather than removing it; a deploy that leaves it unchanged needs no zone permission.
+routes = [{ pattern = "chairside.loncoeng.dev", custom_domain = true }]
+
 # The API. Static files are served without invoking it.
 main = "./src/worker/index.ts"
 

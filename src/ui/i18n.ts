@@ -72,6 +72,13 @@ export const TEXT = {
   withWhom: { ja: "担当", zh: "髮型師", en: "Stylist" },
   guest: { ja: "お客様", zh: "客戶", en: "Guest" },
   noGuest: { ja: "未登録", zh: "未登記", en: "Not registered" },
+  guestSearchHint: {
+    ja: "名前・読み・電話番号で検索（空欄なら未登録）",
+    zh: "以姓名、拼音或電話搜尋（留空即未登記）",
+    en: "Search by name, spelling or phone (blank = not registered)",
+  },
+  changeGuest: { ja: "変更", zh: "更改", en: "Change" },
+  moreMatches: { ja: "ほか {n} 件。続けて入力してください", zh: "另有 {n} 位，請繼續輸入", en: "{n} more — keep typing" },
   menu: { ja: "メニュー", zh: "服務", en: "Menu" },
   totalMinutes: { ja: "合計 {n} 分", zh: "共 {n} 分鐘", en: "{n} min total" },
   minutes: { ja: "{n}分", zh: "{n}分", en: "{n}m" },

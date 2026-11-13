@@ -6,6 +6,7 @@ import { bookingItems, bookings, businessHours, closures, staff } from "../db/sc
 
 import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
+import { json, fail, bad } from "./http.ts";
 
 /** All data for the settings screen. */
 export async function shopSettings(db: Db, from: string) {
@@ -180,11 +181,7 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
   }
 
   const [exists] = await db.select({ id: staff.id }).from(staff).where(eq(staff.id, id)).limit(1);
-  if (!exists)
-    return json(
-      { ok: false, code: "staff-not-found", error: "That staff member was not found." },
-      404,
-    );
+  if (!exists) return fail(404, "staff-not-found", "That staff member was not found.");
 
   await db
     .update(staff)
@@ -220,12 +217,3 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
 
   return json({ ok: true, staffId: id, stillBooked: pending });
 }
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-  });
-}
-
-const bad = (code: string, message: string) => json({ ok: false, code, error: message }, 400);

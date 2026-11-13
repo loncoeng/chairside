@@ -20,6 +20,7 @@ import type { Draft, Existing } from "../db/booking-rules.ts";
 
 import { isDate } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
+import { json, fail, bad } from "./http.ts";
 
 /** Active services with per-grade prices (`byGrade`, null when the price doesn't vary). */
 export async function menu(db: Db) {
@@ -267,15 +268,6 @@ const toMinutes = (hhmm: string): number => {
 const clockOf = (total: number): string =>
   `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-  });
-}
-
-const bad = (code: string, message: string) => json({ ok: false, code, error: message }, 400);
-
 const STATUSES = ["booked", "arrived", "done", "cancelled", "no_show"] as const;
 type Status = (typeof STATUSES)[number];
 
@@ -345,11 +337,7 @@ export async function updateBooking(
     return bad("unreadable-body", "The request body could not be read.");
 
   const current = await getBooking(db, id);
-  if (!current)
-    return json(
-      { ok: false, code: "booking-not-found", error: "That booking was not found." },
-      404,
-    );
+  if (!current) return fail(404, "booking-not-found", "That booking was not found.");
 
   // Status only.
 

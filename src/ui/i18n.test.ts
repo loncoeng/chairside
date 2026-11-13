@@ -91,7 +91,7 @@ test("every code the server can send has words on the screen", () => {
   for (const name of readdirSync(dir)) {
     if (!name.endsWith(".ts") || name.endsWith(".test.ts")) continue;
     const source = readFileSync(new URL(name, dir), "utf8");
-    for (const m of source.matchAll(/(?:code: |bad\()"([a-z-]+)"/g)) codes.add(m[1]!);
+    for (const m of source.matchAll(/(?:code: |bad\(|fail\(\d+, )"([a-z-]+)"/g)) codes.add(m[1]!);
   }
 
   const missing = [...codes].filter((code) => !(`error.${code}` in TEXT));

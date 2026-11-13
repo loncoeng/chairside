@@ -18,6 +18,7 @@ import { isMethod } from "../db/payment-methods.ts";
 import type { Method } from "../db/payment-methods.ts";
 
 import type { Database as Db } from "../db/database.ts";
+import { json, fail } from "./http.ts";
 
 /** Accepted currencies and their rates. */
 export async function currencyList(db: Db) {
@@ -57,29 +58,20 @@ export async function takePayment(
     method?: unknown;
   } | null;
 
-  if (!body)
-    return json(
-      { ok: false, code: "unreadable-body", error: "The request body could not be read." },
-      400,
-    );
+  if (!body) return fail(400, "unreadable-body", "The request body could not be read.");
 
   const bookingId = Number.isInteger(body.bookingId) ? (body.bookingId as number) : null;
-  if (bookingId === null)
-    return json({ ok: false, code: "no-booking", error: "No booking was given." }, 400);
+  if (bookingId === null) return fail(400, "no-booking", "No booking was given.");
 
   const amount = typeof body.amount === "number" ? body.amount : NaN;
   // Refunds (negative amounts) are not supported yet.
   if (!Number.isFinite(amount) || amount <= 0)
-    return json({ ok: false, code: "bad-amount", error: "The amount is not valid." }, 400);
-  if (amount > 1_000_000)
-    return json({ ok: false, code: "amount-too-large", error: "The amount is too large." }, 400);
+    return fail(400, "bad-amount", "The amount is not valid.");
+  if (amount > 1_000_000) return fail(400, "amount-too-large", "The amount is too large.");
 
   const method = body.method === undefined ? "cash" : body.method;
   if (!isMethod(method)) {
-    return json(
-      { ok: false, code: "bad-method", error: "That payment method is not accepted." },
-      400,
-    );
+    return fail(400, "bad-method", "That payment method is not accepted.");
   }
 
   const code = typeof body.currency === "string" ? body.currency : "";
@@ -90,8 +82,7 @@ export async function takePayment(
     .where(eq(currencies.code, code))
     .limit(1);
 
-  if (!currency)
-    return json({ ok: false, code: "bad-currency", error: "That currency is not accepted." }, 400);
+  if (!currency) return fail(400, "bad-currency", "That currency is not accepted.");
 
   const [booking] = await db
     .select({ id: bookings.id, status: bookings.status })
@@ -99,16 +90,9 @@ export async function takePayment(
     .where(eq(bookings.id, bookingId))
     .limit(1);
 
-  if (!booking)
-    return json(
-      { ok: false, code: "booking-not-found", error: "That booking was not found." },
-      404,
-    );
+  if (!booking) return fail(404, "booking-not-found", "That booking was not found.");
   if (booking.status === "cancelled" || booking.status === "no_show") {
-    return json(
-      { ok: false, code: "booking-cancelled", error: "A cancelled booking cannot be paid." },
-      409,
-    );
+    return fail(409, "booking-cancelled", "A cancelled booking cannot be paid.");
   }
 
   await db.insert(payments).values({
@@ -262,11 +246,4 @@ export async function revenue(db: Db, month: string) {
       .map(([serviceId, v]) => ({ serviceId, ...v }))
       .sort((a, b) => b.n - a.n),
   };
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-  });
 }

@@ -6,6 +6,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { staff } from "../db/schema.ts";
 import { checkPassword, clearCookie, issue, setCookie } from "../db/session.ts";
 import type { Database as Db } from "../db/database.ts";
+import { json, fail } from "./http.ts";
 
 /**
  * Failed sign-ins allowed per IP per window. In-memory per isolate, so not a
@@ -38,7 +39,7 @@ export async function signIn(
 ): Promise<Response> {
   // No secret: refuse sign-in rather than issue forgeable tokens.
   if (!secret) {
-    return json({ ok: false, code: "not-configured", error: "The server is not set up yet." }, 503);
+    return fail(503, "not-configured", "The server is not set up yet.");
   }
 
   const who = request.headers.get("cf-connecting-ip") ?? "unknown";
@@ -79,39 +80,23 @@ export async function signIn(
   // Same reply for unknown ID and wrong password.
   if (!person || !ok) {
     record(who);
-    return json(
-      { ok: false, code: "wrong-credentials", error: "The ID or password is wrong." },
-      401,
-    );
+    return fail(401, "wrong-credentials", "The ID or password is wrong.");
   }
 
   const token = await issue(secret, person.id, person.role);
 
-  return new Response(
-    JSON.stringify({
+  return json(
+    {
       ok: true,
       staff: { id: person.id, name: person.name, role: person.role, grade: person.grade },
-    }),
-    {
-      status: 200,
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store",
-        "set-cookie": setCookie(token),
-      },
     },
+    200,
+    { "set-cookie": setCookie(token) },
   );
 }
 
 export function signOut(): Response {
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "set-cookie": clearCookie(),
-    },
-  });
+  return json({ ok: true }, 200, { "set-cookie": clearCookie() });
 }
 
 /** The signed-in staff member. */
@@ -124,12 +109,5 @@ export async function whoAmI(db: Db, staffId: number): Promise<Response> {
 
   return person
     ? json({ ok: true, staff: person })
-    : json({ ok: false, code: "staff-not-found", error: "That staff member was not found." }, 401);
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-  });
+    : fail(401, "staff-not-found", "That staff member was not found.");
 }

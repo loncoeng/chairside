@@ -16,6 +16,7 @@ import {
 
 import { isDate } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
+import { json, fail } from "./http.ts";
 
 /** Customer list (max 50). The search matches name, alternate spelling (searchKey) and phone. */
 export async function listCustomers(db: Db, query: string) {
@@ -152,10 +153,7 @@ export async function getCustomer(db: Db, id: number) {
 export async function saveCustomer(db: Db, request: Request, id: number | null): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body !== "object")
-    return json(
-      { ok: false, code: "unreadable-body", error: "The request body could not be read." },
-      400,
-    );
+    return fail(400, "unreadable-body", "The request body could not be read.");
 
   const field = (key: string, limit: number): string | null | undefined => {
     if (!(key in body)) return undefined;
@@ -177,12 +175,12 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
   // isDate, not a shape match: 2026-02-30 has the right shape.
   for (const date of [firstVisitRaw, birthday]) {
     if (date && !isDate(date)) {
-      return json({ ok: false, code: "bad-date", error: "Send the date as YYYY-MM-DD." }, 400);
+      return fail(400, "bad-date", "Send the date as YYYY-MM-DD.");
     }
   }
 
   if (id === null ? !name : name === null) {
-    return json({ ok: false, code: "name-required", error: "Enter a name." }, 400);
+    return fail(400, "name-required", "Enter a name.");
   }
 
   const values = {
@@ -201,8 +199,7 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
       .insert(customers)
       .values({ name: name as string, ...values })
       .returning({ id: customers.id });
-    if (!created)
-      return json({ ok: false, code: "create-failed", error: "It could not be saved." }, 500);
+    if (!created) return fail(500, "create-failed", "It could not be saved.");
     customerId = created.id;
   } else {
     const [exists] = await db
@@ -210,11 +207,7 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
       .from(customers)
       .where(eq(customers.id, id))
       .limit(1);
-    if (!exists)
-      return json(
-        { ok: false, code: "customer-not-found", error: "That customer was not found." },
-        404,
-      );
+    if (!exists) return fail(404, "customer-not-found", "That customer was not found.");
     if (Object.keys(values).length > 0) {
       await db.update(customers).set(values).where(eq(customers.id, id));
     }
@@ -251,19 +244,14 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     recordedOn?: unknown;
   } | null;
 
-  if (!body)
-    return json(
-      { ok: false, code: "unreadable-body", error: "The request body could not be read." },
-      400,
-    );
+  if (!body) return fail(400, "unreadable-body", "The request body could not be read.");
 
   const customerId = Number.isInteger(body.customerId) ? (body.customerId as number) : null;
-  if (customerId === null)
-    return json({ ok: false, code: "no-customer", error: "No customer was given." }, 400);
+  if (customerId === null) return fail(400, "no-customer", "No customer was given.");
 
   const recordedOn = typeof body.recordedOn === "string" ? body.recordedOn : "";
   if (!isDate(recordedOn)) {
-    return json({ ok: false, code: "bad-date", error: "Send the date as YYYY-MM-DD." }, 400);
+    return fail(400, "bad-date", "Send the date as YYYY-MM-DD.");
   }
 
   const text = (value: unknown) =>
@@ -274,7 +262,7 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
   const caution = text(body.caution);
 
   if (formula === null && note === null && caution === null) {
-    return json({ ok: false, code: "empty-record", error: "The record is empty." }, 400);
+    return fail(400, "empty-record", "The record is empty.");
   }
 
   const [exists] = await db
@@ -282,11 +270,7 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     .from(customers)
     .where(eq(customers.id, customerId))
     .limit(1);
-  if (!exists)
-    return json(
-      { ok: false, code: "customer-not-found", error: "That customer was not found." },
-      404,
-    );
+  if (!exists) return fail(404, "customer-not-found", "That customer was not found.");
 
   const [created] = await db
     .insert(records)
@@ -301,11 +285,4 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     .returning({ id: records.id });
 
   return json({ ok: true, recordId: created?.id ?? null }, 201);
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-  });
 }

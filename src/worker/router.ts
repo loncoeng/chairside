@@ -21,6 +21,7 @@ import { createBooking, customerList, getBooking, menu, updateBooking } from "./
 import { addRecord, getCustomer, listCustomers, saveCustomer } from "./customer-api.ts";
 import { currencyList, paymentsFor, revenue, takePayment } from "./money-api.ts";
 import { setClosure, setHours, setStaff, shopSettings } from "./shop-api.ts";
+import { json } from "./http.ts";
 
 /**
  * Handles one API request. Takes any drizzle SQLite database (../db/database.ts),
@@ -262,20 +263,4 @@ async function bookedRange(db: Db) {
     .select({ from: min(bookings.date), to: max(bookings.date) })
     .from(bookings);
   return row?.from ? row : null;
-}
-
-/**
- * JSON response with shared headers. `no-store` keeps customer data out of the
- * cache on a shared shop PC.
- */
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store, private",
-      "x-content-type-options": "nosniff",
-      "referrer-policy": "no-referrer",
-    },
-  });
 }

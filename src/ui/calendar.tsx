@@ -182,7 +182,7 @@ function Block({
     >
       <span class="cal-who">
         {line.nominated && (
-          <span class="cal-nom" aria-label={nominatedLabel} title={nominatedLabel}>
+          <span class="cal-nom" role="img" aria-label={nominatedLabel} title={nominatedLabel}>
             ★
           </span>
         )}

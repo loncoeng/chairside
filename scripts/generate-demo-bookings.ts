@@ -134,37 +134,104 @@ const GUESTS: {
  * Name pools for the other generated guests: mostly Cantonese, some Portuguese and
  * Japanese, matching a Macau salon. All names are fictional.
  */
-const ZH_SURNAMES =
-  "陳李黃張梁何吳劉蔡楊鄭謝許羅高林周葉朱馮曾徐胡盧邱蘇余潘杜江".split("");
+const ZH_SURNAMES = "陳李黃張梁何吳劉蔡楊鄭謝許羅高林周葉朱馮曾徐胡盧邱蘇余潘杜江".split("");
 const ZH_GIVEN: [string, string][] = [
-  ["嘉欣", "ka yan"], ["俊傑", "chun kit"], ["美玲", "mei ling"], ["志强", "chi keung"],
-  ["詩華", "sze wah"], ["偉明", "wai ming"], ["曉晴", "hiu ching"], ["文健", "man kin"],
-  ["雅婷", "nga ting"], ["家豪", "ka ho"], ["淑芬", "suk fan"], ["建華", "kin wah"],
-  ["芷若", "tsz yeuk"], ["少聰", "siu chung"], ["慧敏", "wai man"], ["國強", "kwok keung"],
-  ["秀蘭", "sau lan"], ["子軒", "tsz hin"], ["雨桐", "yu tung"], ["浩然", "ho yin"],
-  ["佩珊", "pui shan"], ["敏儀", "man yee"], ["志偉", "chi wai"], ["麗珍", "lai chun"],
-  ["家儀", "ka yee"], ["國榮", "kwok wing"], ["穎琳", "wing lam"], ["天佑", "tin yau"],
-  ["嘉輝", "ka fai"], ["月娥", "yuet ngo"],
+  ["嘉欣", "ka yan"],
+  ["俊傑", "chun kit"],
+  ["美玲", "mei ling"],
+  ["志强", "chi keung"],
+  ["詩華", "sze wah"],
+  ["偉明", "wai ming"],
+  ["曉晴", "hiu ching"],
+  ["文健", "man kin"],
+  ["雅婷", "nga ting"],
+  ["家豪", "ka ho"],
+  ["淑芬", "suk fan"],
+  ["建華", "kin wah"],
+  ["芷若", "tsz yeuk"],
+  ["少聰", "siu chung"],
+  ["慧敏", "wai man"],
+  ["國強", "kwok keung"],
+  ["秀蘭", "sau lan"],
+  ["子軒", "tsz hin"],
+  ["雨桐", "yu tung"],
+  ["浩然", "ho yin"],
+  ["佩珊", "pui shan"],
+  ["敏儀", "man yee"],
+  ["志偉", "chi wai"],
+  ["麗珍", "lai chun"],
+  ["家儀", "ka yee"],
+  ["國榮", "kwok wing"],
+  ["穎琳", "wing lam"],
+  ["天佑", "tin yau"],
+  ["嘉輝", "ka fai"],
+  ["月娥", "yuet ngo"],
 ];
 
 const PT_FIRST = [
-  "Ana", "João", "Rita", "Carlos", "Sofia", "Miguel", "Inês", "Paulo",
-  "Marta", "Tiago", "Beatriz", "Rui", "Helena", "Nuno", "Catarina", "André",
+  "Ana",
+  "João",
+  "Rita",
+  "Carlos",
+  "Sofia",
+  "Miguel",
+  "Inês",
+  "Paulo",
+  "Marta",
+  "Tiago",
+  "Beatriz",
+  "Rui",
+  "Helena",
+  "Nuno",
+  "Catarina",
+  "André",
 ];
 const PT_LAST = [
-  "Silva", "Pereira", "Costa", "Lopes", "Martins", "Ferreira", "Rocha", "Dias",
-  "Sousa", "Almeida", "Gomes", "Carvalho", "Teixeira", "Moreira", "Azevedo", "Barbosa",
+  "Silva",
+  "Pereira",
+  "Costa",
+  "Lopes",
+  "Martins",
+  "Ferreira",
+  "Rocha",
+  "Dias",
+  "Sousa",
+  "Almeida",
+  "Gomes",
+  "Carvalho",
+  "Teixeira",
+  "Moreira",
+  "Azevedo",
+  "Barbosa",
 ];
 
 const JA_SURNAMES: [string, string][] = [
-  ["佐藤", "sato"], ["鈴木", "suzuki"], ["高橋", "takahashi"], ["伊藤", "ito"],
-  ["中村", "nakamura"], ["小林", "kobayashi"], ["山田", "yamada"], ["松本", "matsumoto"],
-  ["井上", "inoue"], ["木村", "kimura"], ["清水", "shimizu"], ["森田", "morita"],
+  ["佐藤", "sato"],
+  ["鈴木", "suzuki"],
+  ["高橋", "takahashi"],
+  ["伊藤", "ito"],
+  ["中村", "nakamura"],
+  ["小林", "kobayashi"],
+  ["山田", "yamada"],
+  ["松本", "matsumoto"],
+  ["井上", "inoue"],
+  ["木村", "kimura"],
+  ["清水", "shimizu"],
+  ["森田", "morita"],
 ];
 const JA_GIVEN: [string, string][] = [
-  ["健", "ken"], ["花", "hana"], ["翔", "sho"], ["凛", "rin"], ["葵", "aoi"],
-  ["蓮", "ren"], ["結衣", "yui"], ["大和", "yamato"], ["咲", "saki"], ["悠真", "yuma"],
-  ["美月", "mizuki"], ["陽向", "hinata"],
+  ["健", "ken"],
+  ["花", "hana"],
+  ["翔", "sho"],
+  ["凛", "rin"],
+  ["葵", "aoi"],
+  ["蓮", "ren"],
+  ["結衣", "yui"],
+  ["大和", "yamato"],
+  ["咲", "saki"],
+  ["悠真", "yuma"],
+  ["美月", "mizuki"],
+  ["陽向", "hinata"],
 ];
 
 /** Number of generated guests beyond the named twelve. */
@@ -191,7 +258,7 @@ function random(): number {
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   return seed / 0x7fffffff;
 }
-const pick = <T,>(list: readonly T[]): T => list[Math.floor(random() * list.length)]!;
+const pick = <T>(list: readonly T[]): T => list[Math.floor(random() * list.length)]!;
 const chance = (p: number) => random() < p;
 
 const minutes = (hhmm: string): number => {
@@ -207,7 +274,8 @@ const addDays = (date: string, days: number): string => {
 };
 const weekdayOf = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay();
 /** Unix seconds for a moment in the shop's own time. */
-const stamp = (date: string, hhmm: string) => Math.floor(Date.parse(`${date}T${hhmm}:00+08:00`) / 1000);
+const stamp = (date: string, hhmm: string) =>
+  Math.floor(Date.parse(`${date}T${hhmm}:00+08:00`) / 1000);
 
 type Extra = { id: number; name: string; key: string; phone: string; since: string };
 
@@ -220,7 +288,11 @@ const takenNames = new Set<string>();
 const DIALLING: { code: string; weight: number; make: () => string }[] = [
   { code: "+853", weight: 72, make: () => `6${digits(3)} ${digits(4)}` },
   { code: "+852", weight: 20, make: () => `${pick(["9", "6", "5"])}${digits(3)} ${digits(4)}` },
-  { code: "+86", weight: 8, make: () => `1${pick(["3", "5", "7", "8"])}${digits(1)} ${digits(4)} ${digits(4)}` },
+  {
+    code: "+86",
+    weight: 8,
+    make: () => `1${pick(["3", "5", "7", "8"])}${digits(1)} ${digits(4)} ${digits(4)}`,
+  },
 ];
 
 function digits(n: number): string {
@@ -462,7 +534,8 @@ for (const guest of GUESTS) {
     const booking = place(on, guest.menu, guest.usual, preferAt, guest.id, chance(0.8));
 
     if (booking) {
-      const history: { at: number; kind: string; before: string | null; after: string | null }[] = [];
+      const history: { at: number; kind: string; before: string | null; after: string | null }[] =
+        [];
 
       // Booked 1 to 13 days ahead.
       const takenOn = addDays(booking.date, -(1 + Math.floor(random() * 13)));
@@ -612,8 +685,8 @@ function inserts(into: string, columns: string, rows: string[], per = 100): stri
   const out: string[] = [];
   const br = String.fromCharCode(10);
   for (let at = 0; at < rows.length; at += per) {
-    const body = rows.slice(at, at + per).join("," + br);
-    out.push(`INSERT INTO ${into} (${columns}) VALUES` + br + body + ";");
+    const body = rows.slice(at, at + per).join(`,${br}`);
+    out.push(`INSERT INTO ${into} (${columns}) VALUES${br}${body};`);
   }
   return out.join(br + br);
 }
@@ -623,7 +696,9 @@ function inserts(into: string, columns: string, rows: string[], per = 100): stri
  * fails with `{"D1_RESET_DO":true}` (a per-call size limit, not per statement).
  * The delete runs first so inserts never race the cascade.
  */
-const header = (what: string) => `-- Generated by scripts/generate-demo-bookings.ts. Do not edit by hand.
+const header = (
+  what: string,
+) => `-- Generated by scripts/generate-demo-bookings.ts. Do not edit by hand.
 --
 -- ${what}
 --
@@ -693,7 +768,11 @@ DELETE FROM bookings;
   [
     "demo-payments.sql",
     header("What was handed over, and in what.") +
-      inserts("payments", "id, booking_id, amount, currency, rate_to_base, method, paid_at", paymentRows) +
+      inserts(
+        "payments",
+        "id, booking_id, amount, currency, rate_to_base, method, paid_at",
+        paymentRows,
+      ) +
       br,
   ],
 ];
@@ -713,15 +792,19 @@ ${inserts(
   "customers",
   "id, name, search_key, phone, note, first_visit_on",
   extras.map(
-    (e) => `  (${e.id}, ${quote(e.name)}, ${quote(e.key)}, ${quote(e.phone)}, NULL, ${quote(e.since)})`,
+    (e) =>
+      `  (${e.id}, ${quote(e.name)}, ${quote(e.key)}, ${quote(e.phone)}, NULL, ${quote(e.since)})`,
   ),
 )}
 `;
 
 // Booking count. The deploy skips reseeding when the database already has this many,
 // since a full reseed uses about a quarter of D1's free daily writes.
-writeFileSync(new URL("../seed/demo-bookings.count", import.meta.url), `${bookingRows.length}
-`);
+writeFileSync(
+  new URL("../seed/demo-bookings.count", import.meta.url),
+  `${bookingRows.length}
+`,
+);
 writeFileSync(new URL("../seed/demo-customers.sql", import.meta.url), customerSql);
 for (const [name, body] of files) {
   writeFileSync(new URL(`../seed/${name}`, import.meta.url), body);

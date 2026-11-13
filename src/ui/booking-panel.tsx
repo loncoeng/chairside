@@ -65,7 +65,10 @@ function statusName(value: string | null, t: (key: Key) => string): string {
 }
 
 /** Status buttons. */
-const MOVES: { status: Status; key: "markArrived" | "markDone" | "markCancelled" | "markNoShow" | "markBooked" }[] = [
+const MOVES: {
+  status: Status;
+  key: "markArrived" | "markDone" | "markCancelled" | "markNoShow" | "markBooked";
+}[] = [
   { status: "booked", key: "markBooked" },
   { status: "arrived", key: "markArrived" },
   { status: "done", key: "markDone" },
@@ -417,8 +420,7 @@ export function BookingPanel({
 function History({ events, staff }: { events: Event[]; staff: Person[] }) {
   const { t, lang } = useText();
   const moves = events.filter((e) => e.kind === "moved").length;
-  const nameOf = (id: string | null) =>
-    staff.find((p) => String(p.id) === id)?.name ?? id ?? "—";
+  const nameOf = (id: string | null) => staff.find((p) => String(p.id) === id)?.name ?? id ?? "—";
 
   const when = (at: number) =>
     new Date(at * 1000).toLocaleString(lang === "zh" ? "zh-Hant" : lang, {

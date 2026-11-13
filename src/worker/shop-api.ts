@@ -1,12 +1,11 @@
 // Shop settings: opening hours, closures and staff.
 
-import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
+import { and, asc, eq, gte, or } from "drizzle-orm";
 
 import { bookingItems, bookings, businessHours, closures, staff } from "../db/schema.ts";
 
 import { isDate, isTime } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
-
 
 /** All data for the settings screen. */
 export async function shopSettings(db: Db, from: string) {
@@ -47,29 +46,43 @@ export async function shopSettings(db: Db, from: string) {
 export async function setHours(db: Db, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { hours?: unknown } | null;
   const rows = Array.isArray(body?.hours) ? body.hours : null;
-  if (!rows || rows.length !== 7) return bad("hours-need-seven-days", "Send all seven days together.");
+  if (rows?.length !== 7) return bad("hours-need-seven-days", "Send all seven days together.");
 
-  const parsed: { weekday: number; opensAt: string | null; closesAt: string | null; closed: boolean }[] = [];
+  const parsed: {
+    weekday: number;
+    opensAt: string | null;
+    closesAt: string | null;
+    closed: boolean;
+  }[] = [];
 
   for (const row of rows as Record<string, unknown>[]) {
     const weekday = Number(row.weekday);
-    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return bad("bad-weekday", "The day of the week is not valid.");
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6)
+      return bad("bad-weekday", "The day of the week is not valid.");
 
     const closed = row.closed === true;
     const opensAt = typeof row.opensAt === "string" ? row.opensAt : null;
     const closesAt = typeof row.closesAt === "string" ? row.closesAt : null;
 
     if (!closed) {
-      if (!opensAt || !isTime(opensAt)) return bad("bad-opening-time", "The opening time is not in HH:MM form.");
-      if (!closesAt || !isTime(closesAt)) return bad("bad-closing-time", "The closing time is not in HH:MM form.");
+      if (!opensAt || !isTime(opensAt))
+        return bad("bad-opening-time", "The opening time is not in HH:MM form.");
+      if (!closesAt || !isTime(closesAt))
+        return bad("bad-closing-time", "The closing time is not in HH:MM form.");
       // Every reader assumes closesAt > opensAt (no overnight hours).
       if (closesAt <= opensAt) return bad("closes-before-opens", "Closing is before opening.");
     }
 
-    parsed.push({ weekday, opensAt: closed ? null : opensAt, closesAt: closed ? null : closesAt, closed });
+    parsed.push({
+      weekday,
+      opensAt: closed ? null : opensAt,
+      closesAt: closed ? null : closesAt,
+      closed,
+    });
   }
 
-  if (new Set(parsed.map((p) => p.weekday)).size !== 7) return bad("duplicate-weekday", "A day of the week appears twice.");
+  if (new Set(parsed.map((p) => p.weekday)).size !== 7)
+    return bad("duplicate-weekday", "A day of the week appears twice.");
 
   for (const row of parsed) {
     await db
@@ -91,7 +104,6 @@ export async function setClosure(db: Db, request: Request): Promise<Response> {
 
   const date = typeof body?.date === "string" ? body.date : "";
   if (!isDate(date)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
-
 
   if (body?.remove === true) {
     await db.delete(closures).where(eq(closures.date, date));
@@ -119,7 +131,12 @@ export async function setClosure(db: Db, request: Request): Promise<Response> {
   const standing = await db
     .select({ id: bookings.id })
     .from(bookings)
-    .where(and(eq(bookings.date, date), or(eq(bookings.status, "booked"), eq(bookings.status, "arrived"))));
+    .where(
+      and(
+        eq(bookings.date, date),
+        or(eq(bookings.status, "booked"), eq(bookings.status, "arrived")),
+      ),
+    );
 
   return json({ ok: true, bookingsOnThatDay: standing.length });
 }
@@ -142,10 +159,13 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
 
   const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
   const role = typeof body.role === "string" ? body.role : "stylist";
-  if (!["owner", "stylist", "assistant"].includes(role)) return bad("bad-role", "The role is not valid.");
+  if (!["owner", "stylist", "assistant"].includes(role))
+    return bad("bad-role", "The role is not valid.");
 
-  const color = typeof body.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(body.color) ? body.color : null;
-  const joinedOn = typeof body.joinedOn === "string" && isDate(body.joinedOn) ? body.joinedOn : null;
+  const color =
+    typeof body.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(body.color) ? body.color : null;
+  const joinedOn =
+    typeof body.joinedOn === "string" && isDate(body.joinedOn) ? body.joinedOn : null;
   const leftOn = typeof body.leftOn === "string" && isDate(body.leftOn) ? body.leftOn : null;
 
   const id = Number.isInteger(body.id) ? (body.id as number) : null;
@@ -160,7 +180,11 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
   }
 
   const [exists] = await db.select({ id: staff.id }).from(staff).where(eq(staff.id, id)).limit(1);
-  if (!exists) return json({ ok: false, code: "staff-not-found", error: "That staff member was not found." }, 404);
+  if (!exists)
+    return json(
+      { ok: false, code: "staff-not-found", error: "That staff member was not found." },
+      404,
+    );
 
   await db
     .update(staff)
@@ -195,15 +219,6 @@ export async function setStaff(db: Db, request: Request): Promise<Response> {
           .orderBy(asc(bookings.date));
 
   return json({ ok: true, staffId: id, stillBooked: pending });
-}
-
-/** Current staff, for pickers. */
-export async function activeStaff(db: Db) {
-  return await db
-    .select({ id: staff.id, name: staff.name, role: staff.role, color: staff.color })
-    .from(staff)
-    .where(isNull(staff.leftOn))
-    .orderBy(asc(staff.id));
 }
 
 function json(body: unknown, status = 200): Response {

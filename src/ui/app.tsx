@@ -152,7 +152,7 @@ function Screen() {
     const stop = new AbortController();
     fetch("/api/session", { signal: stop.signal })
       .then(async (r) => {
-        const staff = r.ok ? ((await r.json()) as { staff?: Signed }).staff ?? null : null;
+        const staff = r.ok ? (((await r.json()) as { staff?: Signed }).staff ?? null) : null;
         // Log only demo rejections, the case worth debugging.
         if (source === "demo" && staff === null) note(`session recheck: HTTP ${r.status}`);
         return staff;
@@ -217,7 +217,12 @@ function Screen() {
     setRevision((n) => n + 1);
   }, []);
 
-  if (me === undefined) return <main class="wide"><p class="lede">{t("loading")}</p></main>;
+  if (me === undefined)
+    return (
+      <main class="wide">
+        <p class="lede">{t("loading")}</p>
+      </main>
+    );
 
   if (me === null) {
     return (
@@ -349,134 +354,142 @@ function Screen() {
       )}
 
       {route.view === "day" && (
-      <section aria-labelledby="day">
-        <div class="day-bar">
-          <h2 id="day">
-            {date}
-            <span class="day-weekday">
-              （{weekday(new Date(`${date}T00:00:00Z`).getUTCDay())}）
-            </span>
-          </h2>
-          <div class="day-nav">
-            <button type="button" onClick={() => go(-1)} aria-label={t("prevDay")}>
-              ←
-            </button>
-            <button type="button" onClick={() => setDate(todayInShop())} disabled={date === todayInShop()}>
-              {t("today")}
-            </button>
-            <button type="button" onClick={() => go(1)} aria-label={t("nextDay")}>
-              →
-            </button>
-            <button
-              type="button"
-              class="primary"
-              onClick={() => {
-                setPicked(null);
-                setBooking(true);
-              }}
-              disabled={services.length === 0}
-            >
-              {t("takeBooking")}
-            </button>
+        <section aria-labelledby="day">
+          <div class="day-bar">
+            <h2 id="day">
+              {date}
+              <span class="day-weekday">
+                （{weekday(new Date(`${date}T00:00:00Z`).getUTCDay())}）
+              </span>
+            </h2>
+            <div class="day-nav">
+              <button type="button" onClick={() => go(-1)} aria-label={t("prevDay")}>
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => setDate(todayInShop())}
+                disabled={date === todayInShop()}
+              >
+                {t("today")}
+              </button>
+              <button type="button" onClick={() => go(1)} aria-label={t("nextDay")}>
+                →
+              </button>
+              <button
+                type="button"
+                class="primary"
+                onClick={() => {
+                  setPicked(null);
+                  setBooking(true);
+                }}
+                disabled={services.length === 0}
+              >
+                {t("takeBooking")}
+              </button>
+            </div>
           </div>
-        </div>
 
-        {booking && (
-          <BookingForm
-            date={date}
-            staff={room.status === "ready" ? room.value.staff : []}
-            services={services}
-            customers={customers}
-            onBooked={() => {
-              setBooking(false);
-              setRevision((n) => n + 1);
-            }}
-            onClose={() => setBooking(false)}
-          />
-        )}
-
-        {picked !== null && room.status === "ready" && (
-          <BookingPanel
-            line={picked}
-            staff={room.value.staff}
-            services={services}
-            onChanged={() => {
-              setPicked(null);
-              setRevision((n) => n + 1);
-            }}
-            onClose={() => setPicked(null)}
-          />
-        )}
-
-        {day.status === "loading" && <p class="lede">{t("loading")}</p>}
-
-        {day.status === "failed" && (
-          <p class="failed" role="alert">
-            {t("dayFailed")} <span class="reason">{day.reason}</span>
-          </p>
-        )}
-
-        {day.status === "ready" && room.status === "ready" && (
-          <>
-            {day.value.holidays.length > 0 && (
-              <ul class="holiday-note">
-                {day.value.holidays.map((h) => (
-                  <li key={h.region}>
-                    {/* Regions differ: mainland Golden Week runs a week past Macau's two days. */}
-                    <span class={`region is-${h.region}`}>{t(`region.${h.region}`)}</span>
-                    {h.name}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Past holidaysKnownTo, no holidays means the year is not imported. */}
-            {day.value.holidaysKnownTo && date > day.value.holidaysKnownTo && (
-              <p class="holiday-note is-unknown">
-                {t("holidaysUnknown", { to: day.value.holidaysKnownTo })}
-              </p>
-            )}
-
-            <Peak day={day.value} seats={room.value.seats} />
-            <Calendar
-              day={day.value}
-              seats={room.value.seats}
+          {booking && (
+            <BookingForm
+              date={date}
+              staff={room.status === "ready" ? room.value.staff : []}
               services={services}
-              onPick={(line) => {
-                // One panel at a time.
+              customers={customers}
+              onBooked={() => {
                 setBooking(false);
-                setPicked(line);
+                setRevision((n) => n + 1);
               }}
-              picked={picked?.bookingId ?? null}
+              onClose={() => setBooking(false)}
             />
+          )}
 
-            {/* On an empty day, link to the dates that have bookings. */}
-            {day.value.lines.length > 0 || !day.value.bookedRange?.from ? null : (
-              <p class="lede">
-                {t("nothingBooked")}{" "}
-                <button type="button" class="link" onClick={() => setDate(day.value.bookedRange!.from!)}>
-                  {t("sampleIs", {
-                    from: day.value.bookedRange.from ?? "",
-                    to: day.value.bookedRange.to ?? "",
-                  })}
-                </button>
-              </p>
-            )}
-          </>
-        )}
-      </section>
+          {picked !== null && room.status === "ready" && (
+            <BookingPanel
+              line={picked}
+              staff={room.value.staff}
+              services={services}
+              onChanged={() => {
+                setPicked(null);
+                setRevision((n) => n + 1);
+              }}
+              onClose={() => setPicked(null)}
+            />
+          )}
+
+          {day.status === "loading" && <p class="lede">{t("loading")}</p>}
+
+          {day.status === "failed" && (
+            <p class="failed" role="alert">
+              {t("dayFailed")} <span class="reason">{day.reason}</span>
+            </p>
+          )}
+
+          {day.status === "ready" && room.status === "ready" && (
+            <>
+              {day.value.holidays.length > 0 && (
+                <ul class="holiday-note">
+                  {day.value.holidays.map((h) => (
+                    <li key={h.region}>
+                      {/* Regions differ: mainland Golden Week runs a week past Macau's two days. */}
+                      <span class={`region is-${h.region}`}>{t(`region.${h.region}`)}</span>
+                      {h.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Past holidaysKnownTo, no holidays means the year is not imported. */}
+              {day.value.holidaysKnownTo && date > day.value.holidaysKnownTo && (
+                <p class="holiday-note is-unknown">
+                  {t("holidaysUnknown", { to: day.value.holidaysKnownTo })}
+                </p>
+              )}
+
+              <Peak day={day.value} seats={room.value.seats} />
+              <Calendar
+                day={day.value}
+                seats={room.value.seats}
+                services={services}
+                onPick={(line) => {
+                  // One panel at a time.
+                  setBooking(false);
+                  setPicked(line);
+                }}
+                picked={picked?.bookingId ?? null}
+              />
+
+              {/* On an empty day, link to the dates that have bookings. */}
+              {day.value.lines.length > 0 || !day.value.bookedRange?.from ? null : (
+                <p class="lede">
+                  {t("nothingBooked")}{" "}
+                  <button
+                    type="button"
+                    class="link"
+                    onClick={() => setDate(day.value.bookedRange!.from!)}
+                  >
+                    {t("sampleIs", {
+                      from: day.value.bookedRange.from ?? "",
+                      to: day.value.bookedRange.to ?? "",
+                    })}
+                  </button>
+                </p>
+              )}
+            </>
+          )}
+        </section>
       )}
 
       {route.view === "day" && (
-      <section aria-labelledby="room">
-        <h2 id="room">{t("room")}</h2>
-        {room.status === "ready" && <RoomSummary room={room.value} />}
-        {room.status === "failed" && (
-          <p class="failed" role="alert">
-            {t("roomFailed")} <span class="reason">{room.reason}</span>
-          </p>
-        )}
-      </section>
+        <section aria-labelledby="room">
+          <h2 id="room">{t("room")}</h2>
+          {room.status === "ready" && <RoomSummary room={room.value} />}
+          {room.status === "failed" && (
+            <p class="failed" role="alert">
+              {t("roomFailed")} <span class="reason">{room.reason}</span>
+            </p>
+          )}
+        </section>
       )}
     </main>
   );
@@ -489,9 +502,7 @@ function RoomSummary({ room }: { room: Room }) {
 
   return (
     <>
-      <p class="lede">
-        {t("roomSummary", { styling, shampoo, staff: room.staff.length })}
-      </p>
+      <p class="lede">{t("roomSummary", { styling, shampoo, staff: room.staff.length })}</p>
       <ul class="staff">
         {room.staff.map((person) => (
           <li key={person.id}>

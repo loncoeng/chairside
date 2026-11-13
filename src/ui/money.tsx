@@ -85,10 +85,18 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
       <div class="day-bar">
         <h2>{month}</h2>
         <div class="day-nav">
-          <button type="button" onClick={() => onMonth(shiftMonth(month, -1))} aria-label={t("prevMonth")}>
+          <button
+            type="button"
+            onClick={() => onMonth(shiftMonth(month, -1))}
+            aria-label={t("prevMonth")}
+          >
             ←
           </button>
-          <button type="button" onClick={() => onMonth(shiftMonth(month, 1))} aria-label={t("nextMonth")}>
+          <button
+            type="button"
+            onClick={() => onMonth(shiftMonth(month, 1))}
+            aria-label={t("nextMonth")}
+          >
             →
           </button>
         </div>
@@ -150,7 +158,10 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
                     }
                   >
                     <span class="chart-stack">
-                      <span class="chart-fill" style={{ height: `${(d.total / busiest) * 100}%` }} />
+                      <span
+                        class="chart-fill"
+                        style={{ height: `${(d.total / busiest) * 100}%` }}
+                      />
                     </span>
                     <span class="chart-label">
                       {String(d.day).padStart(2, "0")}
@@ -210,7 +221,11 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
                   <li key={s.serviceId ?? "none"}>
                     <span>
                       {s.nameJa
-                        ? serviceName(lang, { nameJa: s.nameJa, nameZh: s.nameZh, nameEn: s.nameEn })
+                        ? serviceName(lang, {
+                            nameJa: s.nameJa,
+                            nameZh: s.nameZh,
+                            nameEn: s.nameEn,
+                          })
                         : "—"}
                     </span>
                     <span class="rows-n">{s.n}</span>

@@ -88,6 +88,7 @@ export function GuestPicker({
         }}
       />
       {open && query.trim() !== "" && (
+        // ARIA combobox: focus stays in the input, whose arrow keys move between options.
         <ul id="guest-matches" class="guest-matches" role="listbox">
           {shown.map((c, i) => (
             <li

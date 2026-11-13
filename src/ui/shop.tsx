@@ -45,7 +45,11 @@ export function Shop() {
     return () => stop.abort();
   }, [revision]);
 
-  async function send(path: string, method: string, body: unknown): Promise<Record<string, unknown> | null> {
+  async function send(
+    path: string,
+    method: string,
+    body: unknown,
+  ): Promise<Record<string, unknown> | null> {
     setBusy(true);
     setFailed(null);
     setSaid(null);
@@ -120,7 +124,9 @@ export function Shop() {
                 step={900}
                 disabled={h.closed}
                 value={h.opensAt ?? ""}
-                onInput={(e) => editHours(h.weekday, { opensAt: (e.target as HTMLInputElement).value })}
+                onInput={(e) =>
+                  editHours(h.weekday, { opensAt: (e.target as HTMLInputElement).value })
+                }
               />
               <span class="hours-dash">–</span>
               <input
@@ -128,7 +134,9 @@ export function Shop() {
                 step={900}
                 disabled={h.closed}
                 value={h.closesAt ?? ""}
-                onInput={(e) => editHours(h.weekday, { closesAt: (e.target as HTMLInputElement).value })}
+                onInput={(e) =>
+                  editHours(h.weekday, { closesAt: (e.target as HTMLInputElement).value })
+                }
               />
             </li>
           ))}
@@ -239,7 +247,10 @@ export function Shop() {
           </label>
           <label class="field">
             <span>{t("role")}</span>
-            <select value={newRole} onChange={(e) => setNewRole((e.target as HTMLSelectElement).value)}>
+            <select
+              value={newRole}
+              onChange={(e) => setNewRole((e.target as HTMLSelectElement).value)}
+            >
               {["owner", "stylist", "assistant"].map((r) => (
                 <option key={r} value={r}>
                   {t(r as "stylist")}
@@ -296,7 +307,12 @@ function TeamRow({
       {gone ? (
         <>
           <span class="team-left">{t("leftOn", { date: person.leftOn ?? "" })}</span>
-          <button type="button" class="link" disabled={busy} onClick={() => onSave({ leftOn: null })}>
+          <button
+            type="button"
+            class="link"
+            disabled={busy}
+            onClick={() => onSave({ leftOn: null })}
+          >
             {t("bringBack")}
           </button>
         </>

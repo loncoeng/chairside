@@ -17,8 +17,12 @@ const SECRET = "a-secret-for-the-tests-only";
 /** Minimal shop fixture. */
 function database() {
   const raw = new SQL.Database();
-  for (const name of readdirSync("migrations").filter((n) => n.endsWith(".sql")).sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
+  for (const name of readdirSync("migrations")
+    .filter((n) => n.endsWith(".sql"))
+    .sort()) {
+    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
+      "--> statement-breakpoint",
+    )) {
       if (statement.trim() !== "") raw.run(statement);
     }
   }
@@ -64,9 +68,14 @@ test("a day that does not exist is refused wherever a date is taken", async () =
   const db = database();
 
   for (const date of BAD) {
-    strictEqual((await ask(db, "/api/day?date=" + date, null, "GET")).status, 400, `GET /api/day ${date}`);
     strictEqual(
-      (await ask(db, "/api/bookings", { customerId: 1, date, startsAt: "10:00", serviceIds: [1] })).status,
+      (await ask(db, `/api/day?date=${date}`, null, "GET")).status,
+      400,
+      `GET /api/day ${date}`,
+    );
+    strictEqual(
+      (await ask(db, "/api/bookings", { customerId: 1, date, startsAt: "10:00", serviceIds: [1] }))
+        .status,
       400,
       `POST /api/bookings ${date}`,
     );
@@ -92,7 +101,7 @@ test("and a day that does exist is not", async () => {
   // Catches an inverted check.
   const db = database();
 
-  strictEqual((await ask(db, "/api/day?date=" + GOOD, null, "GET")).status, 200);
+  strictEqual((await ask(db, `/api/day?date=${GOOD}`, null, "GET")).status, 200);
   strictEqual(
     (await ask(db, "/api/records", { customerId: 1, recordedOn: GOOD, note: "毛先だけ" })).status,
     201,

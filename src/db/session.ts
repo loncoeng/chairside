@@ -7,7 +7,10 @@ const SESSION_HOURS = 12;
 const encoder = new TextEncoder();
 
 const toBase64Url = (bytes: Uint8Array): string =>
-  btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 
 const fromBase64Url = (value: string): Uint8Array => {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -85,7 +88,10 @@ export async function issue(secret: string, staffId: number, role: string): Prom
  * The session a token carries, or null if it is invalid. Wrapped in try because
  * `atob` throws on non-base64, which would otherwise be a 500 instead of a 401.
  */
-export async function read(secret: string | undefined, token: string | null): Promise<Session | null> {
+export async function read(
+  secret: string | undefined,
+  token: string | null,
+): Promise<Session | null> {
   // No secret configured: nobody is signed in.
   if (!secret || !token) return null;
 

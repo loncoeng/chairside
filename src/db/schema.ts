@@ -16,7 +16,9 @@ export const staff = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
     /** Access level. See permissions.ts. */
-    role: text("role", { enum: ["owner", "stylist", "assistant"] }).notNull().default("stylist"),
+    role: text("role", { enum: ["owner", "stylist", "assistant"] })
+      .notNull()
+      .default("stylist"),
     /**
      * Price tier (see `service_prices`). Separate from `role` so a promotion
      * doesn't change permissions.
@@ -170,7 +172,10 @@ export const payments = sqliteTable(
       .default("cash"),
     paidAt: integer("paid_at").notNull().default(now),
   },
-  (t) => [index("payments_booking_idx").on(t.bookingId), index("payments_paid_at_idx").on(t.paidAt)],
+  (t) => [
+    index("payments_booking_idx").on(t.bookingId),
+    index("payments_paid_at_idx").on(t.paidAt),
+  ],
 );
 
 /** Treatment records (formulas, notes), used to repeat a previous treatment. */

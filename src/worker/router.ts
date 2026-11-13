@@ -38,120 +38,123 @@ export async function route(
    */
   token?: string | null,
 ): Promise<Response> {
-    const url = new URL(request.url);
+  const url = new URL(request.url);
 
-    try {
-      // Live commit, polled by the deploy check.
-      if (url.pathname === "/api/version") {
-        return json({ build });
-      }
-
-      // Auth is checked once here, not per handler, so a new endpoint can't forget it.
-
-      if (url.pathname === "/api/session") {
-        if (request.method === "POST") return await signIn(db, request, secret);
-        if (request.method === "DELETE") return signOut();
-        if (request.method === "GET") {
-          const open = await read(secret, token ?? tokenFrom(request));
-          return open ? await whoAmI(db, open.staffId) : json({ ok: false }, 401);
-        }
-        return json({ error: "method not allowed" }, 405);
-      }
-
-      const session = await read(secret, token ?? tokenFrom(request));
-
-      if (!isOpen(url.pathname) && session === null) {
-        return json({ code: "signed-out", error: "Please sign in." }, 401);
-      }
-
-      if (session !== null && !mayReach(session.role, url.pathname, request.method)) {
-        return json({ code: "forbidden", error: "You are not allowed to do that." }, 403);
-      }
-      if (url.pathname === "/api/room") {
-        return json(await room(db));
-      }
-      if (url.pathname === "/api/bookings" && request.method === "POST") {
-        return await createBooking(db, request, session?.staffId ?? null);
-      }
-
-      // /api/bookings/:id
-      const booking = /^\/api\/bookings\/(\d+)$/.exec(url.pathname);
-      if (booking) {
-        const id = Number(booking[1]);
-        if (request.method === "GET") {
-          const found = await getBooking(db, id);
-          if (!found) return json({ code: "booking-not-found", error: "That booking was not found." }, 404);
-          return json({ ...found, payments: await paymentsFor(db, id) });
-        }
-        if (request.method === "PATCH") {
-          return await updateBooking(db, request, id, session?.staffId ?? null);
-        }
-        return json({ error: "method not allowed" }, 405);
-      }
-      if (url.pathname === "/api/services") {
-        return json(await menu(db));
-      }
-      // Full list for the booking form picker; /api/people is the searchable list.
-      if (url.pathname === "/api/customers") {
-        return json(await customerList(db));
-      }
-      if (url.pathname === "/api/people" && request.method === "POST") {
-        return await saveCustomer(db, request, null);
-      }
-      if (url.pathname === "/api/people") {
-        return json(await listCustomers(db, url.searchParams.get("q") ?? ""));
-      }
-      if (url.pathname === "/api/records" && request.method === "POST") {
-        return await addRecord(db, request);
-      }
-      if (url.pathname === "/api/shop") {
-        return json(await shopSettings(db, today()));
-      }
-      if (url.pathname === "/api/shop/hours" && request.method === "PUT") {
-        return await setHours(db, request);
-      }
-      if (url.pathname === "/api/shop/closures" && request.method === "POST") {
-        return await setClosure(db, request);
-      }
-      if (url.pathname === "/api/shop/staff" && request.method === "POST") {
-        return await setStaff(db, request);
-      }
-      if (url.pathname === "/api/currencies") {
-        return json(await currencyList(db));
-      }
-      if (url.pathname === "/api/payments" && request.method === "POST") {
-        return await takePayment(db, request, session?.staffId ?? null);
-      }
-      if (url.pathname === "/api/revenue") {
-        const month = url.searchParams.get("month") ?? today().slice(0, 7);
-        if (!isMonth(month)) {
-          return json({ error: "month must be a real YYYY-MM" }, 400);
-        }
-        return json(await revenue(db, month));
-      }
-
-      const person = /^\/api\/people\/(\d+)$/.exec(url.pathname);
-      if (person) {
-        if (request.method === "PATCH") {
-          return await saveCustomer(db, request, Number(person[1]));
-        }
-        const found = await getCustomer(db, Number(person[1]));
-        return found ? json(found) : json({ code: "customer-not-found", error: "That customer was not found." }, 404);
-      }
-      if (url.pathname === "/api/day") {
-        const date = url.searchParams.get("date") ?? today();
-        if (!isDate(date)) {
-          return json({ error: "date must be a real YYYY-MM-DD" }, 400);
-        }
-        return json(await day(db, date));
-      }
-    } catch (error) {
-      console.error(error);
-      return json({ error: "the database did not answer" }, 500);
+  try {
+    // Live commit, polled by the deploy check.
+    if (url.pathname === "/api/version") {
+      return json({ build });
     }
 
-    // Only /api/* reaches the Worker (run_worker_first in wrangler.toml).
-    return json({ error: "not found" }, 404);
+    // Auth is checked once here, not per handler, so a new endpoint can't forget it.
+
+    if (url.pathname === "/api/session") {
+      if (request.method === "POST") return await signIn(db, request, secret);
+      if (request.method === "DELETE") return signOut();
+      if (request.method === "GET") {
+        const open = await read(secret, token ?? tokenFrom(request));
+        return open ? await whoAmI(db, open.staffId) : json({ ok: false }, 401);
+      }
+      return json({ error: "method not allowed" }, 405);
+    }
+
+    const session = await read(secret, token ?? tokenFrom(request));
+
+    if (!isOpen(url.pathname) && session === null) {
+      return json({ code: "signed-out", error: "Please sign in." }, 401);
+    }
+
+    if (session !== null && !mayReach(session.role, url.pathname, request.method)) {
+      return json({ code: "forbidden", error: "You are not allowed to do that." }, 403);
+    }
+    if (url.pathname === "/api/room") {
+      return json(await room(db));
+    }
+    if (url.pathname === "/api/bookings" && request.method === "POST") {
+      return await createBooking(db, request, session?.staffId ?? null);
+    }
+
+    // /api/bookings/:id
+    const booking = /^\/api\/bookings\/(\d+)$/.exec(url.pathname);
+    if (booking) {
+      const id = Number(booking[1]);
+      if (request.method === "GET") {
+        const found = await getBooking(db, id);
+        if (!found)
+          return json({ code: "booking-not-found", error: "That booking was not found." }, 404);
+        return json({ ...found, payments: await paymentsFor(db, id) });
+      }
+      if (request.method === "PATCH") {
+        return await updateBooking(db, request, id, session?.staffId ?? null);
+      }
+      return json({ error: "method not allowed" }, 405);
+    }
+    if (url.pathname === "/api/services") {
+      return json(await menu(db));
+    }
+    // Full list for the booking form picker; /api/people is the searchable list.
+    if (url.pathname === "/api/customers") {
+      return json(await customerList(db));
+    }
+    if (url.pathname === "/api/people" && request.method === "POST") {
+      return await saveCustomer(db, request, null);
+    }
+    if (url.pathname === "/api/people") {
+      return json(await listCustomers(db, url.searchParams.get("q") ?? ""));
+    }
+    if (url.pathname === "/api/records" && request.method === "POST") {
+      return await addRecord(db, request);
+    }
+    if (url.pathname === "/api/shop") {
+      return json(await shopSettings(db, today()));
+    }
+    if (url.pathname === "/api/shop/hours" && request.method === "PUT") {
+      return await setHours(db, request);
+    }
+    if (url.pathname === "/api/shop/closures" && request.method === "POST") {
+      return await setClosure(db, request);
+    }
+    if (url.pathname === "/api/shop/staff" && request.method === "POST") {
+      return await setStaff(db, request);
+    }
+    if (url.pathname === "/api/currencies") {
+      return json(await currencyList(db));
+    }
+    if (url.pathname === "/api/payments" && request.method === "POST") {
+      return await takePayment(db, request, session?.staffId ?? null);
+    }
+    if (url.pathname === "/api/revenue") {
+      const month = url.searchParams.get("month") ?? today().slice(0, 7);
+      if (!isMonth(month)) {
+        return json({ error: "month must be a real YYYY-MM" }, 400);
+      }
+      return json(await revenue(db, month));
+    }
+
+    const person = /^\/api\/people\/(\d+)$/.exec(url.pathname);
+    if (person) {
+      if (request.method === "PATCH") {
+        return await saveCustomer(db, request, Number(person[1]));
+      }
+      const found = await getCustomer(db, Number(person[1]));
+      return found
+        ? json(found)
+        : json({ code: "customer-not-found", error: "That customer was not found." }, 404);
+    }
+    if (url.pathname === "/api/day") {
+      const date = url.searchParams.get("date") ?? today();
+      if (!isDate(date)) {
+        return json({ error: "date must be a real YYYY-MM-DD" }, 400);
+      }
+      return json(await day(db, date));
+    }
+  } catch (error) {
+    console.error(error);
+    return json({ error: "the database did not answer" }, 500);
+  }
+
+  // Only /api/* reaches the Worker (run_worker_first in wrangler.toml).
+  return json({ error: "not found" }, 404);
 }
 
 /** Today in Macau (UTC+8, no DST). Workers run in UTC. */
@@ -229,11 +232,7 @@ async function day(db: Db, date: string) {
       .from(businessHours)
       .where(eq(businessHours.weekday, weekday))
       .limit(1),
-    db
-      .select({ reason: closures.reason })
-      .from(closures)
-      .where(eq(closures.date, date))
-      .limit(1),
+    db.select({ reason: closures.reason }).from(closures).where(eq(closures.date, date)).limit(1),
     db
       .select({ region: holidays.region, name: holidays.name })
       .from(holidays)

@@ -19,8 +19,6 @@ import type { Method } from "../db/payment-methods.ts";
 
 import type { Database as Db } from "../db/database.ts";
 
-
-
 /** Accepted currencies and their rates. */
 export async function currencyList(db: Db) {
   return await db
@@ -59,19 +57,29 @@ export async function takePayment(
     method?: unknown;
   } | null;
 
-  if (!body) return json({ ok: false, code: "unreadable-body", error: "The request body could not be read." }, 400);
+  if (!body)
+    return json(
+      { ok: false, code: "unreadable-body", error: "The request body could not be read." },
+      400,
+    );
 
   const bookingId = Number.isInteger(body.bookingId) ? (body.bookingId as number) : null;
-  if (bookingId === null) return json({ ok: false, code: "no-booking", error: "No booking was given." }, 400);
+  if (bookingId === null)
+    return json({ ok: false, code: "no-booking", error: "No booking was given." }, 400);
 
   const amount = typeof body.amount === "number" ? body.amount : NaN;
   // Refunds (negative amounts) are not supported yet.
-  if (!Number.isFinite(amount) || amount <= 0) return json({ ok: false, code: "bad-amount", error: "The amount is not valid." }, 400);
-  if (amount > 1_000_000) return json({ ok: false, code: "amount-too-large", error: "The amount is too large." }, 400);
+  if (!Number.isFinite(amount) || amount <= 0)
+    return json({ ok: false, code: "bad-amount", error: "The amount is not valid." }, 400);
+  if (amount > 1_000_000)
+    return json({ ok: false, code: "amount-too-large", error: "The amount is too large." }, 400);
 
   const method = body.method === undefined ? "cash" : body.method;
   if (!isMethod(method)) {
-    return json({ ok: false, code: "bad-method", error: "That payment method is not accepted." }, 400);
+    return json(
+      { ok: false, code: "bad-method", error: "That payment method is not accepted." },
+      400,
+    );
   }
 
   const code = typeof body.currency === "string" ? body.currency : "";
@@ -82,7 +90,8 @@ export async function takePayment(
     .where(eq(currencies.code, code))
     .limit(1);
 
-  if (!currency) return json({ ok: false, code: "bad-currency", error: "That currency is not accepted." }, 400);
+  if (!currency)
+    return json({ ok: false, code: "bad-currency", error: "That currency is not accepted." }, 400);
 
   const [booking] = await db
     .select({ id: bookings.id, status: bookings.status })
@@ -90,9 +99,16 @@ export async function takePayment(
     .where(eq(bookings.id, bookingId))
     .limit(1);
 
-  if (!booking) return json({ ok: false, code: "booking-not-found", error: "That booking was not found." }, 404);
+  if (!booking)
+    return json(
+      { ok: false, code: "booking-not-found", error: "That booking was not found." },
+      404,
+    );
   if (booking.status === "cancelled" || booking.status === "no_show") {
-    return json({ ok: false, code: "booking-cancelled", error: "A cancelled booking cannot be paid." }, 409);
+    return json(
+      { ok: false, code: "booking-cancelled", error: "A cancelled booking cannot be paid." },
+      409,
+    );
   }
 
   await db.insert(payments).values({
@@ -229,7 +245,9 @@ export async function revenue(db: Db, month: string) {
     total,
     bills: paid.length,
     nominated,
-    byDay: [...byDay.entries()].map(([date, d]) => ({ date, ...d })).sort((a, b) => a.date.localeCompare(b.date)),
+    byDay: [...byDay.entries()]
+      .map(([date, d]) => ({ date, ...d }))
+      .sort((a, b) => a.date.localeCompare(b.date)),
     byCurrency: [...byCurrency.entries()].map(([currency, c]) => ({ currency, ...c })),
     byMethod: [...byMethod.entries()].map(([method, m]) => ({ method, ...m })),
     byStaff: [...byStaff.entries()]

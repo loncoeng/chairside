@@ -49,7 +49,8 @@ const at = (hhmm: string): number => {
 };
 
 /** Half-open intervals: one ending at 14:00 and one starting at 14:00 don't overlap. */
-const clash = (a: Draft, b: Draft): boolean => at(a.startsAt) < at(b.endsAt) && at(b.startsAt) < at(a.endsAt);
+const clash = (a: Draft, b: Draft): boolean =>
+  at(a.startsAt) < at(b.endsAt) && at(b.startsAt) < at(a.endsAt);
 
 /** Treatments that no longer occupy anything. */
 const gone = (status: string) => status === "cancelled" || status === "no_show";
@@ -61,9 +62,7 @@ export function check(
   options: { ignoreBookingId?: number } = {},
 ): Verdict[] {
   const verdicts: Verdict[] = [];
-  const live = existing.filter(
-    (e) => !gone(e.status) && e.bookingId !== options.ignoreBookingId,
-  );
+  const live = existing.filter((e) => !gone(e.status) && e.bookingId !== options.ignoreBookingId);
   const nameOf = new Map(room.seats.map((s) => [s.id, s.name]));
 
   if (drafts.length === 0) {

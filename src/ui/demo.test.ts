@@ -19,8 +19,12 @@ const SECRET = "demo-only-secret";
 /** Schema, one staff member, and the demo login. */
 function database() {
   const raw = new SQL.Database();
-  for (const name of readdirSync("migrations").filter((n) => n.endsWith(".sql")).sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
+  for (const name of readdirSync("migrations")
+    .filter((n) => n.endsWith(".sql"))
+    .sort()) {
+    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
+      "--> statement-breakpoint",
+    )) {
       if (statement.trim() !== "") raw.run(statement);
     }
   }

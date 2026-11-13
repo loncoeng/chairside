@@ -27,7 +27,9 @@ const migrations = readdirSync("migrations")
   .sort();
 
 for (const name of migrations) {
-  for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
+  for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
+    "--> statement-breakpoint",
+  )) {
     if (statement.trim() !== "") db.exec(statement);
   }
 }

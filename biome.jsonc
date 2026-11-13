@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": ["src/**", "scripts/**", "*.ts", "!src/worker/worker-configuration.d.ts"]
+  },
+  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      // noUncheckedIndexedAccess is on, so `!` marks a lookup already known to succeed.
+      "style": { "noNonNullAssertion": "off" },
+      // role="group" on a div is valid ARIA; a fieldset brings its own border and legend.
+      "a11y": { "useSemanticElements": "off" }
+    }
+  },
+  "overrides": [
+    {
+      // An ARIA combobox: the list items are options and take no focus of their own.
+      "includes": ["src/ui/guest-picker.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noNoninteractiveElementToInteractiveRole": "off",
+            "useFocusableInteractive": "off",
+            "useKeyWithClickEvents": "off"
+          }
+        }
+      }
+    }
+  ],
+  "javascript": { "formatter": { "quoteStyle": "double" } },
+  // The stylesheet's cascade order is deliberate; formatting it is enough.
+  "css": { "linter": { "enabled": false } },
+  "assist": { "enabled": false }
+}

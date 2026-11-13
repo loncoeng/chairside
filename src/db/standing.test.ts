@@ -3,9 +3,6 @@ import { test } from "node:test";
 
 import { standingOf } from "./standing.ts";
 
-type Booking = { id: number; date: string; startsAt: string; status: string };
-type Event = { bookingId: number; at: number; kind: string; after: string | null };
-
 /** Unix seconds from a local (+08:00) time. */
 const when = (iso: string) => Date.parse(`${iso}+08:00`) / 1000;
 
@@ -99,10 +96,7 @@ test("the last cancellation is the one measured", () => {
 
 test("a cancellation with no event behind it is counted but not judged", () => {
   // Imported rows have no events, so short notice can't be judged.
-  const s = standingOf(
-    [{ id: 1, date: "2026-09-01", startsAt: "14:00", status: "cancelled" }],
-    [],
-  );
+  const s = standingOf([{ id: 1, date: "2026-09-01", startsAt: "14:00", status: "cancelled" }], []);
 
   strictEqual(s.cancelled, 1);
   strictEqual(s.shortNotice, 0);

@@ -76,7 +76,10 @@ test("a refusal is said in the reader's language", () => {
 });
 
 test("a refusal falls back to the server's sentence, then to the status", () => {
-  strictEqual(errorText("ja", { code: "invented-later", error: "What the server said." }, 400), "What the server said.");
+  strictEqual(
+    errorText("ja", { code: "invented-later", error: "What the server said." }, 400),
+    "What the server said.",
+  );
   strictEqual(errorText("ja", "<html>Bad Gateway</html>", 502), "HTTP 502");
   strictEqual(errorText("ja", null, 500), "HTTP 500");
 });

@@ -4,8 +4,8 @@
 -- 2031, from Google's public calendars. 927 days.
 --
 -- Committed rather than fetched at deploy time, so that the shop's instance
--- does not depend on anybody's feed being up — and so the on-premise build,
--- which may have no internet at all, gets the same dates.
+-- does not depend on anybody's feed being up, and the browser demo gets the
+-- same dates without asking anybody for them.
 --
 -- `source` and `fetched_on` are on every row. Entering a year with nothing
 -- on file should put a notice on the screen, not an empty calendar, and that

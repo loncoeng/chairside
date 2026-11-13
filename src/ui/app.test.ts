@@ -2,15 +2,15 @@
 // screen-to-API wiring. Only the network is faked: the real router over a database with no logins.
 
 import { ok, strictEqual } from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { Window } from "happy-dom";
-import initSqlJs from "sql.js";
 import { drizzle } from "drizzle-orm/sql-js";
 
 import { route } from "../worker/router.ts";
 import { TEXT } from "./i18n.ts";
+import { migrated } from "../db/test-database.ts";
 
 /** Japanese strings from the dictionary. */
 const JA = {
@@ -20,7 +20,6 @@ const JA = {
   dayFailed: TEXT.dayFailed.ja,
 };
 
-const SQL = await initSqlJs();
 const SERVER_SECRET = "the-server-secret-for-these-tests";
 
 /**
@@ -32,16 +31,7 @@ const missing = NEEDED.filter((file) => !existsSync(file));
 
 /** Like the live instance: schema and shop rows, no logins (see seed/demo-no-logins.sql). */
 function server() {
-  const raw = new SQL.Database();
-  for (const name of readdirSync("migrations")
-    .filter((n) => n.endsWith(".sql"))
-    .sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
-      "--> statement-breakpoint",
-    )) {
-      if (statement.trim() !== "") raw.run(statement);
-    }
-  }
+  const raw = migrated();
   raw.run(`
     INSERT INTO seats (id, name, kind, active, sort_order) VALUES (1, 'A1', 'styling', 1, 1);
     INSERT INTO staff (id, name, role, grade, color) VALUES (1, 'Aoi', 'owner', 'owner', '#B4553F');

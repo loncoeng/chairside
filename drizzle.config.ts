@@ -1,5 +1,5 @@
 // Generates SQL under migrations/ from src/db/schema.ts. Run by hand; the output is
-// committed and shared by Cloudflare (`wrangler d1 migrations apply`), on-premise and browser builds.
+// committed and shared by Cloudflare (`wrangler d1 migrations apply`), the browser demo and the tests.
 
 import { defineConfig } from "drizzle-kit";
 

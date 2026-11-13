@@ -41,32 +41,32 @@ INSERT OR REPLACE INTO staff (id, name, role, grade, color, joined_on, left_on) 
 -- Durations are what the booking screen fills in, not a rule. A colour that
 -- runs long is normal and the screen lets it.
 --
--- `price` is what it costs when the stylist makes no difference — a shampoo
--- is a shampoo. Where it does, service_prices has a row per grade and this
--- column is the fallback.
-INSERT OR REPLACE INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price, active, sort_order) VALUES
-  (1,  'カット',        '剪髮',     'Cut',            45, 'styling',  450, 1, 1),
-  (3,  '前髪カット',    '剪瀏海',   'Fringe trim',    15, 'styling',  150, 1, 2),
-  (4,  'シャンプー',    '洗髮',     'Shampoo',        20, 'shampoo',  180, 1, 3),
-  (5,  'ブロー',        '吹乾',     'Blow-dry',       25, 'styling',  280, 1, 4),
-  (6,  'カラー',        '染髮',     'Colour',         90, 'styling',  980, 1, 5),
-  (7,  'パーマ',        '電髮',     'Perm',          120, 'styling', 1280, 1, 6),
-  (8,  '縮毛矯正',      '離子燙',   'Straightening', 180, 'styling', 2200, 1, 7),
-  (9,  'トリートメント','護髮',     'Treatment',      30, 'shampoo',  580, 1, 8),
-  (10, 'ヘッドスパ',    '頭皮護理', 'Head spa',       40, 'shampoo',  680, 1, 9);
+-- `price_cents` is what it costs, in cents, when the stylist makes no
+-- difference — a shampoo is a shampoo. Where it does, service_prices has a row
+-- per grade and this column is the fallback.
+INSERT OR REPLACE INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price_cents, active, sort_order) VALUES
+  (1,  'カット',        '剪髮',     'Cut',            45, 'styling',  45000, 1, 1),
+  (3,  '前髪カット',    '剪瀏海',   'Fringe trim',    15, 'styling',  15000, 1, 2),
+  (4,  'シャンプー',    '洗髮',     'Shampoo',        20, 'shampoo',  18000, 1, 3),
+  (5,  'ブロー',        '吹乾',     'Blow-dry',       25, 'styling',  28000, 1, 4),
+  (6,  'カラー',        '染髮',     'Colour',         90, 'styling',  98000, 1, 5),
+  (7,  'パーマ',        '電髮',     'Perm',          120, 'styling', 128000, 1, 6),
+  (8,  '縮毛矯正',      '離子燙',   'Straightening', 180, 'styling', 220000, 1, 7),
+  (9,  'トリートメント','護髮',     'Treatment',      30, 'shampoo',  58000, 1, 8),
+  (10, 'ヘッドスパ',    '頭皮護理', 'Head spa',       40, 'shampoo',  68000, 1, 9);
 
 -- What each treatment costs with each grade.
 --
--- Only the ones where the person matters. A cut is 750 with the owner and
--- 300 with a junior stylist, and that difference is most of what a guest is
+-- Only the ones where the person matters. A cut is MOP 750 with the owner and
+-- MOP 300 with a junior stylist, and that difference is most of what a guest is
 -- choosing between when they book. A shampoo costs the same whoever does it,
--- so it has no rows here and falls back to services.price.
-INSERT OR REPLACE INTO service_prices (id, service_id, grade, price) VALUES
-  (1,  1, 'owner',    750), (2,  1, 'stylist1', 450), (3,  1, 'stylist2', 300),
-  (4,  5, 'owner',    380), (5,  5, 'stylist1', 280), (6,  5, 'stylist2', 220),
-  (7,  6, 'owner',   1500), (8,  6, 'stylist1', 980), (9,  6, 'stylist2', 780),
-  (10, 7, 'owner',   1800), (11, 7, 'stylist1',1280), (12, 7, 'stylist2', 980),
-  (13, 8, 'owner',   2800), (14, 8, 'stylist1',2200), (15, 8, 'stylist2',1800);
+-- so it has no rows here and falls back to services.price_cents.
+INSERT OR REPLACE INTO service_prices (id, service_id, grade, price_cents) VALUES
+  (1,  1, 'owner',  75000), (2,  1, 'stylist1',  45000), (3,  1, 'stylist2',  30000),
+  (4,  5, 'owner',  38000), (5,  5, 'stylist1',  28000), (6,  5, 'stylist2',  22000),
+  (7,  6, 'owner', 150000), (8,  6, 'stylist1',  98000), (9,  6, 'stylist2',  78000),
+  (10, 7, 'owner', 180000), (11, 7, 'stylist1', 128000), (12, 7, 'stylist2',  98000),
+  (13, 8, 'owner', 280000), (14, 8, 'stylist1', 220000), (15, 8, 'stylist2', 180000);
 
 -- Opening hours, one row per weekday. 0 = Sunday.
 -- Closed on Mondays, which is ordinary for a salon here.
@@ -79,12 +79,13 @@ INSERT OR IGNORE INTO business_hours (id, weekday, opens_at, closes_at, closed) 
   (6, 5, '10:00', '20:00', 0),
   (7, 6, '10:00', '20:00', 0);
 
--- What the shop takes, at the rate the shop sets. 1:1:1 is what most shops in
--- Macau work at; nothing is fetched, so this keeps working offline.
-INSERT OR IGNORE INTO currencies (code, rate_to_base, active, sort_order) VALUES
-  ('MOP', 1.00, 1, 1),
-  ('HKD', 1.00, 1, 2),
-  ('CNY', 1.00, 1, 3);
+-- What the shop takes, at the rate the shop sets, in basis points (10000 is
+-- 1:1). 1:1:1 is what most shops in Macau work at; nothing is fetched, so this
+-- keeps working offline.
+INSERT OR IGNORE INTO currencies (code, rate_to_base_bp, active, sort_order) VALUES
+  ('MOP', 10000, 1, 1),
+  ('HKD', 10000, 1, 2),
+  ('CNY', 10000, 1, 3);
 
 -- Invented customers.
 --
@@ -99,24 +100,25 @@ INSERT OR IGNORE INTO currencies (code, rate_to_base, active, sort_order) VALUES
 --
 -- Numbers carry a dialling code. A salon here has local guests, regulars over
 -- from Hong Kong, and visitors from the mainland — three different codes, and
--- a number without one cannot be rung.
+-- a number without one cannot be rung. Each starts with 0 after the code,
+-- which no real number in any of the three does, so none of them can be.
 --
 -- REPLACE rather than IGNORE for this table: the public instance's sample
 -- identities belong to this file, so correcting one here corrects it there.
 -- A shop would never apply this file at all.
 INSERT OR REPLACE INTO customers (id, name, search_key, phone, note, first_visit_on) VALUES
-  (1,  '陳 嘉雯',     'chan ka man',     '+853 6612 3401', '広東語。肩につく長さを維持', '2020-11-20'),
-  (2,  '李 偉強',     'lei wai keong',   '+853 6612 3402', NULL,                          '2019-03-18'),
-  (3,  '黄 詩婷',     'wong sze ting',   '+853 6612 3403', NULL,                          '2024-05-22'),
-  (4,  'Emily Wong',  'wong emily',      '+852 9612 3404', '英語のみ',                    '2023-08-05'),
-  (5,  '張 曉彤',     'cheung hiu tung', '+853 6612 3405', '前回より明るめ希望',          '2021-10-25'),
-  (6,  '林 家豪',     'lam ka ho',       '+853 6612 3406', NULL,                          '2023-12-01'),
-  (7,  '何 俊傑',     'ho chun kit',     '+853 6612 3407', '毎回カットのみ',              '2022-09-30'),
-  (8,  '吳 佩珊',     'ng pui shan',     '+853 6612 3408', '頭皮が弱い。薬剤は弱めで',    '2024-01-09'),
-  (9,  'Sofia Lopes', 'lopes sofia',     '+853 6612 3409', 'ポルトガル語／英語',          '2025-02-14'),
-  (10, 'Ana Ferreira','ferreira ana',    '+853 6612 3410', NULL,                          '2025-06-03'),
-  (11, '田中 美咲',   'tanaka misaki',   '+853 6612 3411', NULL,                          '2021-06-12'),
-  (12, '渡辺 さくら', 'watanabe sakura', '+86 138 6612 3412', NULL,                          '2022-02-03');
+  (1,  '陳 嘉雯',     'chan ka man',     '+853 0612 3401', '広東語。肩につく長さを維持', '2020-11-20'),
+  (2,  '李 偉強',     'lei wai keong',   '+853 0612 3402', NULL,                          '2019-03-18'),
+  (3,  '黄 詩婷',     'wong sze ting',   '+853 0612 3403', NULL,                          '2024-05-22'),
+  (4,  'Emily Wong',  'wong emily',      '+852 0612 3404', '英語のみ',                    '2023-08-05'),
+  (5,  '張 曉彤',     'cheung hiu tung', '+853 0612 3405', '前回より明るめ希望',          '2021-10-25'),
+  (6,  '林 家豪',     'lam ka ho',       '+853 0612 3406', NULL,                          '2023-12-01'),
+  (7,  '何 俊傑',     'ho chun kit',     '+853 0612 3407', '毎回カットのみ',              '2022-09-30'),
+  (8,  '吳 佩珊',     'ng pui shan',     '+853 0612 3408', '頭皮が弱い。薬剤は弱めで',    '2024-01-09'),
+  (9,  'Sofia Lopes', 'lopes sofia',     '+853 0612 3409', 'ポルトガル語／英語',          '2025-02-14'),
+  (10, 'Ana Ferreira','ferreira ana',    '+853 0612 3410', NULL,                          '2025-06-03'),
+  (11, '田中 美咲',   'tanaka misaki',   '+853 0612 3411', NULL,                          '2021-06-12'),
+  (12, '渡辺 さくら', 'watanabe sakura', '+86 038 6612 3412', NULL,                          '2022-02-03');
 
 -- A few treatment records, so the customers screen has something to show.
 --

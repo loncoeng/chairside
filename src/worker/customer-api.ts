@@ -16,7 +16,7 @@ import {
 
 import { isDate } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
-import { json, fail } from "./http.ts";
+import { bad, fail, json } from "./http.ts";
 
 /** Customer list (max 50). The search matches name, alternate spelling (searchKey) and phone. */
 export async function listCustomers(db: Db, query: string) {
@@ -272,11 +272,22 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     .limit(1);
   if (!exists) return fail(404, "customer-not-found", "That customer was not found.");
 
+  // A record tied to somebody else's visit would show on the wrong guest's history.
+  const bookingId = Number.isInteger(body.bookingId) ? (body.bookingId as number) : null;
+  if (bookingId !== null) {
+    const [theirs] = await db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(and(eq(bookings.id, bookingId), eq(bookings.customerId, customerId)))
+      .limit(1);
+    if (!theirs) return bad("booking-not-theirs", "That booking is not this guest's.");
+  }
+
   const [created] = await db
     .insert(records)
     .values({
       customerId,
-      bookingId: Number.isInteger(body.bookingId) ? (body.bookingId as number) : null,
+      bookingId,
       formula,
       note,
       caution,

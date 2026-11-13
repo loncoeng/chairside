@@ -1,34 +1,20 @@
 // Runs the real queries on sql.js (the browser demo's engine) to catch D1-only
-// code. The README claims the same queries run on D1, a SQLite file and sql.js.
+// code. The README claims the same queries run on D1 and on sql.js.
 
 import { deepStrictEqual, strictEqual, ok } from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 
-import initSqlJs from "sql.js";
 import { drizzle } from "drizzle-orm/sql-js";
 
 import { getBooking, menu } from "../worker/booking-api.ts";
 import { getCustomer, listCustomers, saveCustomer } from "../worker/customer-api.ts";
 import { revenue } from "../worker/money-api.ts";
 import { shopSettings } from "../worker/shop-api.ts";
-
-const SQL = await initSqlJs();
+import { migrated } from "./test-database.ts";
 
 /** In-memory database with all migrations and some sample rows. */
 function database() {
-  const raw = new SQL.Database();
-
-  // Read every migration from disk rather than a hand-kept list.
-  for (const name of readdirSync("migrations")
-    .filter((n) => n.endsWith(".sql"))
-    .sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
-      "--> statement-breakpoint",
-    )) {
-      if (statement.trim() !== "") raw.run(statement);
-    }
-  }
+  const raw = migrated();
 
   raw.run(`
     INSERT INTO seats (id, name, kind, active, sort_order) VALUES
@@ -38,14 +24,14 @@ function database() {
       (1, 'Aoi', 'owner', 'owner', '#B4553F'),
       (8, 'Hana', 'assistant', 'assistant', '#6B7A45');
 
-    INSERT INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price, active, sort_order)
-      VALUES (1, 'カット', '剪髮', 'Cut', 45, 'styling', 280, 1, 1),
-             (4, 'シャンプー', '洗髮', 'Shampoo', 20, 'shampoo', 180, 1, 4);
+    INSERT INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price_cents, active, sort_order)
+      VALUES (1, 'カット', '剪髮', 'Cut', 45, 'styling', 28000, 1, 1),
+             (4, 'シャンプー', '洗髮', 'Shampoo', 20, 'shampoo', 18000, 1, 4);
 
-    INSERT INTO service_prices (id, service_id, grade, price) VALUES
-      (1, 1, 'owner', 750), (2, 1, 'stylist1', 450), (3, 1, 'stylist2', 300);
+    INSERT INTO service_prices (id, service_id, grade, price_cents) VALUES
+      (1, 1, 'owner', 75000), (2, 1, 'stylist1', 45000), (3, 1, 'stylist2', 30000);
 
-    INSERT INTO currencies (code, rate_to_base, active, sort_order) VALUES ('MOP', 1, 1, 1);
+    INSERT INTO currencies (code, rate_to_base_bp, active, sort_order) VALUES ('MOP', 10000, 1, 1);
 
     INSERT INTO business_hours (id, weekday, opens_at, closes_at, closed) VALUES
       (1, 0, '10:00', '19:00', 0), (2, 1, NULL, NULL, 1), (3, 2, '10:00', '20:00', 0),
@@ -61,8 +47,8 @@ function database() {
       VALUES (1, 1, 4, 8, 10, '10:00', '10:20', 0),
              (2, 1, 1, 1, 1, '10:20', '11:05', 1);
 
-    INSERT INTO payments (id, booking_id, amount, currency, rate_to_base, method, paid_at)
-      VALUES (1, 1, 400, 'MOP', 1, 'card', 1786000000);
+    INSERT INTO payments (id, booking_id, amount_cents, currency, rate_to_base_bp, method, paid_at)
+      VALUES (1, 1, 40000, 'MOP', 10000, 'card', 1786000000);
 
     INSERT INTO booking_events (id, booking_id, at, kind, before, after)
       VALUES (1, 1, 1785000000, 'created', NULL, '2026-08-12 10:00');
@@ -77,11 +63,11 @@ test("the menu reads on sql.js, prices and all", async () => {
   strictEqual(rows[0]?.nameJa, "カット");
 
   // Per-grade prices, since the price depends on who does the cut.
-  strictEqual(rows[0]?.byGrade?.owner, 750);
-  strictEqual(rows[0]?.byGrade?.stylist2, 300);
+  strictEqual(rows[0]?.byGrade?.owner, 75_000);
+  strictEqual(rows[0]?.byGrade?.stylist2, 30_000);
   // No per-grade rows: the flat price applies.
   strictEqual(rows[1]?.byGrade, null);
-  strictEqual(rows[1]?.price, 180);
+  strictEqual(rows[1]?.priceCents, 18_000);
 });
 
 test("a booking reads, joins and all", async () => {
@@ -108,7 +94,7 @@ test("searching finds by the second spelling", async () => {
 test("the month's takings add up, and go to the stylist", async () => {
   // The assistant's shampoo is first, but credit.ts gives the bill to Aoi.
   const month = await revenue(database(), "2026-08");
-  strictEqual(month.total, 400);
+  strictEqual(month.totalCents, 40_000);
   strictEqual(month.bills, 1);
   strictEqual(month.byStaff[0]?.name, "Aoi");
 });

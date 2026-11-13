@@ -48,9 +48,13 @@ already happened, and per-stylist revenue stops adding up.** `joined_on` and
 `left_on` mark who is currently on the team; everyone else simply stops
 appearing as a choice on new bookings.
 
-Registering a departure also **lists that person's future bookings and asks
-who takes them over.** Skip it and the gap is discovered on the day, at the
-chair. Unglamorous, and the single most useful thing in daily use.
+Registering a departure also **says how many future bookings still carry
+that person's name.** Skip it and the gap is discovered on the day, at the
+chair. The shop decides who takes each one over; nothing is reassigned for
+them.
+
+The last owner cannot be demoted or marked as left. Nobody would be left who
+could open the settings to undo it.
 
 ### A bill belongs to the stylist, not to whoever went first
 
@@ -86,6 +90,41 @@ money received must not move after the fact.
 
 With no external call, this also works offline.
 
+### Money is whole cents
+
+Every amount is an integer number of cents, and every rate an integer number
+of basis points (10,000 is 1:1). In floating point, ten payments of 0.10 do
+not make 1.00, and a month of takings is a long sum. The decimal point
+appears in two places only: reading what was typed at the till, and showing
+an amount (`src/db/money.ts`). A foreign payment is converted at its own rate
+and rounded once, to the cent, before it is added to anything.
+
+The first version stored REAL. `migrations/0006_money_in_cents.sql` moved
+every value across, rounding each to the nearest cent, and the totals before
+and after were compared on the full sample: 2,825 payments, not a cent apart.
+
+### Writes land whole, and the later of two collisions withdraws
+
+A booking is a row, its treatments and a line of history. Written one at a
+time, a failure halfway leaves a booking with nothing in it. They go together
+(`src/db/atomic.ts`): D1's `batch()` is its transaction, and sql.js has an
+ordinary one.
+
+That does not stop two people booking the same stylist at the same moment.
+D1 cannot hold a transaction open while JavaScript runs the rules, so both
+requests can pass the check before either writes. Each write is therefore
+checked once more after it lands, against bookings with a lower id only. Of
+two that collide, the higher id withdraws and the lower stands, and the
+answer is the same whichever looks first. The one that withdraws comes back
+409, as if it had lost the first check.
+
+A payment carries a key the till picks each time it opens. Press the button
+twice, or retry after a lost reply, and the second is recognised and records
+nothing.
+
+Bringing a cancelled booking back is checked too. While it was cancelled,
+its stylist's time may have gone to somebody else.
+
 ### Holidays are imported, not computed
 
 Macau, Hong Kong and mainland holidays all belong on the calendar, because
@@ -103,22 +142,25 @@ fetched are stored alongside the data.
 **When the data runs out it must not go quietly.** Entering a year with no
 holidays on file puts a notice on screen.
 
-### One schema, three places to run it
+### One schema, two places to run it
 
 Cloudflare D1 is SQLite underneath, so **the same schema and the same queries
-run in all three environments.**
+run in both environments.**
 
 | | Purpose | Driver |
 |---|---|---|
 | Cloudflare Workers + D1 | The shop's production | `drizzle-orm/d1` |
-| Node + a SQLite file | If the shop would rather keep it on one PC | `drizzle-orm/better-sqlite3` |
 | SQLite compiled to WASM, in the browser | The public demo | `drizzle-orm/sql-js` |
 
 Queries take a database handle as an argument, so only the call site changes.
-**The demo does not get its own copy of the interface.**
+**The demo does not get its own copy of the interface.** The tests run the
+real router on sql.js, so a query that only works on D1 fails one.
 
-Choosing MySQL or PostgreSQL here would close off both the on-premise option
-and the browser demo.
+A shop that would rather keep everything on one PC could add a third driver
+for a SQLite file the same way. It has not been built, because nobody has
+asked for it.
+
+Choosing MySQL or PostgreSQL here would close off the browser demo.
 
 ### The demo shares nothing
 
@@ -151,9 +193,21 @@ it is a customer list on the open internet. Roles are a table of path patterns
 (`src/db/permissions.ts`), so what an owner can reach and a stylist cannot is
 six lines anybody can read.
 
-The role travels inside the signed token, so a demotion takes up to twelve
-hours to bite. For a shop of eight that is the right side of the trade; for
-eighty it would not be.
+The token only says who somebody is. Whether they still work here, and in
+what role, is read from the staff table on every request: one indexed lookup,
+and a departure or a demotion applies at once. The first version trusted the
+role inside the token and let a departed stylist keep working for up to
+twelve hours.
+
+Every write must say it is JSON. A form on another site can POST, but only as
+form data or plain text, so such a request is refused before anything reads
+it, whatever SameSite does in a given browser. The cookie is `__Host-`, so
+nothing on another subdomain can set it, and the signing key must be at least
+32 characters or nobody can sign in at all.
+
+Failed sign-ins are counted in the database, per address and per login id.
+The first version counted them in the Worker's memory, which is per instance:
+an attacker spread across instances got five tries on each.
 
 The demo signs in for real, through the same screen and the same
 `POST /api/session`. A demo that went round the login would be showing
@@ -219,8 +273,11 @@ Five years of accumulation comes to roughly 170MB against a 5GB limit.
 returned, so the calendar is indexed on date and stylist. Without those
 indexes the first year runs fine and the third year stops abruptly.
 
-Aggregation happens in SQL. A Worker gets 10ms of CPU per invocation, which
-summing in JavaScript will exceed.
+A month's takings are read as rows, about 1,700 of them, and summed in the
+Worker, because whose name goes on a bill is a rule with its own tests
+(`src/db/credit.ts`) rather than something to bury in a join. That is well
+inside a Worker's CPU budget. Ten years in one report would not be, and would
+be summed in SQL first.
 
 ---
 
@@ -252,12 +309,6 @@ minutes a year, and a password screen is a place to leak one — an old password
 field that echoes, a reset flow that mails a token, an account somebody forgot
 to close. It is the next thing to build if the shop grows, and the hashing it
 would need is already there (`src/db/session.ts`).
-
-**Locking an account out.** Somebody who leaves has `left_on` set, and
-sign-in refuses anybody with it — the same field the roster already used, so
-there is no second thing to remember. What is missing is forcing an existing
-session to end: theirs keeps working for up to twelve hours. Shorter than that
-and everybody signs in twice a day.
 
 **LINE integration.** Straightforward to build and of little use here; few
 customers in Macau are on it. Notification targets are kept abstract and

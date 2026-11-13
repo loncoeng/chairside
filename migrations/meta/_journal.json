@@ -43,6 +43,13 @@
       "when": 1790599288953,
       "tag": "0005_logins",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794544173326,
+      "tag": "0006_money_in_cents",
+      "breakpoints": true
     }
   ]
 }

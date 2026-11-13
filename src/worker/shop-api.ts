@@ -1,10 +1,11 @@
 // Shop settings: opening hours, closures and staff.
 
-import { and, asc, eq, gte, or } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, ne, or } from "drizzle-orm";
 
 import { bookingItems, bookings, businessHours, closures, staff } from "../db/schema.ts";
 
 import { isDate, isTime } from "../db/dates.ts";
+import { atomically } from "../db/atomic.ts";
 import type { Database as Db } from "../db/database.ts";
 import { json, fail, bad } from "./http.ts";
 
@@ -85,12 +86,14 @@ export async function setHours(db: Db, request: Request): Promise<Response> {
   if (new Set(parsed.map((p) => p.weekday)).size !== 7)
     return bad("duplicate-weekday", "A day of the week appears twice.");
 
-  for (const row of parsed) {
-    await db
+  // All seven or none, so a failure cannot leave half a week changed.
+  const [first, ...rest] = parsed.map((row) =>
+    db
       .update(businessHours)
       .set({ opensAt: row.opensAt, closesAt: row.closesAt, closed: row.closed })
-      .where(eq(businessHours.weekday, row.weekday));
-  }
+      .where(eq(businessHours.weekday, row.weekday)),
+  );
+  await atomically(db, [first!, ...rest]);
 
   return json({ ok: true });
 }
@@ -142,59 +145,103 @@ export async function setClosure(db: Db, request: Request): Promise<Response> {
   return json({ ok: true, bookingsOnThatDay: standing.length });
 }
 
+type Role = "owner" | "stylist" | "assistant";
+type Grade = "owner" | "stylist1" | "stylist2" | "assistant";
+const ROLES: readonly string[] = ["owner", "stylist", "assistant"];
+const GRADES: readonly string[] = ["owner", "stylist1", "stylist2", "assistant"];
+
 /**
- * Creates or updates a staff member. Staff are never deleted (past bookings and
+ * Creates or updates a staff member. On an update only the fields sent change;
+ * a field left out keeps its value. Staff are never deleted (past bookings and
  * per-stylist takings reference them); set `leftOn` instead.
+ *
+ * The last owner cannot be demoted or marked as left: nobody could reach the
+ * settings to undo it.
  */
 export async function setStaff(db: Db, request: Request): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as {
-    id?: unknown;
-    name?: unknown;
-    role?: unknown;
-    color?: unknown;
-    joinedOn?: unknown;
-    leftOn?: unknown;
-  } | null;
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!body || typeof body !== "object") {
+    return bad("unreadable-body", "The request body could not be read.");
+  }
 
-  if (!body) return bad("unreadable-body", "The request body could not be read.");
+  const sent = (key: string) => key in body;
+  const changes: Partial<typeof staff.$inferInsert> = {};
 
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
-  const role = typeof body.role === "string" ? body.role : "stylist";
-  if (!["owner", "stylist", "assistant"].includes(role))
-    return bad("bad-role", "The role is not valid.");
-
-  const color =
-    typeof body.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(body.color) ? body.color : null;
-  const joinedOn =
-    typeof body.joinedOn === "string" && isDate(body.joinedOn) ? body.joinedOn : null;
-  const leftOn = typeof body.leftOn === "string" && isDate(body.leftOn) ? body.leftOn : null;
+  if (sent("name")) {
+    const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
+    if (name === "") return bad("name-required", "Enter a name.");
+    changes.name = name;
+  }
+  if (sent("role")) {
+    if (typeof body.role !== "string" || !ROLES.includes(body.role)) {
+      return bad("bad-role", "The role is not valid.");
+    }
+    changes.role = body.role as Role;
+  }
+  if (sent("grade")) {
+    if (typeof body.grade !== "string" || !GRADES.includes(body.grade)) {
+      return bad("bad-grade", "The grade is not valid.");
+    }
+    changes.grade = body.grade as Grade;
+  }
+  if (sent("color")) {
+    if (
+      body.color !== null &&
+      !(typeof body.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(body.color))
+    ) {
+      return bad("bad-color", "The colour is not a #RRGGBB value.");
+    }
+    changes.color = body.color as string | null;
+  }
+  for (const key of ["joinedOn", "leftOn"] as const) {
+    if (!sent(key)) continue;
+    const value = body[key];
+    if (value !== null && !isDate(value)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
+    changes[key] = value as string | null;
+  }
 
   const id = Number.isInteger(body.id) ? (body.id as number) : null;
 
   if (id === null) {
-    if (name === "") return bad("name-required", "Enter a name.");
+    if (changes.name === undefined) return bad("name-required", "Enter a name.");
     const [created] = await db
       .insert(staff)
-      .values({ name, role: role as "owner" | "stylist" | "assistant", color, joinedOn, leftOn })
+      .values({ ...changes, name: changes.name })
       .returning({ id: staff.id });
     return json({ ok: true, staffId: created?.id ?? null }, 201);
   }
 
-  const [exists] = await db.select({ id: staff.id }).from(staff).where(eq(staff.id, id)).limit(1);
-  if (!exists) return fail(404, "staff-not-found", "That staff member was not found.");
+  const [person] = await db
+    .select({ id: staff.id, role: staff.role, joinedOn: staff.joinedOn, leftOn: staff.leftOn })
+    .from(staff)
+    .where(eq(staff.id, id))
+    .limit(1);
+  if (!person) return fail(404, "staff-not-found", "That staff member was not found.");
 
-  await db
-    .update(staff)
-    .set({
-      ...(name === "" ? {} : { name }),
-      role: role as "owner" | "stylist" | "assistant",
-      color,
-      joinedOn,
-      leftOn,
-    })
-    .where(eq(staff.id, id));
+  const after = { ...person, ...changes };
+  if (after.joinedOn && after.leftOn && after.leftOn < after.joinedOn) {
+    return bad("left-before-joined", "The leaving date is before the joining date.");
+  }
+
+  const wasOwner = person.role === "owner" && person.leftOn === null;
+  const stillOwner = after.role === "owner" && after.leftOn === null;
+  if (wasOwner && !stillOwner) {
+    const [other] = await db
+      .select({ id: staff.id })
+      .from(staff)
+      .where(and(eq(staff.role, "owner"), isNull(staff.leftOn), ne(staff.id, id)))
+      .limit(1);
+    if (!other) {
+      return fail(409, "last-owner", "Somebody else has to be an owner first.");
+    }
+  }
+
+  if (Object.keys(changes).length > 0) {
+    await db.update(staff).set(changes).where(eq(staff.id, id));
+  }
 
   // Bookings still assigned after leftOn. Returned, not reassigned: the shop decides who takes over.
+  const leftOn = after.leftOn ?? null;
   const pending =
     leftOn === null
       ? []

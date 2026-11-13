@@ -54,27 +54,31 @@ way. The person at the desk knows the room.
 
 **Departed staff are never deleted.** Deleting one removes them from bookings
 that already happened and breaks per-stylist revenue. Registering a departure
-lists their future bookings and asks who takes them over, which is the
-unglamorous part that matters most in daily use.
+says how many future bookings still carry their name, so they are handed on
+before the day rather than discovered at the chair.
 
 **The shop sets the exchange rate.** Most shops in Macau work at 1:1:1 and
 1:1.03 turns up occasionally. That is a policy, not a market rate, so nothing
 is fetched and each payment keeps a copy of the rate as it stood. Change the
 rate later and past takings stay where they were.
 
-## One schema, three places to run it
+**Money is whole cents.** Amounts are integers in cents and rates are integers
+in basis points, so a month of takings adds up exactly.
+
+## One schema, two places to run it
 
 D1 is SQLite underneath, so the same schema and the same queries run
-unchanged in all three:
+unchanged in both:
 
 | | Purpose | Driver |
 |---|---|---|
 | Cloudflare Workers + D1 | The shop's production | `drizzle-orm/d1` |
-| Node + a SQLite file | If the shop would rather keep it on one PC | `drizzle-orm/better-sqlite3` |
 | SQLite in the browser (WASM) | The public demo | `drizzle-orm/sql-js` |
 
-The demo therefore shares nothing: each visitor's data lives in their own
-browser, costs nothing to run, cannot be vandalised, and resets on reload.
+The tests run the real router on the second, so a query that only works on
+one of them fails a test. The demo therefore shares nothing: each visitor's
+data lives in their own browser, costs nothing to run, cannot be vandalised,
+and resets on reload.
 
 ## Building it in stages
 
@@ -102,6 +106,7 @@ npm run dev
 `npx wrangler dev` runs both together against a local copy of the database.
 
 `npm test` runs the tests, and makes the demo database they need on the way.
+`npm run check` type-checks and lints ([Biome](https://biomejs.dev)).
 
 ## The demo, and the instance
 
@@ -123,17 +128,21 @@ Everybody who works in the shop has a login. Apart from the sign-in screen
 and `/api/version`, nothing answers without one. The owner sees the takings
 and the settings; a stylist does not.
 
-A session is a signed token in an HttpOnly cookie, good for twelve hours, with
-no row to look up. Passwords are PBKDF2-SHA256, 100,000 rounds, salted per
-person.
+A session is a signed token in an HttpOnly `__Host-` cookie, good for twelve
+hours. The token says who you are; whether you still work there, and in what
+role, is read from the staff table on every request, so a departure or a
+demotion applies at once. Passwords are PBKDF2-SHA256, 100,000 rounds, salted
+per person. Failed sign-ins are counted in the database, per address and per
+login id, so the limit holds on every Worker instance.
 
-The Worker needs a signing key before anybody can sign in:
+The Worker needs a signing key of at least 32 characters before anybody can
+sign in:
 
 ```sh
-npx wrangler secret put SESSION_SECRET
+openssl rand -base64 32 | npx wrangler secret put SESSION_SECRET
 ```
 
-Without one, every sign-in comes back 503. That is deliberate. The other
+Without one, or with a shorter one, every sign-in comes back 503. That is deliberate. The other
 behaviour — no key configured, so let them through — is the one that ships
 with no key configured.
 

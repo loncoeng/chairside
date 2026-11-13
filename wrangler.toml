@@ -31,7 +31,7 @@ not_found_handling = "single-page-application"
 # Otherwise unmatched /api paths hit the SPA fallback and return HTML with a 200.
 run_worker_first = ["/api/*"]
 
-# D1 is SQLite, so the same schema runs on a shop PC and in the browser demo.
+# D1 is SQLite, so the same schema runs in the browser demo.
 # database_id is not a credential (useless without an API token). Committing it
 # keeps a fresh clone from silently creating a second database.
 [[d1_databases]]

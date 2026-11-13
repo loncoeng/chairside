@@ -2,30 +2,19 @@
 // (a missing `!` refuses every date). Uses the real router.
 
 import { strictEqual } from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 
-import initSqlJs from "sql.js";
 import { drizzle } from "drizzle-orm/sql-js";
 
 import { issue } from "../db/session.ts";
 import { route } from "./router.ts";
+import { migrated } from "../db/test-database.ts";
 
-const SQL = await initSqlJs();
-const SECRET = "a-secret-for-the-tests-only";
+const SECRET = "a-secret-for-the-tests-only-and-nothing-else";
 
 /** Minimal shop fixture. */
 function database() {
-  const raw = new SQL.Database();
-  for (const name of readdirSync("migrations")
-    .filter((n) => n.endsWith(".sql"))
-    .sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
-      "--> statement-breakpoint",
-    )) {
-      if (statement.trim() !== "") raw.run(statement);
-    }
-  }
+  const raw = migrated();
   raw.run(`
     INSERT INTO seats (id, name, kind, active, sort_order) VALUES
       (1, 'A1', 'styling', 1, 1), (10, 'S1', 'shampoo', 1, 10);
@@ -33,8 +22,8 @@ function database() {
     INSERT INTO staff (id, name, role, grade, color) VALUES
       (1, 'Aoi', 'owner', 'owner', '#B4553F');
 
-    INSERT INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price, active, sort_order)
-      VALUES (1, 'カット', '剪髮', 'Cut', 45, 'styling', 280, 1, 1);
+    INSERT INTO services (id, name_ja, name_zh, name_en, duration_min, seat_kind, price_cents, active, sort_order)
+      VALUES (1, 'カット', '剪髮', 'Cut', 45, 'styling', 28000, 1, 1);
 
     INSERT INTO business_hours (id, weekday, opens_at, closes_at, closed) VALUES
       (1, 0, '10:00', '19:00', 0), (2, 1, NULL, NULL, 1), (3, 2, '10:00', '20:00', 0),
@@ -56,7 +45,7 @@ async function ask(db: ReturnType<typeof database>, path: string, body: unknown,
     db,
     new Request(`https://example.test${path}`, {
       method,
-      headers: { "content-type": "application/json", cookie: `chairside_session=${token}` },
+      headers: { "content-type": "application/json", cookie: `__Host-chairside_session=${token}` },
       body: method === "GET" ? undefined : JSON.stringify(body),
     }),
     "test",

@@ -1,11 +1,11 @@
-// API routes. Separate from the Worker so the browser demo shares the same table.
+// API routes. Separate from the Worker so the browser demo runs the same ones.
 
 import { asc, eq, isNull, max, min } from "drizzle-orm";
 import type { Database as Db } from "../db/database.ts";
 import { isDate, isMonth } from "../db/dates.ts";
 import { isOpen, mayReach } from "../db/permissions.ts";
 import { read, tokenFrom } from "../db/session.ts";
-import { signIn, signOut, whoAmI } from "./session-api.ts";
+import { present, signIn, signOut } from "./session-api.ts";
 import {
   bookingItems,
   bookings,
@@ -21,11 +21,11 @@ import { createBooking, customerList, getBooking, menu, updateBooking } from "./
 import { addRecord, getCustomer, listCustomers, saveCustomer } from "./customer-api.ts";
 import { currencyList, paymentsFor, revenue, takePayment } from "./money-api.ts";
 import { setClosure, setHours, setStaff, shopSettings } from "./shop-api.ts";
-import { json } from "./http.ts";
+import { fail, json } from "./http.ts";
 
 /**
  * Handles one API request. Takes any drizzle SQLite database (../db/database.ts),
- * so it runs on D1, a shop PC, or sql.js in the browser demo.
+ * so it runs on D1 and on sql.js in the browser demo.
  */
 export async function route(
   db: Db,
@@ -47,6 +47,15 @@ export async function route(
       return json({ build });
     }
 
+    // A form on another site can POST, but only as form data or plain text. Asking
+    // for JSON on every write means such a request is refused before it is read,
+    // whatever SameSite does or does not do in a given browser.
+    const writes =
+      request.method === "POST" || request.method === "PUT" || request.method === "PATCH";
+    if (writes && !request.headers.get("content-type")?.startsWith("application/json")) {
+      return fail(415, "not-json", "Send the request body as JSON.");
+    }
+
     // Auth is checked once here, not per handler, so a new endpoint can't forget it.
 
     if (url.pathname === "/api/session") {
@@ -54,25 +63,28 @@ export async function route(
       if (request.method === "DELETE") return signOut();
       if (request.method === "GET") {
         const open = await read(secret, token ?? tokenFrom(request));
-        return open ? await whoAmI(db, open.staffId) : json({ ok: false }, 401);
+        const person = open ? await present(db, open) : null;
+        return person ? json({ ok: true, staff: person }) : json({ ok: false }, 401);
       }
       return json({ error: "method not allowed" }, 405);
     }
 
-    const session = await read(secret, token ?? tokenFrom(request));
+    // The token says who; the staff table says whether they still work here and in what role.
+    const open = await read(secret, token ?? tokenFrom(request));
+    const session = open ? await present(db, open) : null;
 
     if (!isOpen(url.pathname) && session === null) {
-      return json({ code: "signed-out", error: "Please sign in." }, 401);
+      return fail(401, "signed-out", "Please sign in.");
     }
 
     if (session !== null && !mayReach(session.role, url.pathname, request.method)) {
-      return json({ code: "forbidden", error: "You are not allowed to do that." }, 403);
+      return fail(403, "forbidden", "You are not allowed to do that.");
     }
     if (url.pathname === "/api/room") {
       return json(await room(db));
     }
     if (url.pathname === "/api/bookings" && request.method === "POST") {
-      return await createBooking(db, request, session?.staffId ?? null);
+      return await createBooking(db, request, session?.id ?? null);
     }
 
     // /api/bookings/:id
@@ -86,7 +98,7 @@ export async function route(
         return json({ ...found, payments: await paymentsFor(db, id) });
       }
       if (request.method === "PATCH") {
-        return await updateBooking(db, request, id, session?.staffId ?? null);
+        return await updateBooking(db, request, id, session?.id ?? null);
       }
       return json({ error: "method not allowed" }, 405);
     }
@@ -122,7 +134,7 @@ export async function route(
       return json(await currencyList(db));
     }
     if (url.pathname === "/api/payments" && request.method === "POST") {
-      return await takePayment(db, request, session?.staffId ?? null);
+      return await takePayment(db, request, session?.id ?? null);
     }
     if (url.pathname === "/api/revenue") {
       const month = url.searchParams.get("month") ?? today().slice(0, 7);

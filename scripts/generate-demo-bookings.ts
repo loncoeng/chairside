@@ -285,14 +285,15 @@ const extras: Extra[] = [];
 const takenNames = new Set<string>();
 
 /** Phone number formats: Macau, Hong Kong and mainland China. */
+/**
+ * Real dialling codes and lengths, but every number starts with 0 after the
+ * code. No subscriber number in Macau, Hong Kong or the mainland does, so none
+ * of these can ring a real phone.
+ */
 const DIALLING: { code: string; weight: number; make: () => string }[] = [
-  { code: "+853", weight: 72, make: () => `6${digits(3)} ${digits(4)}` },
-  { code: "+852", weight: 20, make: () => `${pick(["9", "6", "5"])}${digits(3)} ${digits(4)}` },
-  {
-    code: "+86",
-    weight: 8,
-    make: () => `1${pick(["3", "5", "7", "8"])}${digits(1)} ${digits(4)} ${digits(4)}`,
-  },
+  { code: "+853", weight: 72, make: () => `0${digits(3)} ${digits(4)}` },
+  { code: "+852", weight: 20, make: () => `0${digits(3)} ${digits(4)}` },
+  { code: "+86", weight: 8, make: () => `0${digits(2)} ${digits(4)} ${digits(4)}` },
 ];
 
 function digits(n: number): string {
@@ -500,13 +501,14 @@ function record(
     // Round to 10, with an occasional discount or surcharge.
     const roll = random();
     const adjusted = roll < 0.08 ? list * 0.9 : roll < 0.12 ? list + 50 : list;
-    const amount = Math.round(adjusted / 10) * 10;
+    // Whole tens of patacas, written in cents with the rate at par (see src/db/schema.ts).
+    const amountCents = Math.round(adjusted / 10) * 10 * 100;
 
     const currency = weighted(CURRENCIES).code;
     const method = weighted(METHODS).name;
 
     paymentRows.push(
-      `  (${paymentId++}, ${booking.id}, ${amount}, ${quote(currency)}, 1, ${quote(method)}, ` +
+      `  (${paymentId++}, ${booking.id}, ${amountCents}, ${quote(currency)}, 10000, ${quote(method)}, ` +
         `${stamp(booking.date, clock(booking.endsAt))})`,
     );
   }
@@ -770,7 +772,7 @@ DELETE FROM bookings;
     header("What was handed over, and in what.") +
       inserts(
         "payments",
-        "id, booking_id, amount, currency, rate_to_base, method, paid_at",
+        "id, booking_id, amount_cents, currency, rate_to_base_bp, method, paid_at",
         paymentRows,
       ) +
       br,

@@ -6,6 +6,9 @@ import type { Person } from "./types.ts";
 import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
 import { GuestPicker } from "./guest-picker.tsx";
+import { shown } from "../db/money.ts";
+
+const price = (cents: number | null) => (cents === null ? null : shown(cents));
 
 export type Service = {
   id: number;
@@ -14,16 +17,16 @@ export type Service = {
   nameEn: string | null;
   durationMin: number;
   seatKind: "styling" | "shampoo" | null;
-  /** Price when it doesn't depend on the stylist. */
-  price: number | null;
-  /** Price per stylist grade, when it does. */
+  /** Price in cents when it doesn't depend on the stylist. */
+  priceCents: number | null;
+  /** Price in cents per stylist grade, when it does. */
   byGrade: Record<string, number> | null;
 };
 
-/** Price for a stylist grade, falling back to the flat price. */
+/** Price in cents for a stylist grade, falling back to the flat price. */
 export function priceFor(service: Service, grade: string | null | undefined): number | null {
   if (grade && service.byGrade && grade in service.byGrade) return service.byGrade[grade]!;
-  return service.price;
+  return service.priceCents;
 }
 
 export type Customer = { id: number; name: string; searchKey: string | null; phone: string | null };
@@ -181,7 +184,7 @@ export function BookingForm({
           {minutes > 0 && (
             <span class="menu-total">
               {t("totalMinutes", { n: minutes })}
-              {total > 0 && <b> {total.toLocaleString("en-US")}</b>}
+              {total > 0 && <b> {shown(total)}</b>}
             </span>
           )}
         </legend>
@@ -200,7 +203,7 @@ export function BookingForm({
                 {order >= 0 && <span class="menu-order">{order + 1}</span>}
                 <span class="menu-name">{serviceName(lang, service)}</span>
                 <span class="menu-min">{t("minutes", { n: service.durationMin })}</span>
-                <span class="menu-price">{priceFor(service, grade)?.toLocaleString("en-US")}</span>
+                <span class="menu-price">{price(priceFor(service, grade))}</span>
               </button>
             );
           })}

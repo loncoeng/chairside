@@ -1,5 +1,5 @@
-// Database type for all queries. Never names D1, so the same queries run on D1,
-// a SQLite file and sql.js in the browser. See DESIGN.md.
+// Database type for all queries. Never names D1, so the same queries run on D1
+// and on sql.js in the browser. See DESIGN.md.
 
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 

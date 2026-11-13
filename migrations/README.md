@@ -7,8 +7,8 @@ and committed. Cloudflare applies them with `wrangler d1 migrations apply`.
 npx drizzle-kit generate   # after editing the schema
 ```
 
-The `.sql` files are the source of truth for all three environments — D1, a
-local SQLite file, and the browser demo. `meta/` is drizzle's own snapshot; it
+The `.sql` files are the source of truth for D1, the browser demo and the
+tests. `meta/` is drizzle's own snapshot; it
 is what lets the next `generate` emit a diff instead of the whole schema again,
 so it is committed too.
 

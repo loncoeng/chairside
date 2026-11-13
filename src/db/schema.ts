@@ -1,8 +1,11 @@
-// Table definitions, shared by D1 (production), Node + a SQLite file (on-premise)
-// and sql.js in the browser (demo). All three are SQLite.
+// Table definitions, shared by D1 (production) and sql.js in the browser (demo).
+// Both are SQLite.
+//
+// Money is stored as whole cents (1/100 of a pataca) and exchange rates as basis
+// points (10,000 = 1:1), so every sum is integer arithmetic and adds up exactly.
 
 import { sql } from "drizzle-orm";
-import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const now = sql`(unixepoch())`;
 
@@ -82,10 +85,10 @@ export const services = sqliteTable("services", {
   /** Seat kind this occupies; null for none. */
   seatKind: text("seat_kind", { enum: ["styling", "shampoo"] }),
   /**
-   * Flat list price, and the fallback when `service_prices` has no row for the
-   * grade. Amounts actually paid are in `payments`.
+   * Flat list price in cents, and the fallback when `service_prices` has no row
+   * for the grade. Amounts actually paid are in `payments`.
    */
-  price: real("price"),
+  priceCents: integer("price_cents"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
 });
@@ -145,8 +148,8 @@ export const bookingItems = sqliteTable(
  */
 export const currencies = sqliteTable("currencies", {
   code: text("code").primaryKey(),
-  /** Against the base currency (MOP). */
-  rateToBase: real("rate_to_base").notNull().default(1),
+  /** Against the base currency (MOP), in basis points: 10,000 is 1:1, 10,300 is 1:1.03. */
+  rateToBaseBp: integer("rate_to_base_bp").notNull().default(10_000),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
 });
@@ -159,11 +162,11 @@ export const payments = sqliteTable(
     bookingId: integer("booking_id")
       .notNull()
       .references(() => bookings.id, { onDelete: "cascade" }),
-    /** Amount in `currency`. */
-    amount: real("amount").notNull(),
+    /** Amount in `currency`, in cents. */
+    amountCents: integer("amount_cents").notNull(),
     currency: text("currency").notNull(),
-    /** Snapshot of the configured rate at payment time. */
-    rateToBase: real("rate_to_base").notNull(),
+    /** Snapshot of the configured rate at payment time, in basis points. */
+    rateToBaseBp: integer("rate_to_base_bp").notNull(),
     /** MPay and BOC Pay are Macau wallets; WeChat Pay and Alipay are mainland. See payment-methods.ts. */
     method: text("method", {
       enum: ["cash", "card", "mpay", "boc", "wechat", "alipay"],
@@ -171,10 +174,16 @@ export const payments = sqliteTable(
       .notNull()
       .default("cash"),
     paidAt: integer("paid_at").notNull().default(now),
+    /**
+     * Chosen by the till each time it opens, so a second press of the button, or
+     * a retry after a dropped reply, records the payment once.
+     */
+    requestKey: text("request_key"),
   },
   (t) => [
     index("payments_booking_idx").on(t.bookingId),
     index("payments_paid_at_idx").on(t.paidAt),
+    uniqueIndex("payments_request_key").on(t.requestKey),
   ],
 );
 
@@ -282,7 +291,23 @@ export const servicePrices = sqliteTable(
       .notNull()
       .references(() => services.id, { onDelete: "cascade" }),
     grade: text("grade", { enum: ["owner", "stylist1", "stylist2", "assistant"] }).notNull(),
-    price: real("price").notNull(),
+    priceCents: integer("price_cents").notNull(),
   },
   (t) => [uniqueIndex("service_prices_key").on(t.serviceId, t.grade)],
+);
+
+/**
+ * Failed sign-ins, so the limit holds across every Worker instance rather than
+ * per isolate. `who` is an IP address or `id:` and a login id; rows older than
+ * the window are deleted as new ones arrive.
+ */
+export const failedSignIns = sqliteTable(
+  "failed_sign_ins",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    who: text("who").notNull(),
+    /** Unix milliseconds. */
+    at: integer("at").notNull(),
+  },
+  (t) => [index("failed_sign_ins_who_idx").on(t.who, t.at)],
 );

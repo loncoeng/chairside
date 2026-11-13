@@ -538,6 +538,51 @@ export const TEXT = {
     zh: "該狀態無法使用。",
     en: "That status is not valid.",
   },
+  "error.not-json": {
+    ja: "送信の形式が正しくありません。",
+    zh: "提交格式不正確。",
+    en: "Send the request body as JSON.",
+  },
+  "error.unknown-customer": {
+    ja: "そのお客様は登録されていません。",
+    zh: "沒有該客人的記錄。",
+    en: "That guest is not on file.",
+  },
+  "error.unknown-staff": {
+    ja: "その日に在籍していないスタッフです。",
+    zh: "該員工當日不在職。",
+    en: "That stylist is not on the team on that date.",
+  },
+  "error.last-owner": {
+    ja: "オーナーが一人もいなくなります。先に別の人をオーナーにしてください。",
+    zh: "這樣就沒有店主了。請先把另一位設為店主。",
+    en: "Somebody else has to be an owner first.",
+  },
+  "error.bad-grade": {
+    ja: "その等級は使えません。",
+    zh: "該級別無法使用。",
+    en: "The grade is not valid.",
+  },
+  "error.bad-color": {
+    ja: "色の指定が正しくありません。",
+    zh: "顏色格式不正確。",
+    en: "The colour is not a #RRGGBB value.",
+  },
+  "error.left-before-joined": {
+    ja: "退職日が入社日より前になっています。",
+    zh: "離職日期早於入職日期。",
+    en: "The leaving date is before the joining date.",
+  },
+  "error.booking-not-theirs": {
+    ja: "その予約はこのお客様のものではありません。",
+    zh: "該預約不屬於這位客人。",
+    en: "That booking is not this guest's.",
+  },
+  "error.bad-request-key": {
+    ja: "送信の識別子が正しくありません。",
+    zh: "提交識別碼不正確。",
+    en: "The request key is not valid.",
+  },
 } satisfies Record<string, Dict>;
 
 export type Key = keyof typeof TEXT;

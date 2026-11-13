@@ -50,7 +50,10 @@ jobs:
             echo "::warning::FORBIDDEN_TERMS is not set — the history was not checked."
             exit 0
           fi
-          python -m pip install --quiet publish-guard
+          # Pinned by hash: this step holds the secret, so what runs here must be exactly what was reviewed.
+          printf '%s\n' 'publish-guard==0.1.1 --hash=sha256:b9962a4a79ab47bccf78bb9e3368d92923674a188577300266d74714730481e6' > guard-requirements.txt
+          python -m pip install --quiet --no-deps --require-hashes -r guard-requirements.txt
+          rm -f guard-requirements.txt
           python - <<'PY' > publish-guard.generated.toml
           import json, os
           terms = [t.strip() for t in os.environ["FORBIDDEN_TERMS"].splitlines() if t.strip()]

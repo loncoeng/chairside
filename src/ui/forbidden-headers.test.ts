@@ -73,7 +73,7 @@ test("nothing under src/ui sets a header the browser will not carry", () => {
 test("the list is a list of names, and the check can see one", () => {
   // The regex must match the line that broke the demo.
   const shipped = `if (demoCookie !== null) carried.headers.set("cookie", demoCookie);`;
-  const written = new RegExp(`(?:set|append)\\s*\\(\\s*(['"\`])cookie\\1`, "i");
+  const written = /(?:set|append)\s*\(\s*(['"`])cookie\1/i;
   ok(written.test(shipped), "the check would not have found the line that broke the demo");
 
   const alsoShipped = `const issued = response.headers.get("set-cookie");`;

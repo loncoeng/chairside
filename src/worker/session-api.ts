@@ -31,7 +31,11 @@ function record(who: string): void {
   recent.set(who, tries);
 }
 
-export async function signIn(db: Db, request: Request, secret: string | undefined): Promise<Response> {
+export async function signIn(
+  db: Db,
+  request: Request,
+  secret: string | undefined,
+): Promise<Response> {
   // No secret: refuse sign-in rather than issue forgeable tokens.
   if (!secret) {
     return json({ ok: false, code: "not-configured", error: "The server is not set up yet." }, 503);
@@ -39,7 +43,14 @@ export async function signIn(db: Db, request: Request, secret: string | undefine
 
   const who = request.headers.get("cf-connecting-ip") ?? "unknown";
   if (tooMany(who)) {
-    return json({ ok: false, code: "too-many-attempts", error: "Too many attempts. Wait a while and try again." }, 429);
+    return json(
+      {
+        ok: false,
+        code: "too-many-attempts",
+        error: "Too many attempts. Wait a while and try again.",
+      },
+      429,
+    );
   }
 
   const body = (await request.json().catch(() => null)) as {
@@ -68,7 +79,10 @@ export async function signIn(db: Db, request: Request, secret: string | undefine
   // Same reply for unknown ID and wrong password.
   if (!person || !ok) {
     record(who);
-    return json({ ok: false, code: "wrong-credentials", error: "The ID or password is wrong." }, 401);
+    return json(
+      { ok: false, code: "wrong-credentials", error: "The ID or password is wrong." },
+      401,
+    );
   }
 
   const token = await issue(secret, person.id, person.role);

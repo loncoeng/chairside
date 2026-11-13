@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run check && node scripts/build-demo-db.ts && vite build && node scripts/check-demo-assets.ts",
-    "check": "npm run types && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
+    "check": "npm run types && biome check --error-on-warnings && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "test": "npm run demo:db && tsx --test \"src/**/*.test.ts\"",
     "deploy": "npm run build && wrangler deploy",
     "seed": "wrangler d1 execute chairside --remote --file seed/demo.sql && wrangler d1 execute chairside --remote --file seed/holidays.sql && wrangler d1 execute chairside --remote --file seed/demo-no-logins.sql && wrangler d1 execute chairside --remote --file seed/demo-clear.sql && wrangler d1 execute chairside --remote --file seed/demo-customers.sql && wrangler d1 execute chairside --remote --file seed/demo-bookings.sql && wrangler d1 execute chairside --remote --file seed/demo-items.sql && wrangler d1 execute chairside --remote --file seed/demo-events.sql && wrangler d1 execute chairside --remote --file seed/demo-payments.sql && wrangler d1 execute chairside --remote --file seed/demo-customer-details.sql",
@@ -18,9 +18,11 @@
     "demo:details": "node scripts/generate-demo-details.ts",
     "holidays": "node scripts/import-holidays.ts",
     "demo:db": "node scripts/build-demo-db.ts",
-    "logins": "node scripts/make-logins.ts"
+    "logins": "node scripts/make-logins.ts",
+    "lint": "biome check --error-on-warnings"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.4",
     "@types/node": "^26.6.4",
     "@types/sql.js": "^1.4.11",
     "drizzle-kit": "^0.31.11",

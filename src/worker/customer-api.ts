@@ -14,7 +14,7 @@ import {
   staff,
 } from "../db/schema.ts";
 
-import { isDate, isTime } from "../db/dates.ts";
+import { isDate } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
 /** Customer list (max 50). The search matches name, alternate spelling (searchKey) and phone. */
@@ -151,7 +151,11 @@ export async function getCustomer(db: Db, id: number) {
  */
 export async function saveCustomer(db: Db, request: Request, id: number | null): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!body || typeof body !== "object") return json({ ok: false, code: "unreadable-body", error: "The request body could not be read." }, 400);
+  if (!body || typeof body !== "object")
+    return json(
+      { ok: false, code: "unreadable-body", error: "The request body could not be read." },
+      400,
+    );
 
   const field = (key: string, limit: number): string | null | undefined => {
     if (!(key in body)) return undefined;
@@ -197,7 +201,8 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
       .insert(customers)
       .values({ name: name as string, ...values })
       .returning({ id: customers.id });
-    if (!created) return json({ ok: false, code: "create-failed", error: "It could not be saved." }, 500);
+    if (!created)
+      return json({ ok: false, code: "create-failed", error: "It could not be saved." }, 500);
     customerId = created.id;
   } else {
     const [exists] = await db
@@ -205,7 +210,11 @@ export async function saveCustomer(db: Db, request: Request, id: number | null):
       .from(customers)
       .where(eq(customers.id, id))
       .limit(1);
-    if (!exists) return json({ ok: false, code: "customer-not-found", error: "That customer was not found." }, 404);
+    if (!exists)
+      return json(
+        { ok: false, code: "customer-not-found", error: "That customer was not found." },
+        404,
+      );
     if (Object.keys(values).length > 0) {
       await db.update(customers).set(values).where(eq(customers.id, id));
     }
@@ -242,10 +251,15 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     recordedOn?: unknown;
   } | null;
 
-  if (!body) return json({ ok: false, code: "unreadable-body", error: "The request body could not be read." }, 400);
+  if (!body)
+    return json(
+      { ok: false, code: "unreadable-body", error: "The request body could not be read." },
+      400,
+    );
 
   const customerId = Number.isInteger(body.customerId) ? (body.customerId as number) : null;
-  if (customerId === null) return json({ ok: false, code: "no-customer", error: "No customer was given." }, 400);
+  if (customerId === null)
+    return json({ ok: false, code: "no-customer", error: "No customer was given." }, 400);
 
   const recordedOn = typeof body.recordedOn === "string" ? body.recordedOn : "";
   if (!isDate(recordedOn)) {
@@ -268,7 +282,11 @@ export async function addRecord(db: Db, request: Request): Promise<Response> {
     .from(customers)
     .where(eq(customers.id, customerId))
     .limit(1);
-  if (!exists) return json({ ok: false, code: "customer-not-found", error: "That customer was not found." }, 404);
+  if (!exists)
+    return json(
+      { ok: false, code: "customer-not-found", error: "That customer was not found." },
+      404,
+    );
 
   const [created] = await db
     .insert(records)

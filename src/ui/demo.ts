@@ -112,7 +112,10 @@ export async function startDemo(onProgress?: (what: string) => void): Promise<vo
 
     // Patch fetch so screens need no knowledge of demo mode.
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-      const request = input instanceof Request ? input : new Request(new URL(String(input), location.origin), init);
+      const request =
+        input instanceof Request
+          ? input
+          : new Request(new URL(String(input), location.origin), init);
       const { pathname } = new URL(request.url);
 
       if (!pathname.startsWith("/api/")) {

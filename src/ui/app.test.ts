@@ -33,8 +33,12 @@ const missing = NEEDED.filter((file) => !existsSync(file));
 /** Like the live instance: schema and shop rows, no logins (see seed/demo-no-logins.sql). */
 function server() {
   const raw = new SQL.Database();
-  for (const name of readdirSync("migrations").filter((n) => n.endsWith(".sql")).sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
+  for (const name of readdirSync("migrations")
+    .filter((n) => n.endsWith(".sql"))
+    .sort()) {
+    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
+      "--> statement-breakpoint",
+    )) {
       if (statement.trim() !== "") raw.run(statement);
     }
   }
@@ -54,9 +58,23 @@ function browser() {
   const dom = window as unknown as Record<string, unknown>;
 
   const names = [
-    "window", "document", "navigator", "location", "localStorage", "sessionStorage",
-    "HTMLElement", "Element", "Node", "Text", "Event", "CustomEvent", "MouseEvent",
-    "requestAnimationFrame", "cancelAnimationFrame", "getComputedStyle", "DOMParser",
+    "window",
+    "document",
+    "navigator",
+    "location",
+    "localStorage",
+    "sessionStorage",
+    "HTMLElement",
+    "Element",
+    "Node",
+    "Text",
+    "Event",
+    "CustomEvent",
+    "MouseEvent",
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "getComputedStyle",
+    "DOMParser",
   ];
   // defineProperty: some are getter-only on Node's global (navigator), so assignment throws.
   const restore: [string, PropertyDescriptor | undefined][] = [];
@@ -74,15 +92,20 @@ function browser() {
   }
 
   // happy-dom reports an English locale; the assertions use Japanese.
-  (dom["localStorage"] as Storage).setItem("chairside.lang", "ja");
+  (dom.localStorage as Storage).setItem("chairside.lang", "ja");
 
   const db = server();
   const asked: string[] = [];
 
   const previousFetch = globalThis.fetch;
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(String(input instanceof Request ? input.url : input), "https://demo.invalid/");
-    asked.push(`${(input instanceof Request ? input.method : init?.method) ?? "GET"} ${url.pathname}`);
+    const url = new URL(
+      String(input instanceof Request ? input.url : input),
+      "https://demo.invalid/",
+    );
+    asked.push(
+      `${(input instanceof Request ? input.method : init?.method) ?? "GET"} ${url.pathname}`,
+    );
 
     // Static files from public/, the same bytes the Worker serves.
     if (!url.pathname.startsWith("/api/")) {
@@ -130,7 +153,8 @@ async function waitFor(what: string, ready: () => boolean, ms = 15_000): Promise
   throw new Error(`${what} — after ${ms}ms the page read: ${text().slice(0, 400)}`);
 }
 
-const text = (): string => (globalThis as unknown as { document: Document }).document.body.textContent ?? "";
+const text = (): string =>
+  (globalThis as unknown as { document: Document }).document.body.textContent ?? "";
 
 function button(label: string): HTMLElement | null {
   const doc = (globalThis as unknown as { document: Document }).document;

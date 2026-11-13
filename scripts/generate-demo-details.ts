@@ -18,12 +18,17 @@ function random(): number {
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   return seed / 0x7fffffff;
 }
-const pick = <T,>(list: readonly T[]): T => list[Math.floor(random() * list.length)]!;
+const pick = <T>(list: readonly T[]): T => list[Math.floor(random() * list.length)]!;
 const between = (lo: number, hi: number) => lo + Math.floor(random() * (hi - lo + 1));
 
 const ZH_STREETS = ["示範街", "樣本大馬路", "虛構巷", "範例圍", "假名斜巷", "測試前地"];
 const ZH_BUILDINGS = ["樣板花園", "示範大廈", "範例中心", "虛構閣", "樣本新邨"];
-const PT_STREETS = ["Rua da Amostra", "Travessa do Exemplo", "Avenida Fictícia", "Estrada do Modelo"];
+const PT_STREETS = [
+  "Rua da Amostra",
+  "Travessa do Exemplo",
+  "Avenida Fictícia",
+  "Estrada do Modelo",
+];
 const PT_BUILDINGS = ["Edf. Modelo", "Edf. Exemplo", "Jardim Fictício"];
 const FLATS = ["A", "B", "C", "D", "E", "F"];
 
@@ -34,8 +39,10 @@ function address(): string {
   const floor = between(1, 32);
   const flat = pick(FLATS);
   if (roll < 0.55) return `澳門${pick(ZH_STREETS)}${no}號${pick(ZH_BUILDINGS)}${floor}樓${flat}座`;
-  if (roll < 0.75) return `${pick(PT_STREETS)} n.º ${no}, ${pick(PT_BUILDINGS)} ${floor}.º ${flat}, Macau`;
-  if (roll < 0.9) return `香港九龍${pick(ZH_STREETS)}${no}號${pick(ZH_BUILDINGS)}${floor}樓${flat}室`;
+  if (roll < 0.75)
+    return `${pick(PT_STREETS)} n.º ${no}, ${pick(PT_BUILDINGS)} ${floor}.º ${flat}, Macau`;
+  if (roll < 0.9)
+    return `香港九龍${pick(ZH_STREETS)}${no}號${pick(ZH_BUILDINGS)}${floor}樓${flat}室`;
   return `廣東省珠海市${pick(ZH_STREETS)}${no}號${pick(ZH_BUILDINGS)}${floor}${String(between(1, 8)).padStart(2, "0")}室`;
 }
 

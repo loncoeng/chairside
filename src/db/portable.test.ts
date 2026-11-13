@@ -20,8 +20,12 @@ function database() {
   const raw = new SQL.Database();
 
   // Read every migration from disk rather than a hand-kept list.
-  for (const name of readdirSync("migrations").filter((n) => n.endsWith(".sql")).sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split("--> statement-breakpoint")) {
+  for (const name of readdirSync("migrations")
+    .filter((n) => n.endsWith(".sql"))
+    .sort()) {
+    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
+      "--> statement-breakpoint",
+    )) {
       if (statement.trim() !== "") raw.run(statement);
     }
   }
@@ -132,10 +136,17 @@ test("a guest is added, corrected, and a shared phone number is said", async () 
   strictEqual(added.status, 201);
   const reply = (await added.json()) as { customerId: number; samePhone: { id: number }[] };
   // "6612 3401" is on file already, written with a space.
-  deepStrictEqual(reply.samePhone.map((p) => p.id), [1]);
+  deepStrictEqual(
+    reply.samePhone.map((p) => p.id),
+    [1],
+  );
 
   // Only what is sent changes; the address survives an edit that does not mention it.
-  const edited = await saveCustomer(db, post({ phone: "6699 0000", note: "VIP", birthday: "1990-05-12" }), reply.customerId);
+  const edited = await saveCustomer(
+    db,
+    post({ phone: "6699 0000", note: "VIP", birthday: "1990-05-12" }),
+    reply.customerId,
+  );
   strictEqual(edited.status, 200);
 
   const person = await getCustomer(db, reply.customerId);

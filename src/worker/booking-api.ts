@@ -18,7 +18,7 @@ import {
 import { blocked, check } from "../db/booking-rules.ts";
 import type { Draft, Existing } from "../db/booking-rules.ts";
 
-import { isDate, isTime } from "../db/dates.ts";
+import { isDate } from "../db/dates.ts";
 import type { Database as Db } from "../db/database.ts";
 
 /** Active services with per-grade prices (`byGrade`, null when the price doesn't vary). */
@@ -87,21 +87,23 @@ export async function createBooking(
   byStaffId: number | null,
 ): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Proposal | null;
-  if (!body || typeof body !== "object") return bad("unreadable-body", "The request body could not be read.");
+  if (!body || typeof body !== "object")
+    return bad("unreadable-body", "The request body could not be read.");
 
   const date = typeof body.date === "string" ? body.date : "";
   if (!isDate(date)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
 
   // Strict range check, or "25:99" would be refused later as crossing midnight.
   const startsAt = typeof body.startsAt === "string" ? body.startsAt : "";
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("bad-start-time", "The start time is not in HH:MM form.");
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt))
+    return bad("bad-start-time", "The start time is not in HH:MM form.");
 
   const serviceIds = Array.isArray(body.serviceIds)
     ? body.serviceIds.filter((id): id is number => Number.isInteger(id))
     : [];
   if (serviceIds.length === 0) return bad("no-services", "Choose at least one treatment.");
-  if (serviceIds.length > 8) return bad("too-many-services", "A booking can hold at most eight treatments.");
-
+  if (serviceIds.length > 8)
+    return bad("too-many-services", "A booking can hold at most eight treatments.");
 
   const chosen = await db
     .select({ id: services.id, durationMin: services.durationMin, seatKind: services.seatKind })
@@ -109,7 +111,8 @@ export async function createBooking(
     .where(inArray(services.id, serviceIds));
 
   const byId = new Map(chosen.map((s) => [s.id, s]));
-  if (serviceIds.some((id) => !byId.has(id))) return bad("unknown-service", "A treatment is not on the menu.");
+  if (serviceIds.some((id) => !byId.has(id)))
+    return bad("unknown-service", "A treatment is not on the menu.");
 
   const staffId = intOrNull(body.staffId);
 
@@ -135,7 +138,8 @@ export async function createBooking(
   }
 
   // Refuse past midnight so day arithmetic doesn't wrap.
-  if (cursor >= 24 * 60) return bad("crosses-midnight", "Starting then, it would run past midnight.");
+  if (cursor >= 24 * 60)
+    return bad("crosses-midnight", "Starting then, it would run past midnight.");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
   const verdicts = check(drafts, existing, room);
@@ -337,10 +341,15 @@ export async function updateBooking(
   byStaffId: number | null,
 ): Promise<Response> {
   const body = (await request.json().catch(() => null)) as (Proposal & { status?: unknown }) | null;
-  if (!body || typeof body !== "object") return bad("unreadable-body", "The request body could not be read.");
+  if (!body || typeof body !== "object")
+    return bad("unreadable-body", "The request body could not be read.");
 
   const current = await getBooking(db, id);
-  if (!current) return json({ ok: false, code: "booking-not-found", error: "That booking was not found." }, 404);
+  if (!current)
+    return json(
+      { ok: false, code: "booking-not-found", error: "That booking was not found." },
+      404,
+    );
 
   // Status only.
 
@@ -371,7 +380,8 @@ export async function updateBooking(
   // Reschedule.
 
   const startsAt = typeof body.startsAt === "string" ? body.startsAt : current.startsAt;
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt)) return bad("bad-start-time", "The start time is not in HH:MM form.");
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startsAt))
+    return bad("bad-start-time", "The start time is not in HH:MM form.");
 
   const date = typeof body.date === "string" ? body.date : current.date;
   if (!isDate(date)) return bad("bad-date", "Send the date as YYYY-MM-DD.");
@@ -381,7 +391,8 @@ export async function updateBooking(
     : current.items.map((item) => item.serviceId).filter((sid): sid is number => sid !== null);
 
   if (serviceIds.length === 0) return bad("no-services", "Choose at least one treatment.");
-  if (serviceIds.length > 8) return bad("too-many-services", "A booking can hold at most eight treatments.");
+  if (serviceIds.length > 8)
+    return bad("too-many-services", "A booking can hold at most eight treatments.");
 
   const chosen = await db
     .select({ id: services.id, durationMin: services.durationMin, seatKind: services.seatKind })
@@ -389,7 +400,8 @@ export async function updateBooking(
     .where(inArray(services.id, serviceIds));
 
   const byId = new Map(chosen.map((s) => [s.id, s]));
-  if (serviceIds.some((sid) => !byId.has(sid))) return bad("unknown-service", "A treatment is not on the menu.");
+  if (serviceIds.some((sid) => !byId.has(sid)))
+    return bad("unknown-service", "A treatment is not on the menu.");
 
   // Staff is per line (e.g. assistant shampoos, stylist cuts). If no staffId is sent
   // and the services are unchanged, each line keeps its staff; otherwise one
@@ -408,7 +420,8 @@ export async function updateBooking(
 
   let cursor = toMinutes(startsAt);
   const drafts: Draft[] = [];
-  const plan: { serviceId: number; staffId: number | null; startsAt: string; endsAt: string }[] = [];
+  const plan: { serviceId: number; staffId: number | null; startsAt: string; endsAt: string }[] =
+    [];
 
   for (const [index, sid] of serviceIds.entries()) {
     const service = byId.get(sid)!;
@@ -427,7 +440,8 @@ export async function updateBooking(
     cursor = to;
   }
 
-  if (cursor >= 24 * 60) return bad("crosses-midnight", "Starting then, it would run past midnight.");
+  if (cursor >= 24 * 60)
+    return bad("crosses-midnight", "Starting then, it would run past midnight.");
 
   const [existing, room] = await Promise.all([existingOn(db, date), roomFor(db, date)]);
   // Exclude its own rows so a move doesn't clash with itself.

@@ -31,9 +31,21 @@ export const TEXT = {
     zh: "無法載入這天的預約。",
     en: "Could not load this day.",
   },
-  nothingBooked: { ja: "この日に予約はありません。", zh: "這天沒有預約。", en: "Nothing booked on this day." },
-  sampleIs: { ja: "サンプルデータは {from} 〜 {to} の期間です。", zh: "範例資料在 {from} 至 {to}。", en: "The sample week runs {from} to {to}." },
-  noSchedule: { ja: "この日は予定がありません。", zh: "這天沒有安排。", en: "Nothing on this day." },
+  nothingBooked: {
+    ja: "この日に予約はありません。",
+    zh: "這天沒有預約。",
+    en: "Nothing booked on this day.",
+  },
+  sampleIs: {
+    ja: "サンプルデータは {from} 〜 {to} の期間です。",
+    zh: "範例資料在 {from} 至 {to}。",
+    en: "The sample week runs {from} to {to}.",
+  },
+  noSchedule: {
+    ja: "この日は予定がありません。",
+    zh: "這天沒有安排。",
+    en: "Nothing on this day.",
+  },
 
   // The room
   room: { ja: "店内", zh: "店內", en: "The room" },
@@ -78,7 +90,11 @@ export const TEXT = {
     en: "Search by name, spelling or phone (blank = not registered)",
   },
   changeGuest: { ja: "変更", zh: "更改", en: "Change" },
-  moreMatches: { ja: "ほか {n} 件。続けて入力してください", zh: "另有 {n} 位，請繼續輸入", en: "{n} more — keep typing" },
+  moreMatches: {
+    ja: "ほか {n} 件。続けて入力してください",
+    zh: "另有 {n} 位，請繼續輸入",
+    en: "{n} more — keep typing",
+  },
   menu: { ja: "メニュー", zh: "服務", en: "Menu" },
   totalMinutes: { ja: "合計 {n} 分", zh: "共 {n} 分鐘", en: "{n} min total" },
   minutes: { ja: "{n}分", zh: "{n}分", en: "{n}m" },
@@ -100,18 +116,34 @@ export const TEXT = {
   markDone: { ja: "完了", zh: "已完成", en: "Done" },
   markCancelled: { ja: "キャンセル", zh: "已取消", en: "Cancelled" },
   markNoShow: { ja: "無断キャンセル", zh: "爽約", en: "No-show" },
-  reschedule: { ja: "時間・担当を変える", zh: "更改時間或髮型師", en: "Change the time or stylist" },
+  reschedule: {
+    ja: "時間・担当を変える",
+    zh: "更改時間或髮型師",
+    en: "Change the time or stylist",
+  },
   applyChange: { ja: "変更する", zh: "套用變更", en: "Apply" },
 
   // Booking history
   history: { ja: "変更の記録", zh: "更改記錄", en: "What has happened" },
-  movedTimes: { ja: "この予約は {n} 回変更されています", zh: "這個預約已更改 {n} 次", en: "Moved {n} times" },
+  movedTimes: {
+    ja: "この予約は {n} 回変更されています",
+    zh: "這個預約已更改 {n} 次",
+    en: "Moved {n} times",
+  },
   // Not 予約済み or 予約完了: those are status names, so the log would read
   // "予約済み" then "予約済み → 完了". Same for "Booked" in English.
   "event.created": { ja: "予約を登録", zh: "建立預約", en: "Created" },
   "event.status": { ja: "{before} → {after}", zh: "{before} → {after}", en: "{before} → {after}" },
-  "event.moved": { ja: "{before} から {after} へ変更", zh: "由 {before} 改為 {after}", en: "Moved from {before} to {after}" },
-  "event.restaffed": { ja: "担当を {before} から {after} へ変更", zh: "髮型師由 {before} 改為 {after}", en: "Stylist changed from {before} to {after}" },
+  "event.moved": {
+    ja: "{before} から {after} へ変更",
+    zh: "由 {before} 改為 {after}",
+    en: "Moved from {before} to {after}",
+  },
+  "event.restaffed": {
+    ja: "担当を {before} から {after} へ変更",
+    zh: "髮型師由 {before} 改為 {after}",
+    en: "Stylist changed from {before} to {after}",
+  },
   "event.edited": { ja: "内容を変更", zh: "內容已更改", en: "Edited" },
 
   // Price grades. Separate from role: a promotion doesn't change permissions.
@@ -143,7 +175,11 @@ export const TEXT = {
   search: { ja: "検索", zh: "搜尋", en: "Search" },
   searchHint: { ja: "名前・読み・電話番号", zh: "姓名、拼音或電話", en: "Name, spelling or phone" },
   noneFound: { ja: "見つかりません。", zh: "沒有符合的客戶。", en: "Nobody found." },
-  pickSomeone: { ja: "左から選んでください。", zh: "請從左側選擇。", en: "Pick somebody from the list." },
+  pickSomeone: {
+    ja: "左から選んでください。",
+    zh: "請從左側選擇。",
+    en: "Pick somebody from the list.",
+  },
   phone: { ja: "TEL", zh: "電話", en: "Phone" },
   visits: { ja: "来店", zh: "到店次數", en: "Visits" },
   lastVisit: { ja: "最終来店", zh: "最近到店", en: "Last visit" },
@@ -158,7 +194,11 @@ export const TEXT = {
   editCustomer: { ja: "編集", zh: "編輯", en: "Edit" },
   customerName: { ja: "お名前", zh: "姓名", en: "Name" },
   searchKeyLabel: { ja: "読み・ローマ字", zh: "拼音／英文名", en: "Other spelling" },
-  searchKeyHint: { ja: "検索用。漢字以外の書き方", zh: "用於搜尋", en: "For searching, e.g. a reading" },
+  searchKeyHint: {
+    ja: "検索用。漢字以外の書き方",
+    zh: "用於搜尋",
+    en: "For searching, e.g. a reading",
+  },
   address: { ja: "住所", zh: "地址", en: "Address" },
   firstVisit: { ja: "初来店日", zh: "首次到店", en: "First visit" },
   birthday: { ja: "誕生日", zh: "生日", en: "Birthday" },
@@ -186,7 +226,11 @@ export const TEXT = {
   byCurrency: { ja: "通貨別（受取額）", zh: "貨幣別（收取金額）", en: "By currency (as taken)" },
   byMethod: { ja: "支払方法", zh: "付款方式", en: "By method" },
   byService: { ja: "メニュー別（件数）", zh: "服務別（次數）", en: "By service (count)" },
-  noTakings: { ja: "この月の会計はまだありません。", zh: "這個月還沒有帳單。", en: "Nothing taken this month yet." },
+  noTakings: {
+    ja: "この月の会計はまだありません。",
+    zh: "這個月還沒有帳單。",
+    en: "Nothing taken this month yet.",
+  },
   // The reasoning is in src/db/credit.ts.
   takingsNote: {
     ja: "売上は担当したスタイリストに付きます（シャンプーのみの来店はアシスタント）。",
@@ -228,7 +272,11 @@ export const TEXT = {
   reason: { ja: "理由", zh: "原因", en: "Reason" },
   addClosure: { ja: "休みにする", zh: "設為休息", en: "Close that day" },
   reopen: { ja: "戻す", zh: "取消", en: "Open it again" },
-  noClosures: { ja: "今後の臨時休業はありません。", zh: "之後沒有臨時休息。", en: "Nothing closed ahead." },
+  noClosures: {
+    ja: "今後の臨時休業はありません。",
+    zh: "之後沒有臨時休息。",
+    en: "Nothing closed ahead.",
+  },
   closedSaved: { ja: "休業にしました。", zh: "已設為休息。", en: "Closed." },
   closedWithBookings: {
     ja: "臨時休業として登録しました。当日の予約 {n} 件はそのまま残っています。",
@@ -258,7 +306,11 @@ export const TEXT = {
   // The demo
   demoOn: { ja: "デモ", zh: "示範", en: "Demo" },
   demoLoading: { ja: "デモを読み込み中…", zh: "正在載入示範…", en: "Loading the demo…" },
-  demoFailed: { ja: "デモを読み込めませんでした。", zh: "無法載入示範。", en: "The demo did not load." },
+  demoFailed: {
+    ja: "デモを読み込めませんでした。",
+    zh: "無法載入示範。",
+    en: "The demo did not load.",
+  },
   demoBanner: {
     ja: "デモ表示中です。データはこのブラウザ内だけに保持され、操作内容が他の人に見えることはありません。再読み込みすると元に戻ります。",
     zh: "這是示範。資料只存在於這個瀏覽器中，任何操作都不會被別人看到，重新整理即會復原。",
@@ -338,38 +390,154 @@ export const TEXT = {
 
   // API errors, keyed by the server's error code.
   "error.signed-out": { ja: "サインインしてください。", zh: "請先登入。", en: "Please sign in." },
-  "error.forbidden": { ja: "この操作は許可されていません。", zh: "您沒有執行此操作的權限。", en: "You are not allowed to do that." },
-  "error.booking-not-found": { ja: "その予約は見つかりません。", zh: "找不到該預約。", en: "That booking was not found." },
-  "error.customer-not-found": { ja: "そのお客様は見つかりません。", zh: "找不到該客人。", en: "That customer was not found." },
-  "error.unreadable-body": { ja: "本文が読み取れません。", zh: "無法讀取請求內容。", en: "The request body could not be read." },
-  "error.no-booking": { ja: "予約が指定されていません。", zh: "未指定預約。", en: "No booking was given." },
-  "error.bad-amount": { ja: "金額が不正です。", zh: "金額不正確。", en: "The amount is not valid." },
-  "error.amount-too-large": { ja: "金額が大きすぎます。", zh: "金額過大。", en: "The amount is too large." },
-  "error.bad-method": { ja: "その支払方法は使えません。", zh: "不接受該付款方式。", en: "That payment method is not accepted." },
-  "error.bad-currency": { ja: "その通貨は扱っていません。", zh: "不接受該貨幣。", en: "That currency is not accepted." },
-  "error.booking-cancelled": { ja: "取り消された予約には会計できません。", zh: "已取消的預約無法收款。", en: "A cancelled booking cannot be paid." },
-  "error.bad-date": { ja: "日付は YYYY-MM-DD で送ってください。", zh: "日期請以 YYYY-MM-DD 格式傳送。", en: "Send the date as YYYY-MM-DD." },
+  "error.forbidden": {
+    ja: "この操作は許可されていません。",
+    zh: "您沒有執行此操作的權限。",
+    en: "You are not allowed to do that.",
+  },
+  "error.booking-not-found": {
+    ja: "その予約は見つかりません。",
+    zh: "找不到該預約。",
+    en: "That booking was not found.",
+  },
+  "error.customer-not-found": {
+    ja: "そのお客様は見つかりません。",
+    zh: "找不到該客人。",
+    en: "That customer was not found.",
+  },
+  "error.unreadable-body": {
+    ja: "本文が読み取れません。",
+    zh: "無法讀取請求內容。",
+    en: "The request body could not be read.",
+  },
+  "error.no-booking": {
+    ja: "予約が指定されていません。",
+    zh: "未指定預約。",
+    en: "No booking was given.",
+  },
+  "error.bad-amount": {
+    ja: "金額が不正です。",
+    zh: "金額不正確。",
+    en: "The amount is not valid.",
+  },
+  "error.amount-too-large": {
+    ja: "金額が大きすぎます。",
+    zh: "金額過大。",
+    en: "The amount is too large.",
+  },
+  "error.bad-method": {
+    ja: "その支払方法は使えません。",
+    zh: "不接受該付款方式。",
+    en: "That payment method is not accepted.",
+  },
+  "error.bad-currency": {
+    ja: "その通貨は扱っていません。",
+    zh: "不接受該貨幣。",
+    en: "That currency is not accepted.",
+  },
+  "error.booking-cancelled": {
+    ja: "取り消された予約には会計できません。",
+    zh: "已取消的預約無法收款。",
+    en: "A cancelled booking cannot be paid.",
+  },
+  "error.bad-date": {
+    ja: "日付は YYYY-MM-DD で送ってください。",
+    zh: "日期請以 YYYY-MM-DD 格式傳送。",
+    en: "Send the date as YYYY-MM-DD.",
+  },
   "error.name-required": { ja: "名前を入れてください。", zh: "請輸入名稱。", en: "Enter a name." },
-  "error.create-failed": { ja: "登録できませんでした。", zh: "無法登記。", en: "It could not be saved." },
-  "error.no-customer": { ja: "お客様が指定されていません。", zh: "未指定客人。", en: "No customer was given." },
+  "error.create-failed": {
+    ja: "登録できませんでした。",
+    zh: "無法登記。",
+    en: "It could not be saved.",
+  },
+  "error.no-customer": {
+    ja: "お客様が指定されていません。",
+    zh: "未指定客人。",
+    en: "No customer was given.",
+  },
   "error.empty-record": { ja: "内容が空です。", zh: "內容是空的。", en: "The record is empty." },
-  "error.not-configured": { ja: "サーバの設定が未完了です。", zh: "伺服器尚未完成設定。", en: "The server is not set up yet." },
-  "error.too-many-attempts": { ja: "試行が多すぎます。しばらく待ってください。", zh: "嘗試次數過多，請稍後再試。", en: "Too many attempts. Wait a while and try again." },
-  "error.wrong-credentials": { ja: "IDかパスワードが違います。", zh: "帳號或密碼錯誤。", en: "The ID or password is wrong." },
-  "error.staff-not-found": { ja: "その職員は見つかりません。", zh: "找不到該員工。", en: "That staff member was not found." },
-  "error.hours-need-seven-days": { ja: "7日分をまとめて送ってください。", zh: "請一次傳送七天的資料。", en: "Send all seven days together." },
-  "error.bad-weekday": { ja: "曜日が不正です。", zh: "星期不正確。", en: "The day of the week is not valid." },
-  "error.bad-opening-time": { ja: "開店時刻の形式が違います。", zh: "開店時間格式不正確。", en: "The opening time is not in HH:MM form." },
-  "error.bad-closing-time": { ja: "閉店時刻の形式が違います。", zh: "關店時間格式不正確。", en: "The closing time is not in HH:MM form." },
-  "error.closes-before-opens": { ja: "閉店が開店より前になっています。", zh: "關店時間早於開店時間。", en: "Closing is before opening." },
-  "error.duplicate-weekday": { ja: "曜日が重複しています。", zh: "星期重複。", en: "A day of the week appears twice." },
+  "error.not-configured": {
+    ja: "サーバの設定が未完了です。",
+    zh: "伺服器尚未完成設定。",
+    en: "The server is not set up yet.",
+  },
+  "error.too-many-attempts": {
+    ja: "試行が多すぎます。しばらく待ってください。",
+    zh: "嘗試次數過多，請稍後再試。",
+    en: "Too many attempts. Wait a while and try again.",
+  },
+  "error.wrong-credentials": {
+    ja: "IDかパスワードが違います。",
+    zh: "帳號或密碼錯誤。",
+    en: "The ID or password is wrong.",
+  },
+  "error.staff-not-found": {
+    ja: "その職員は見つかりません。",
+    zh: "找不到該員工。",
+    en: "That staff member was not found.",
+  },
+  "error.hours-need-seven-days": {
+    ja: "7日分をまとめて送ってください。",
+    zh: "請一次傳送七天的資料。",
+    en: "Send all seven days together.",
+  },
+  "error.bad-weekday": {
+    ja: "曜日が不正です。",
+    zh: "星期不正確。",
+    en: "The day of the week is not valid.",
+  },
+  "error.bad-opening-time": {
+    ja: "開店時刻の形式が違います。",
+    zh: "開店時間格式不正確。",
+    en: "The opening time is not in HH:MM form.",
+  },
+  "error.bad-closing-time": {
+    ja: "閉店時刻の形式が違います。",
+    zh: "關店時間格式不正確。",
+    en: "The closing time is not in HH:MM form.",
+  },
+  "error.closes-before-opens": {
+    ja: "閉店が開店より前になっています。",
+    zh: "關店時間早於開店時間。",
+    en: "Closing is before opening.",
+  },
+  "error.duplicate-weekday": {
+    ja: "曜日が重複しています。",
+    zh: "星期重複。",
+    en: "A day of the week appears twice.",
+  },
   "error.bad-role": { ja: "役割が不正です。", zh: "職位不正確。", en: "The role is not valid." },
-  "error.bad-start-time": { ja: "開始時刻の形式が違います。", zh: "開始時間格式不正確。", en: "The start time is not in HH:MM form." },
-  "error.no-services": { ja: "施術を1つ以上選んでください。", zh: "請至少選擇一項服務。", en: "Choose at least one treatment." },
-  "error.too-many-services": { ja: "1件の予約に入れられる施術は8つまでです。", zh: "每個預約最多只能有八項服務。", en: "A booking can hold at most eight treatments." },
-  "error.unknown-service": { ja: "メニューにない施術が含まれています。", zh: "包含不在服務項目中的服務。", en: "A treatment is not on the menu." },
-  "error.crosses-midnight": { ja: "その開始時刻だと日付をまたぎます。", zh: "以這個開始時間會跨過午夜。", en: "Starting then, it would run past midnight." },
-  "error.bad-status": { ja: "その状態は使えません。", zh: "該狀態無法使用。", en: "That status is not valid." },
+  "error.bad-start-time": {
+    ja: "開始時刻の形式が違います。",
+    zh: "開始時間格式不正確。",
+    en: "The start time is not in HH:MM form.",
+  },
+  "error.no-services": {
+    ja: "施術を1つ以上選んでください。",
+    zh: "請至少選擇一項服務。",
+    en: "Choose at least one treatment.",
+  },
+  "error.too-many-services": {
+    ja: "1件の予約に入れられる施術は8つまでです。",
+    zh: "每個預約最多只能有八項服務。",
+    en: "A booking can hold at most eight treatments.",
+  },
+  "error.unknown-service": {
+    ja: "メニューにない施術が含まれています。",
+    zh: "包含不在服務項目中的服務。",
+    en: "A treatment is not on the menu.",
+  },
+  "error.crosses-midnight": {
+    ja: "その開始時刻だと日付をまたぎます。",
+    zh: "以這個開始時間會跨過午夜。",
+    en: "Starting then, it would run past midnight.",
+  },
+  "error.bad-status": {
+    ja: "その状態は使えません。",
+    zh: "該狀態無法使用。",
+    en: "That status is not valid.",
+  },
 } satisfies Record<string, Dict>;
 
 export type Key = keyof typeof TEXT;

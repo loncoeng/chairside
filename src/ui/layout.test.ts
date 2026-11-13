@@ -31,7 +31,10 @@ function line(over: Partial<Line> & Pick<Line, "startsAt" | "endsAt">): Line {
   };
 }
 
-function day(lines: Line[], hours: Day["hours"] = { opensAt: "10:00", closesAt: "20:00", closed: false }): Day {
+function day(
+  lines: Line[],
+  hours: Day["hours"] = { opensAt: "10:00", closesAt: "20:00", closed: false },
+): Day {
   return { date: "2026-09-23", weekday: 3, hours, closure: null, holidays: [], lines };
 }
 
@@ -124,10 +127,11 @@ test("a closed day with nothing on it reports nothing rather than zeroes", () =>
 
 test("a closed day that has bookings still gets a grid", () => {
   // Bookings on a closed day are allowed, so the grid must still show them.
-  const monday = day(
-    [line({ itemId: 1, seatId: 1, startsAt: "13:00", endsAt: "13:45" })],
-    { opensAt: null, closesAt: null, closed: true },
-  );
+  const monday = day([line({ itemId: 1, seatId: 1, startsAt: "13:00", endsAt: "13:45" })], {
+    opensAt: null,
+    closesAt: null,
+    closed: true,
+  });
 
   deepStrictEqual(span(monday), { open: 13 * 60, close: 14 * 60 });
   strictEqual(usage(monday, SEATS).find((u) => u.kind === "styling")!.peak, 1);

@@ -4,6 +4,17 @@
 const ROUNDS = 100_000;
 const SESSION_HOURS = 12;
 
+/**
+ * Shortest signing key accepted. Anything shorter is treated as no key at all,
+ * so a placeholder left in a secret store fails closed instead of signing
+ * tokens somebody could guess. `openssl rand -base64 32` gives 44 characters.
+ */
+export const MIN_SECRET_LENGTH = 32;
+
+/** Whether this key is long enough to sign with. */
+export const usable = (secret: string | undefined): secret is string =>
+  typeof secret === "string" && secret.length >= MIN_SECRET_LENGTH;
+
 const encoder = new TextEncoder();
 
 const toBase64Url = (bytes: Uint8Array): string =>
@@ -47,9 +58,19 @@ export async function hashPassword(password: string): Promise<string> {
   return `pbkdf2$${ROUNDS}$${toBase64Url(salt)}$${toBase64Url(hash)}`;
 }
 
-/** Whether a password matches the stored hash. No stored hash means no sign-in. */
+let standIn: Promise<string> | null = null;
+
+/**
+ * Whether a password matches the stored hash. No stored hash means no sign-in,
+ * but the hash is still computed, against a throwaway one: answering fast for
+ * an unknown login id would tell somebody which ids exist.
+ */
 export async function checkPassword(password: string, stored: string | null): Promise<boolean> {
-  if (!stored) return false;
+  if (!stored) {
+    standIn ??= hashPassword(crypto.randomUUID());
+    await checkPassword(password, await standIn);
+    return false;
+  }
 
   const [scheme, rounds, salt, hash] = stored.split("$");
   if (scheme !== "pbkdf2" || !rounds || !salt || !hash) return false;
@@ -78,6 +99,7 @@ async function signer(secret: string): Promise<CryptoKey> {
  * SESSION_HOURS (12) to apply. Expiry is in milliseconds.
  */
 export async function issue(secret: string, staffId: number, role: string): Promise<string> {
+  if (!usable(secret)) throw new Error(`the signing key must be ${MIN_SECRET_LENGTH}+ characters`);
   const expiresAt = Date.now() + SESSION_HOURS * 3600 * 1000;
   const body = `${staffId}.${role}.${expiresAt}`;
   const signature = await crypto.subtle.sign("HMAC", await signer(secret), encoder.encode(body));
@@ -92,8 +114,8 @@ export async function read(
   secret: string | undefined,
   token: string | null,
 ): Promise<Session | null> {
-  // No secret configured: nobody is signed in.
-  if (!secret || !token) return null;
+  // No usable key configured: nobody is signed in.
+  if (!usable(secret) || !token) return null;
 
   try {
     const at = token.lastIndexOf(".");
@@ -119,7 +141,11 @@ export async function read(
   }
 }
 
-export const COOKIE = "chairside_session";
+/**
+ * `__Host-` makes the browser refuse the cookie unless it is Secure, has Path=/
+ * and names no Domain, so nothing on another subdomain can set or widen it.
+ */
+export const COOKIE = "__Host-chairside_session";
 
 /** Session token from the request's Cookie header. */
 export function tokenFrom(request: Request): string | null {

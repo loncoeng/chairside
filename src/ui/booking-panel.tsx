@@ -8,13 +8,14 @@ import { serviceName } from "./i18n.ts";
 import type { Key } from "./i18n.ts";
 import type { Service } from "./book.tsx";
 import { priceFor } from "./book.tsx";
+import { centsFrom, shown, typedFrom } from "../db/money.ts";
 import { METHODS } from "../db/payment-methods.ts";
 
 type Payment = {
   id: number;
-  amount: number;
+  amountCents: number;
   currency: string;
-  rateToBase: number;
+  rateToBaseBp: number;
   method: string;
   paidAt: number;
 };
@@ -96,6 +97,9 @@ export function BookingPanel({
 
   const [movingTo, setMovingTo] = useState("");
   const [amount, setAmount] = useState("");
+  // One per opening of the till: pressing twice, or retrying after a lost reply, pays once.
+  const [requestKey] = useState(() => crypto.randomUUID());
+  const amountCents = centsFrom(amount);
   const [currency, setCurrency] = useState("MOP");
   const [payMethod, setPayMethod] = useState("cash");
   const [currencyCodes, setCurrencyCodes] = useState<string[]>(["MOP"]);
@@ -126,7 +130,7 @@ export function BookingPanel({
           const grade = staff.find((p) => p.id === item.staffId)?.grade ?? null;
           return sum + (service ? (priceFor(service, grade) ?? 0) : 0);
         }, 0);
-        if (listed > 0) setAmount(String(listed));
+        if (listed > 0) setAmount(typedFrom(listed));
       })
       .catch((problem: unknown) => {
         if (!stop.signal.aborted) setFailed(String(problem));
@@ -155,9 +159,10 @@ export function BookingPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           bookingId: line.bookingId,
-          amount: Number(amount),
+          amountCents,
           currency,
           method: payMethod,
+          requestKey,
         }),
       });
       const reply = (await response.json()) as { ok?: boolean; error?: string };
@@ -269,7 +274,7 @@ export function BookingPanel({
                   {detail.payments.map((p) => (
                     <li key={p.id}>
                       <span class="paid-tag">{t("paid")}</span>
-                      {p.currency} {p.amount.toLocaleString("en-US")}
+                      {p.currency} {shown(p.amountCents)}
                       <span class="paid-method">{t(`method.${p.method}` as "method.cash")}</span>
                     </li>
                   ))}
@@ -315,7 +320,7 @@ export function BookingPanel({
                   <button
                     type="button"
                     class="primary"
-                    disabled={busy || Number(amount) <= 0}
+                    disabled={busy || amountCents === null || amountCents <= 0}
                     onClick={pay}
                   >
                     {t("takePayment")}

@@ -226,7 +226,8 @@ export function Shop() {
               person={person}
               busy={busy}
               onSave={async (patch) => {
-                const reply = await send("/api/shop/staff", "POST", { ...person, ...patch });
+                // Only what changed; the server keeps every field that is not sent.
+                const reply = await send("/api/shop/staff", "POST", { id: person.id, ...patch });
                 if (!reply) return;
                 const pending = Array.isArray(reply.stillBooked) ? reply.stillBooked.length : 0;
                 setSaid(pending > 0 ? t("leftWithBookings", { n: pending }) : t("staffSaved"));

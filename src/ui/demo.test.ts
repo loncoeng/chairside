@@ -4,7 +4,7 @@
 // The token goes to route() as an argument, as in demo.ts.
 
 import { strictEqual, ok } from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import initSqlJs from "sql.js";
@@ -14,20 +14,11 @@ import { route } from "../worker/router.ts";
 import { DEMO_LOGIN, keepSession } from "./demo.ts";
 
 const SQL = await initSqlJs();
-const SECRET = "demo-only-secret";
+const SECRET = "demo-only-secret-published-in-the-source";
 
 /** Schema, one staff member, and the demo login. */
 function database() {
-  const raw = new SQL.Database();
-  for (const name of readdirSync("migrations")
-    .filter((n) => n.endsWith(".sql"))
-    .sort()) {
-    for (const statement of readFileSync(`migrations/${name}`, "utf8").split(
-      "--> statement-breakpoint",
-    )) {
-      if (statement.trim() !== "") raw.run(statement);
-    }
-  }
+  const raw = migrated();
   raw.run(`
     INSERT INTO seats (id, name, kind, active, sort_order) VALUES (1, 'A1', 'styling', 1, 1);
     INSERT INTO staff (id, name, role, grade, color) VALUES (1, 'Aoi', 'owner', 'owner', '#B4553F');
@@ -127,6 +118,7 @@ import { gunzipSync } from "node:zlib";
 
 import { moveToNow, weeksToShift } from "./demo.ts";
 import { todayInShop } from "./types.ts";
+import { migrated } from "../db/test-database.ts";
 
 const DEMO_FILE = "public/demo.sqlite.gz";
 

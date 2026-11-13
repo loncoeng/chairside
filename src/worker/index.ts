@@ -1,5 +1,5 @@
 // Worker entry, and the only file that names D1. See DESIGN.md, "One schema,
-// three places to run it"; src/db/portable.test.ts runs the same queries on sql.js.
+// two places to run it"; the tests run the same router on sql.js.
 
 import { drizzle } from "drizzle-orm/d1";
 

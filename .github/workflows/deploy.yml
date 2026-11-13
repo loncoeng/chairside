@@ -10,6 +10,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      reset:
+        description: Empty the live database and write the sample again from nothing
+        type: boolean
+        default: false
 
 # One at a time, never cancelled: a cancelled deploy leaves the live version unclear.
 concurrency:
@@ -44,6 +49,14 @@ jobs:
       # records applied migrations). Non-interactive runs skip the prompt but still back up.
       - name: Bring the database up to date
         run: npx wrangler d1 migrations apply chairside --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Only when started by hand with "reset" ticked. See seed/demo-reset.sql.
+      - name: Empty the database
+        if: inputs.reset
+        run: npx wrangler d1 execute chairside --remote --file seed/demo-reset.sql
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -176,6 +189,10 @@ jobs:
           expect 401 -X PUT -H 'content-type: application/json' \
             -d '{"name":"probe"}' "$base/api/people/1" || exit 1
 
+          # A write that is not JSON is refused before anything reads it (cross-site forms can't send JSON).
+          printf 'POST %-31s as plain text -> ' "/api/people"
+          expect 415 -X POST -H 'content-type: text/plain' -d 'name=probe' "$base/api/people" || exit 1
+
           echo "the doors are locked"
 
           # The demo's published password must not work here (seed/logins.sql is not applied).
@@ -195,7 +212,7 @@ jobs:
           stylist=$(node scripts/mint-session.ts 2 stylist)
 
           # Check the body, not just the status: a broken run_worker_first returns the SPA HTML with 200.
-          code=$(curl -s -o /tmp/api -w '%{http_code}' --max-time 20 -H "cookie: chairside_session=$owner" "$base/api/room" || true)
+          code=$(curl -s -o /tmp/api -w '%{http_code}' --max-time 20 -H "cookie: __Host-chairside_session=$owner" "$base/api/room" || true)
           echo "GET /api/room -> HTTP $code"
           head -c 300 /tmp/api; echo
           if [ "$code" != "200" ] || ! grep -q '"seats"' /tmp/api; then
@@ -213,7 +230,7 @@ jobs:
           echo "the database answers"
 
           # Use a fixed sample date: an empty day is a valid reply.
-          code=$(curl -s -o /tmp/day -w '%{http_code}' --max-time 20 -H "cookie: chairside_session=$owner" "$base/api/day?date=2026-09-23" || true)
+          code=$(curl -s -o /tmp/day -w '%{http_code}' --max-time 20 -H "cookie: __Host-chairside_session=$owner" "$base/api/day?date=2026-09-23" || true)
           echo "GET /api/day -> HTTP $code"
           lines=$(grep -o '"itemId"' /tmp/day | wc -l)
           echo "treatments on that day: $lines"
@@ -226,7 +243,7 @@ jobs:
 
           # Role gate (src/db/permissions.ts): stylists can't see revenue.
           printf 'GET  %-31s as a stylist  -> ' "/api/revenue"
-          expect 403 -H "cookie: chairside_session=$stylist" "$base/api/revenue?month=2026-09" || exit 1
+          expect 403 -H "cookie: __Host-chairside_session=$stylist" "$base/api/revenue?month=2026-09" || exit 1
           echo "the roles hold"
         env:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}

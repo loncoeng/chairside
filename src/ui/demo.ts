@@ -25,7 +25,7 @@ let demoToken: string | null = null;
 export const DEMO_LOGIN = { loginId: "aoi", password: "chairside-demo" };
 
 /** Public on purpose: it only protects invented data in the visitor's own browser. */
-const DEMO_SECRET = "demo-only-secret";
+const DEMO_SECRET = "demo-only-secret-published-in-the-source";
 
 /** Seconds per day. The file stores timestamps in seconds, not milliseconds. */
 const DAY = 86_400;

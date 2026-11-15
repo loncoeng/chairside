@@ -2,7 +2,7 @@
 
 import { Avatar } from "./avatar.tsx";
 import { ThemeSwitch } from "./theme.tsx";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { Calendar, Peak } from "./calendar.tsx";
 import { BookingForm } from "./book.tsx";
 import { BookingPanel } from "./booking-panel.tsx";
@@ -248,7 +248,7 @@ function Screen() {
 
   return (
     <main class="wide">
-      <header>
+      <header ref={useHeaderHeight()}>
         <div class="title">
           <h1>chairside</h1>
           {demo === "on" && (
@@ -570,4 +570,26 @@ function RoomSummary({ room }: { room: Room }) {
       </ul>
     </>
   );
+}
+
+/**
+ * Keeps --header-h on <html> equal to the header's height, so what sticks
+ * below it (the calendar's seat row, the customer card) knows where to stop.
+ */
+function useHeaderHeight() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement;
+    const watch = new ResizeObserver(() => {
+      root.style.setProperty("--header-h", `${el.offsetHeight}px`);
+    });
+    watch.observe(el);
+    return () => {
+      watch.disconnect();
+      root.style.removeProperty("--header-h");
+    };
+  }, []);
+  return ref;
 }

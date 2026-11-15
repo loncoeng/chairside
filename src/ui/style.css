@@ -767,6 +767,26 @@ button.primary:disabled {
   overflow: hidden;
 }
 
+/* When the grid fits the screen, it stops scrolling sideways on its own, so
+   the seat row can stick under the header as the day scrolls past. */
+@media (min-width: 66rem) {
+  .cal-scroll {
+    overflow: visible;
+  }
+  .cal-corner,
+  .cal-group {
+    position: sticky;
+    top: var(--header-h, 0px);
+    z-index: 4;
+    background: var(--surface);
+  }
+  .cal-head {
+    /* 1px under the kind row, so no sliver of a booking shows between. */
+    top: calc(var(--header-h, 0px) + 1.8rem - 1px);
+    z-index: 4;
+  }
+}
+
 /* The time now, across the grid, with the clock in the time column. */
 .cal-now {
   align-self: start;
@@ -817,8 +837,12 @@ header .title {
   background: var(--accent-soft);
 }
 
-/* Language switch. */
+/* Stays at the top while the page scrolls. */
 header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ground);
   display: flex;
   align-items: center;
   gap: 0.5rem 1.25rem;
@@ -826,6 +850,14 @@ header {
   padding: 0.8rem 0;
   border-bottom: 1px solid var(--rule);
   margin-bottom: 0.25rem;
+}
+
+/* On a phone the header wraps to three lines; keeping it would cost a
+   sixth of the screen. */
+@media (max-width: 40rem) {
+  header {
+    position: static;
+  }
 }
 
 .langs {
@@ -1655,7 +1687,7 @@ section[aria-labelledby="room"] .lede {
   }
   .people-detail {
     position: sticky;
-    top: 1rem;
+    top: calc(var(--header-h, 0px) + 1rem);
   }
 }
 

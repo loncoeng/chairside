@@ -139,37 +139,45 @@ export function Money({ month, onMonth }: { month: string; onMonth: (month: stri
           <section>
             <h4>{t("byDay")}</h4>
             <div class="chart">
-              {average > 0 && (
-                <div
-                  class="chart-mean"
-                  style={{ bottom: `${(average / busiest) * 100}%` }}
-                  title={`${t("average")} ${mop(average)}`}
-                >
-                  <span>{t("average")}</span>
-                </div>
-              )}
-
-              <ul class="chart-days">
-                {days.map((d) => (
-                  <li
-                    key={d.date}
-                    class={`chart-day${d.n === 0 ? " is-shut" : ""}${d.weekday === 0 || d.weekday === 6 ? " is-weekend" : ""}`}
-                    title={
-                      d.n === 0
-                        ? `${d.date}（${weekday(d.weekday)}）${t("noTakingsThatDay")}`
-                        : `${d.date}（${weekday(d.weekday)}）${mop(d.totalCents)} / ${d.n}`
-                    }
+              {/* The line and the bars share one box, so a share of its height
+                  means the same thing to both. The day labels sit below it. */}
+              <div class="chart-plot">
+                {average > 0 && (
+                  <div
+                    class="chart-mean"
+                    style={{ bottom: `${(average / busiest) * 100}%` }}
+                    title={`${t("average")} ${mop(average)}`}
                   >
-                    <span class="chart-stack">
+                    <span>{t("average")}</span>
+                  </div>
+                )}
+                <ul class="chart-bars">
+                  {days.map((d) => (
+                    <li
+                      key={d.date}
+                      class={`chart-day${d.n === 0 ? " is-shut" : ""}${d.weekday === 0 || d.weekday === 6 ? " is-weekend" : ""}`}
+                      title={
+                        d.n === 0
+                          ? `${d.date}（${weekday(d.weekday)}）${t("noTakingsThatDay")}`
+                          : `${d.date}（${weekday(d.weekday)}）${mop(d.totalCents)} / ${d.n}`
+                      }
+                    >
                       <span
                         class="chart-fill"
                         style={{ height: `${(d.totalCents / busiest) * 100}%` }}
                       />
-                    </span>
-                    <span class="chart-label">
-                      {String(d.day).padStart(2, "0")}
-                      <em>{weekday(d.weekday)}</em>
-                    </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <ul class="chart-labels" aria-hidden="true">
+                {days.map((d) => (
+                  <li
+                    key={d.date}
+                    class={`chart-label${d.n === 0 ? " is-shut" : ""}${d.weekday === 0 || d.weekday === 6 ? " is-weekend" : ""}`}
+                  >
+                    {String(d.day).padStart(2, "0")}
+                    <em>{weekday(d.weekday)}</em>
                   </li>
                 ))}
               </ul>

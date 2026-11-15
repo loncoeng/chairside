@@ -1,6 +1,7 @@
 // Day view: one column per seat, one row per quarter hour.
 // Columns are seats, not stylists, because seats (especially shampoo stations) run out first.
 
+import { useState } from "preact/hooks";
 import type { Day, Line, Seat } from "./types.ts";
 import { HEADER_ROWS, STEP, clock, linesFor, place, span as gridSpan, usage } from "./layout.ts";
 import { useText } from "./lang-context.ts";
@@ -15,15 +16,19 @@ export function Calendar({
   seats,
   services,
   onPick,
+  onEmpty,
   picked,
 }: {
   day: Day;
   seats: Seat[];
   services: Service[];
   onPick: (line: Line) => void;
+  /** Called with "HH:MM" when the free part of the grid is clicked. */
+  onEmpty?: (startsAt: string) => void;
   picked: number | null;
 }) {
   const { t, lang } = useText();
+  const [hover, setHover] = useState<number | null>(null);
   const { open, close } = gridSpan(day);
 
   const unusual = day.hours.closed || day.closure !== null;
@@ -123,6 +128,36 @@ export function Calendar({
             />
           ))}
 
+          {/* Clicking free space starts a booking at that time. Behind the
+              blocks, and out of the tab order: "New booking" does the same. */}
+          {onEmpty && (
+            <button
+              type="button"
+              class="cal-slots"
+              tabIndex={-1}
+              aria-hidden="true"
+              style={{
+                gridRow: `${HEADER_ROWS + 1} / span ${rows}`,
+                gridColumn: `2 / span ${columns.length}`,
+              }}
+              onMouseMove={(e) => setHover(rowAt(e, rows))}
+              onMouseLeave={() => setHover(null)}
+              onClick={(e) => onEmpty(clock(open + rowAt(e, rows) * STEP))}
+            />
+          )}
+          {onEmpty && hover !== null && (
+            <div
+              class="cal-hover"
+              style={{
+                gridRow: hover + HEADER_ROWS + 1,
+                gridColumn: `2 / span ${columns.length}`,
+              }}
+              aria-hidden="true"
+            >
+              {t("bookAt", { time: clock(open + hover * STEP) })}
+            </div>
+          )}
+
           {day.lines.map((line) => {
             const col = column.get(line.seatId ?? UNASSIGNED);
             if (col === undefined) return null;
@@ -148,6 +183,14 @@ export function Calendar({
       </div>
     </>
   );
+}
+
+/** The grid row under the pointer, counted from the first time row. */
+function rowAt(e: MouseEvent, rows: number): number {
+  const box = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  if (box.height === 0) return 0;
+  const row = Math.floor(((e.clientY - box.top) / box.height) * rows);
+  return Math.min(rows - 1, Math.max(0, row));
 }
 
 function Block({

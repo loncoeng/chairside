@@ -91,6 +91,8 @@ function Screen() {
   // Bumped on customer add/rename so the booking form's picker refetches.
   const [peopleRevision, setPeopleRevision] = useState(0);
   const [booking, setBooking] = useState(false);
+  /** Where a new booking starts, when it was opened from the grid. */
+  const [startAt, setStartAt] = useState<string | null>(null);
   const [picked, setPicked] = useState<Line | null>(null);
   // Bumped after a booking change to refetch the day.
   const [revision, setRevision] = useState(0);
@@ -247,7 +249,11 @@ function Screen() {
       <header>
         <div class="title">
           <h1>chairside</h1>
-          <p class="tagline">{t("tagline")}</p>
+          {demo === "on" && (
+            <span class="demo-badge" title={t("demoBanner")}>
+              {t("demoBadge")}
+            </span>
+          )}
         </div>
 
         <nav class="views" aria-label="View">
@@ -270,24 +276,24 @@ function Screen() {
           )}
         </nav>
 
-        {/* Exit only. The demo is entered from the sign-in screen. */}
-        {demo === "on" && (
-          <button type="button" class="demo-toggle is-on" onClick={leaveDemo}>
-            {t("demoLeave")}
-          </button>
-        )}
-
         <span class="whoami">
           {me.name}
-          <button
-            type="button"
-            onClick={async () => {
-              await fetch("/api/session", { method: "DELETE" });
-              setMe(null);
-            }}
-          >
-            {t("signOut")}
-          </button>
+          {/* In the demo, leaving is the way out. It is entered from the sign-in screen. */}
+          {demo === "on" ? (
+            <button type="button" onClick={leaveDemo}>
+              {t("demoLeave")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={async () => {
+                await fetch("/api/session", { method: "DELETE" });
+                setMe(null);
+              }}
+            >
+              {t("signOut")}
+            </button>
+          )}
         </span>
 
         <div class="langs" role="group" aria-label="Language">
@@ -321,7 +327,6 @@ function Screen() {
         </section>
       )}
 
-      {demo === "on" && <p class="demo-banner">{t("demoBanner")}</p>}
       {demo === "failed" && (
         <p class="failed" role="alert">
           {t("demoFailed")} {demoWhy && <span class="reason">{demoWhy}</span>}
@@ -381,6 +386,7 @@ function Screen() {
                 class="primary"
                 onClick={() => {
                   setPicked(null);
+                  setStartAt(null);
                   setBooking(true);
                 }}
                 disabled={services.length === 0}
@@ -392,7 +398,9 @@ function Screen() {
 
           {booking && (
             <BookingForm
+              key={startAt ?? ""}
               date={date}
+              startsAt={startAt}
               staff={room.status === "ready" ? room.value.staff : []}
               services={services}
               customers={customers}
@@ -455,6 +463,11 @@ function Screen() {
                   // One panel at a time.
                   setBooking(false);
                   setPicked(line);
+                }}
+                onEmpty={(at) => {
+                  setPicked(null);
+                  setStartAt(at);
+                  setBooking(true);
                 }}
                 picked={picked?.bookingId ?? null}
               />

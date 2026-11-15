@@ -198,7 +198,7 @@ export function Shop() {
           </button>
         </div>
 
-        <ul class="rows">
+        <ul class="closures">
           {data.closures.map((c) => (
             <li key={c.id}>
               <span>{c.date}</span>

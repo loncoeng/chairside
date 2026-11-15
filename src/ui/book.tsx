@@ -49,6 +49,7 @@ type Reply = {
 
 export function BookingForm({
   date,
+  startsAt: firstStart,
   staff,
   services,
   customers,
@@ -56,6 +57,8 @@ export function BookingForm({
   onClose,
 }: {
   date: string;
+  /** "HH:MM" to start from, e.g. where the grid was clicked. */
+  startsAt?: string | null;
   staff: Person[];
   services: Service[];
   customers: Customer[];
@@ -63,7 +66,7 @@ export function BookingForm({
   onClose: () => void;
 }) {
   const { t, lang, verdict: sayVerdict, failure } = useText();
-  const [startsAt, setStartsAt] = useState("10:00");
+  const [startsAt, setStartsAt] = useState(firstStart ?? "10:00");
   const [staffId, setStaffId] = useState<number | null>(staff[0]?.id ?? null);
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [chosen, setChosen] = useState<number[]>([]);
@@ -248,6 +251,8 @@ export function BookingForm({
       )}
 
       <div class="sheet-actions">
+        {/* Says why the button is greyed out, rather than leaving it to be guessed. */}
+        {chosen.length === 0 && <span class="sheet-hint">{t("pickMenuFirst")}</span>}
         <button type="button" onClick={onClose}>
           {t("cancel")}
         </button>

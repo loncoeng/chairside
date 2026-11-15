@@ -94,7 +94,7 @@ export function SignIn({
           >
             {demoState === "loading" ? t("demoLoading") : t("demoOpen")}
           </button>
-          <p class="said">{t("demoInBrowser")}</p>
+          <p class="sign-in-aside">{t("demoInBrowser")}</p>
           {demoState === "failed" && (
             <p class="failed" role="alert">
               {t("demoFailed")}
@@ -104,46 +104,54 @@ export function SignIn({
         </section>
       )}
 
-      <h2 class="sign-in-shop">{t("shopSignIn")}</h2>
-      <form onSubmit={send}>
-        <label class="field">
-          <span>{t("loginId")}</span>
-          <input
-            type="text"
-            autocomplete="username"
-            value={loginId}
-            onInput={(e) => setLoginId((e.target as HTMLInputElement).value)}
-          />
-        </label>
+      {/* Folded away where there is a demo to open: a visitor needs the demo,
+          and the shop knows where its own door is. */}
+      <details class="sign-in-shop" open={!onOpenDemo || demo !== null || failed !== null}>
+        <summary>{t("shopSignIn")}</summary>
+        <form onSubmit={send}>
+          <label class="field">
+            <span>{t("loginId")}</span>
+            <input
+              type="text"
+              autocomplete="username"
+              value={loginId}
+              onInput={(e) => setLoginId((e.target as HTMLInputElement).value)}
+            />
+          </label>
 
-        <label class="field">
-          <span>{t("password")}</span>
-          <input
-            type="password"
-            autocomplete="current-password"
-            value={password}
-            onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
-          />
-        </label>
+          <label class="field">
+            <span>{t("password")}</span>
+            <input
+              type="password"
+              autocomplete="current-password"
+              value={password}
+              onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
+            />
+          </label>
 
-        {failed && (
-          <p class="failed" role="alert">
-            {failed}
-          </p>
+          {failed && (
+            <p class="failed" role="alert">
+              {failed}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            class="primary"
+            disabled={busy || loginId === "" || password === ""}
+          >
+            {busy ? t("sending") : t("signIn")}
+          </button>
+        </form>
+
+        {/* Demo password shown openly (invented data, local only). The public
+            instance has no open account, so no hint when the demo is off. */}
+        {demo ? (
+          <p class="sign-in-aside">{t("demoCredentials", demo)}</p>
+        ) : (
+          <p class="sign-in-aside">{t("shopSignInNote")}</p>
         )}
-
-        <button type="submit" class="primary" disabled={busy || loginId === "" || password === ""}>
-          {busy ? t("sending") : t("signIn")}
-        </button>
-      </form>
-
-      {/* Demo password shown openly (invented data, local only). The public
-          instance has no open account, so no hint when the demo is off. */}
-      {demo ? (
-        <p class="sign-in-demo">{t("demoCredentials", demo)}</p>
-      ) : (
-        <p class="said">{t("shopSignInNote")}</p>
-      )}
+      </details>
 
       {/* A trail here means the demo failed after starting. */}
       {trail.length > 0 && (

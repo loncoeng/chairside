@@ -1,7 +1,7 @@
 // Browser demo: the real router and queries running on sql.js (SQLite in WASM),
 // one private copy per visitor. Loaded on demand only.
 
-import { todayInShop } from "./types.ts";
+import { timeInShop, todayInShop } from "./types.ts";
 import type { Database } from "../db/database.ts";
 
 /**
@@ -43,21 +43,26 @@ export function weeksToShift(lastDay: string, today: string): number {
   return Math.ceil(behind / 7) * 7;
 }
 
+type Raw = {
+  run: (sql: string) => void;
+  exec: (sql: string) => { values: unknown[][] }[];
+};
+
 /**
  * Shift all sample dates forward in place so the calendar is not empty.
  * Rows move together; nothing is regenerated. Holidays are real dates and
  * do not move (國慶日 stays on October 1).
  */
-export function moveToNow(raw: {
-  run: (sql: string) => void;
-  exec: (sql: string) => { values: unknown[][] }[];
-}): void {
+export function moveToNow(raw: Raw, now = Date.now()): void {
   const found = raw.exec("SELECT max(date) FROM bookings")[0]?.values[0]?.[0];
   if (typeof found !== "string") return;
 
-  const days = weeksToShift(found, todayInShop());
-  if (days === 0) return;
+  const days = weeksToShift(found, todayInShop(now));
+  if (days > 0) shift(raw, days);
+  undoTheFuture(raw, now);
+}
 
+function shift(raw: Raw, days: number): void {
   const seconds = days * DAY;
   // date(NULL, '+N days') stays NULL (no first visit, staff not left).
   raw.run(`
@@ -68,6 +73,41 @@ export function moveToNow(raw: {
     UPDATE customers SET first_visit_on = date(first_visit_on, '+${days} days'), created_at = created_at + ${seconds};
     UPDATE closures SET date = date(date, '+${days} days');
     UPDATE staff SET joined_on = date(joined_on, '+${days} days'), left_on = date(left_on, '+${days} days');
+  `);
+}
+
+/**
+ * The sample was generated with every visit already over, so after the shift
+ * the next week is full of guests who have come, been treated and paid. Puts
+ * those back to booked and takes away what could not have happened yet: their
+ * payments, their status changes, treatment records dated ahead, and any
+ * timestamp later than now. A visit under way is in the chair and unpaid.
+ * Bookings cancelled in advance stay cancelled.
+ */
+function undoTheFuture(raw: Raw, now: number): void {
+  const today = todayInShop(now);
+  const time = timeInShop(now);
+  const seconds = Math.floor(now / 1000);
+  raw.run(`
+    CREATE TEMP TABLE ahead AS
+      SELECT id FROM bookings
+      WHERE (date > '${today}' OR (date = '${today}' AND starts_at > '${time}'))
+        AND status IN ('arrived', 'done', 'no_show');
+    DELETE FROM payments WHERE booking_id IN (SELECT id FROM ahead);
+    DELETE FROM booking_events WHERE kind = 'status' AND booking_id IN (SELECT id FROM ahead);
+    UPDATE bookings SET status = 'booked' WHERE id IN (SELECT id FROM ahead);
+    DROP TABLE ahead;
+
+    -- Started but not yet over: in the chair, not paid.
+    UPDATE bookings SET status = 'arrived'
+      WHERE status = 'done' AND id IN (SELECT booking_id FROM payments WHERE paid_at > ${seconds});
+    DELETE FROM payments WHERE paid_at > ${seconds};
+
+    DELETE FROM records WHERE recorded_on > '${today}';
+    UPDATE bookings SET created_at = min(created_at, ${seconds});
+    UPDATE booking_events SET at = min(at, ${seconds});
+    UPDATE customers SET created_at = min(created_at, ${seconds});
+    UPDATE records SET created_at = min(created_at, ${seconds});
   `);
 }
 

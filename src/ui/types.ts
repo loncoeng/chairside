@@ -58,9 +58,16 @@ export function shiftDate(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+const MACAU = 8 * 60 * 60 * 1000;
+
 /** Today's date in Macau (fixed UTC+8, no daylight saving), not the visitor's zone. */
-export function todayInShop(): string {
-  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+export function todayInShop(now = Date.now()): string {
+  return new Date(now + MACAU).toISOString().slice(0, 10);
+}
+
+/** The time in Macau as "HH:MM". */
+export function timeInShop(now = Date.now()): string {
+  return new Date(now + MACAU).toISOString().slice(11, 16);
 }
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];

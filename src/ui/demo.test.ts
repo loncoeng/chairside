@@ -174,3 +174,38 @@ test("the real sample lands on the visitor's today, and not on the closed day", 
   // Holidays are real dates and do not move.
   strictEqual(one("SELECT min(date) FROM holidays WHERE date >= '2026-10-01'"), before);
 });
+
+test("after the move, nothing has happened that is still to come", () => {
+  const raw = new SQL.Database(new Uint8Array(gunzipSync(readFileSync(DEMO_FILE))));
+  const one = (sql: string): unknown => raw.exec(sql)[0]?.values[0]?.[0];
+  // A Wednesday at 13:00 in Macau, so today has visits both over and ahead.
+  const now = Date.parse("2026-11-18T05:00:00Z");
+
+  moveToNow(raw, now);
+
+  const ahead = "(b.date > '2026-11-18' OR (b.date = '2026-11-18' AND b.starts_at > '13:00'))";
+  strictEqual(
+    one(
+      `SELECT count(*) FROM bookings b WHERE ${ahead} AND b.status IN ('arrived', 'done', 'no_show')`,
+    ),
+    0,
+    "a guest is marked as come for a visit that has not started",
+  );
+  strictEqual(
+    one(`SELECT count(*) FROM payments p JOIN bookings b ON b.id = p.booking_id WHERE ${ahead}`),
+    0,
+    "a visit still to come has been paid for",
+  );
+  strictEqual(one("SELECT count(*) FROM records WHERE recorded_on > '2026-11-18'"), 0);
+  ok(Number(one(`SELECT max(paid_at) FROM payments`)) <= now / 1000, "a payment is dated ahead");
+
+  // The morning is still done and paid, and the week ahead is still booked.
+  ok(
+    Number(
+      one(
+        "SELECT count(*) FROM bookings WHERE date = '2026-11-18' AND starts_at < '12:00' AND status = 'done'",
+      ),
+    ) > 0,
+  );
+  ok(Number(one(`SELECT count(*) FROM bookings b WHERE ${ahead} AND b.status = 'booked'`)) > 0);
+});

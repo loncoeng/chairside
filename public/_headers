@@ -11,3 +11,11 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Cross-Origin-Opener-Policy: same-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+# The page itself, left exactly as built. Without no-transform, Cloudflare adds
+# its analytics script to the HTML, which the policy above then blocks, and
+# which would send page views off the site from a demo that says it does not.
+/
+  Cache-Control: public, max-age=0, must-revalidate, no-transform
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate, no-transform

@@ -1,6 +1,7 @@
 // Sign-in screen, shown without a session. The demo button comes first, the
 // staff form below. The demo also signs in through the real login.
 
+import { ThemeSwitch } from "./theme.tsx";
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
 import { LANGS, LANG_LABEL } from "./i18n.ts";
@@ -66,18 +67,21 @@ export function SignIn({
 
   return (
     <main class="sign-in">
-      <div class="langs" role="group" aria-label="Language">
-        {LANGS.map((code: Lang) => (
-          <button
-            type="button"
-            key={code}
-            class={code === lang ? "is-on" : undefined}
-            aria-pressed={code === lang}
-            onClick={() => setLang(code)}
-          >
-            {LANG_LABEL[code]}
-          </button>
-        ))}
+      <div class="sign-in-top">
+        <ThemeSwitch />
+        <div class="langs" role="group" aria-label="Language">
+          {LANGS.map((code: Lang) => (
+            <button
+              type="button"
+              key={code}
+              class={code === lang ? "is-on" : undefined}
+              aria-pressed={code === lang}
+              onClick={() => setLang(code)}
+            >
+              {LANG_LABEL[code]}
+            </button>
+          ))}
+        </div>
       </div>
 
       <h1>chairside</h1>

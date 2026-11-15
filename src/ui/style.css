@@ -1,6 +1,7 @@
 /* Desktop first, responsive down to phone width. */
 
 :root {
+  color-scheme: light;
   --ground: #f7f7f8;
   --surface: #ffffff;
   --ink: #17181b;
@@ -20,6 +21,9 @@
   --ok: #18794e;
   --ok-soft: #e9f5ee;
   --star: #c98a04;
+  /* The shop's own colour: the name and the main action on each screen. */
+  --brand: #1d6b52;
+  --on-brand: #ffffff;
   --styling: #3e63dd;
   --shampoo: #12a594;
   --radius: 8px;
@@ -31,8 +35,11 @@
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
+/* Dark: from the system unless the page has been told otherwise, or when
+   the page has been told so. The two blocks hold the same values. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --ground: #111214;
     --surface: #1a1b1e;
     --ink: #ececee;
@@ -52,8 +59,36 @@
     --star: #f5b942;
     --styling: #7c9cff;
     --shampoo: #3dd6c0;
+    --brand: #4fb08c;
+    --on-brand: #0d1f18;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #111214;
+  --surface: #1a1b1e;
+  --ink: #ececee;
+  --ink-soft: #a4a7ae;
+  --ink-faint: #6f727a;
+  --rule: #2b2d31;
+  --accent: #ececee;
+  --accent-soft: #26282c;
+  --on-accent: #111214;
+  --focus: #7ea6ff;
+  --warn: #f0a54a;
+  --warn-soft: #2a2116;
+  --stop: #ff6b6b;
+  --stop-soft: #2c1717;
+  --ok: #4cc38a;
+  --ok-soft: #15251d;
+  --star: #f5b942;
+  --styling: #7c9cff;
+  --shampoo: #3dd6c0;
+  --brand: #4fb08c;
+  --on-brand: #0d1f18;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3);
 }
 
 * {
@@ -90,10 +125,13 @@ button {
   font: inherit;
 }
 
+/* The name is the one place set in a serif, in the shop's colour. */
 h1 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-family: ui-serif, "New York", Georgia, "Times New Roman", serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--brand);
   margin: 0;
 }
 
@@ -134,11 +172,17 @@ h2 {
   padding: 0.45rem 0.7rem;
 }
 
-.dot {
-  width: 9px;
-  height: 9px;
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   flex: none;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .role {
@@ -237,6 +281,20 @@ button.link {
   margin: 0 0 0.75rem;
   color: var(--warn);
   font-size: 0.9rem;
+}
+
+.day-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.25rem;
+  margin: -0.4rem 0 0.6rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.day-summary .is-in {
+  color: var(--ok);
+  font-weight: 600;
 }
 
 /* Peak seat usage. */
@@ -458,9 +516,9 @@ button.link {
 button.primary,
 .day-nav button.primary,
 .sheet-actions button.primary {
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  color: var(--on-accent);
+  background: var(--brand);
+  border: 1px solid var(--brand);
+  color: var(--on-brand);
   border-radius: 6px;
   padding: 0.35rem 1rem;
   font-weight: 600;
@@ -468,7 +526,7 @@ button.primary,
 }
 button.primary:hover:not(:disabled),
 .day-nav button.primary:hover:not(:disabled) {
-  background: var(--accent);
+  background: var(--brand);
   opacity: 0.88;
 }
 button.primary:disabled {
@@ -709,6 +767,29 @@ button.primary:disabled {
   overflow: hidden;
 }
 
+/* The time now, across the grid, with the clock in the time column. */
+.cal-now {
+  align-self: start;
+  height: 0;
+  border-top: 2px solid var(--stop);
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+.cal-now span {
+  position: absolute;
+  left: 0.2rem;
+  top: -0.6rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--surface);
+  background: var(--stop);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  line-height: 1.15rem;
+}
+
 .cal-head-unassigned {
   color: var(--ink-faint);
 }
@@ -718,6 +799,22 @@ header .title {
   align-items: center;
   gap: 0.5rem;
   margin-right: 0.5rem;
+}
+
+.theme-switch {
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.theme-switch:hover {
+  color: var(--ink);
+  background: var(--accent-soft);
 }
 
 /* Language switch. */
@@ -1644,8 +1741,11 @@ section[aria-labelledby="room"] .lede {
   gap: 1rem;
 }
 
-.sign-in .langs {
-  align-self: flex-end;
+.sign-in-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
   margin: 0 0 0.4rem;
 }
 .sign-in h1 {

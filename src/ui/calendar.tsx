@@ -1,8 +1,9 @@
 // Day view: one column per seat, one row per quarter hour.
 // Columns are seats, not stylists, because seats (especially shampoo stations) run out first.
 
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import type { Day, Line, Seat } from "./types.ts";
+import { minutesOf, timeInShop, todayInShop } from "./types.ts";
 import { HEADER_ROWS, STEP, clock, linesFor, place, span as gridSpan, usage } from "./layout.ts";
 import { useText } from "./lang-context.ts";
 import { serviceName } from "./i18n.ts";
@@ -10,6 +11,21 @@ import type { Service } from "./book.tsx";
 
 /** Column id for treatments with no seat. */
 const UNASSIGNED = -1;
+
+/** Height of one STEP row. */
+const ROW = "1.45rem";
+
+/** Minutes since midnight in the shop, refreshed each minute, or null on any other day. */
+function useNow(date: string): number | null {
+  const [, tick] = useState(0);
+  const today = date === todayInShop();
+  useEffect(() => {
+    if (!today) return;
+    const timer = setInterval(() => tick((n) => n + 1), 60_000);
+    return () => clearInterval(timer);
+  }, [today]);
+  return today ? minutesOf(timeInShop()) : null;
+}
 
 export function Calendar({
   day,
@@ -29,6 +45,7 @@ export function Calendar({
 }) {
   const { t, lang } = useText();
   const [hover, setHover] = useState<number | null>(null);
+  const now = useNow(day.date);
   const { open, close } = gridSpan(day);
 
   const unusual = day.hours.closed || day.closure !== null;
@@ -79,7 +96,7 @@ export function Calendar({
           class="cal"
           style={{
             gridTemplateColumns: `4rem repeat(${columns.length}, minmax(5.5rem, 1fr))`,
-            gridTemplateRows: `auto auto repeat(${rows}, 1.45rem)`,
+            gridTemplateRows: `auto auto repeat(${rows}, ${ROW})`,
           }}
         >
           <div class="cal-corner" style={{ gridRow: `1 / span ${HEADER_ROWS}` }} />
@@ -155,6 +172,20 @@ export function Calendar({
               aria-hidden="true"
             >
               {t("bookAt", { time: clock(open + hover * STEP) })}
+            </div>
+          )}
+
+          {now !== null && now >= open && now < close && (
+            <div
+              class="cal-now"
+              style={{
+                gridRow: Math.floor((now - open) / STEP) + HEADER_ROWS + 1,
+                gridColumn: `1 / span ${columns.length + 1}`,
+                marginTop: `calc(${ROW} * ${((now - open) % STEP) / STEP})`,
+              }}
+              title={t("now")}
+            >
+              <span>{clock(now)}</span>
             </div>
           )}
 

@@ -1,5 +1,7 @@
 // App shell: sign-in, navigation, and the day view with the room summary below.
 
+import { Avatar } from "./avatar.tsx";
+import { ThemeSwitch } from "./theme.tsx";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { Calendar, Peak } from "./calendar.tsx";
 import { BookingForm } from "./book.tsx";
@@ -12,7 +14,7 @@ import { SignIn } from "./sign-in.tsx";
 import type { Signed } from "./sign-in.tsx";
 import type { Customer, Service } from "./book.tsx";
 import type { Day, Line, Room } from "./types.ts";
-import { shiftDate, todayInShop } from "./types.ts";
+import { shiftDate, timeInShop, todayInShop } from "./types.ts";
 import { LANGS, LANG_LABEL } from "./i18n.ts";
 import type { Lang } from "./i18n.ts";
 import { LangContext, initialLang, rememberLang, useText } from "./lang-context.ts";
@@ -277,6 +279,12 @@ function Screen() {
         </nav>
 
         <span class="whoami">
+          <Avatar
+            name={me.name}
+            color={
+              room.status === "ready" ? room.value.staff.find((p) => p.id === me.id)?.color : null
+            }
+          />
           {me.name}
           {/* In the demo, leaving is the way out. It is entered from the sign-in screen. */}
           {demo === "on" ? (
@@ -296,6 +304,7 @@ function Screen() {
           )}
         </span>
 
+        <ThemeSwitch />
         <div class="langs" role="group" aria-label="Language">
           {LANGS.map((code) => (
             <button
@@ -454,6 +463,7 @@ function Screen() {
                 </p>
               )}
 
+              <DaySummary day={day.value} />
               <Peak day={day.value} seats={room.value.seats} />
               <Calendar
                 day={day.value}
@@ -508,6 +518,35 @@ function Screen() {
   );
 }
 
+/** Counts bookings, not treatments: one visit can be shampoo, then cut. */
+function DaySummary({ day }: { day: Day }) {
+  const { t } = useText();
+  const visits = new Map<number, { status: string; startsAt: string }>();
+  for (const line of day.lines) {
+    const seen = visits.get(line.bookingId);
+    if (!seen || line.startsAt < seen.startsAt) {
+      visits.set(line.bookingId, { status: line.status, startsAt: line.startsAt });
+    }
+  }
+  const all = [...visits.values()];
+  const booked = all.filter((v) => v.status !== "cancelled" && v.status !== "no_show").length;
+  if (booked === 0) return null;
+
+  // Who is in now and what is left only mean something for today.
+  const today = day.date === todayInShop();
+  const time = timeInShop();
+  const inChair = all.filter((v) => v.status === "arrived").length;
+  const ahead = all.filter((v) => v.status === "booked" && v.startsAt > time).length;
+
+  return (
+    <p class="day-summary">
+      <span>{t("summaryBooked", { n: booked })}</span>
+      {today && <span class="is-in">{t("summaryInChair", { n: inChair })}</span>}
+      {today && <span>{t("summaryAhead", { n: ahead })}</span>}
+    </p>
+  );
+}
+
 function RoomSummary({ room }: { room: Room }) {
   const { t } = useText();
   const styling = room.seats.filter((s) => s.kind === "styling").length;
@@ -519,7 +558,7 @@ function RoomSummary({ room }: { room: Room }) {
       <ul class="staff">
         {room.staff.map((person) => (
           <li key={person.id}>
-            <span class="dot" style={{ background: person.color ?? "#888" }} aria-hidden="true" />
+            <Avatar name={person.name} color={person.color} />
             {person.name}
             <span class="role">
               {person.role === "owner" || person.role === "stylist" || person.role === "assistant"

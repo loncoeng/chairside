@@ -25,6 +25,10 @@ export const TEXT = {
   nextDay: { ja: "次の日", zh: "後一天", en: "Next day" },
   today: { ja: "今日", zh: "今天", en: "Today" },
   takeBooking: { ja: "予約を取る", zh: "新增預約", en: "New booking" },
+  summaryBooked: { ja: "予約 {n}件", zh: "預約 {n} 個", en: "{n} booked" },
+  summaryInChair: { ja: "来店中 {n}名", zh: "店內 {n} 位", en: "{n} in the chair" },
+  summaryAhead: { ja: "これから {n}件", zh: "稍後 {n} 個", en: "{n} still to come" },
+  now: { ja: "現在", zh: "現在", en: "Now" },
   bookAt: { ja: "{time} に予約を取る", zh: "在 {time} 新增預約", en: "New booking at {time}" },
   loading: { ja: "読み込み中…", zh: "載入中…", en: "Loading…" },
   dayFailed: {
@@ -317,6 +321,8 @@ export const TEXT = {
     zh: "無法載入示範。",
     en: "The demo did not load.",
   },
+  themeDark: { ja: "暗い表示にする", zh: "切換為深色", en: "Switch to dark" },
+  themeLight: { ja: "明るい表示にする", zh: "切換為淺色", en: "Switch to light" },
   demoBadge: { ja: "デモ", zh: "示範", en: "Demo" },
   demoBanner: {
     ja: "このブラウザの中だけで動いています。再読み込みすると元に戻ります。",

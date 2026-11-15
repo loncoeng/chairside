@@ -1,6 +1,7 @@
 // Shop settings: opening hours, closures and staff.
 // Each save shows a confirmation, including side effects such as bookings left standing.
 
+import { Avatar } from "./avatar.tsx";
 import { useEffect, useState } from "preact/hooks";
 import { useText } from "./lang-context.ts";
 import { todayInShop } from "./types.ts";
@@ -299,7 +300,7 @@ function TeamRow({
 
   return (
     <li class={gone ? "is-gone" : undefined}>
-      <span class="dot" style={{ background: person.color ?? "#888" }} aria-hidden="true" />
+      <Avatar name={person.name} color={person.color} />
       <span class="team-name">{person.name}</span>
       {/* Role (permissions) and grade (price) are separate. */}
       <span class="role">{t(person.role as "stylist")}</span>

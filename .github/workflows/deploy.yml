@@ -129,12 +129,26 @@ jobs:
         run: |
           base=https://chairside.loncoeng.dev
 
+          # The zone rate-limits bursts (429, Cloudflare error 1015), and a run of probes is
+          # one. Space every request out, and wait out a 429 instead of counting it.
+          hit() {
+            out=$1; shift
+            sleep 2
+            for wait in 1 2 3; do
+              code=$(curl -s -o "$out" -w '%{http_code}' --max-time 20 "$@" || true)
+              [ "$code" != "429" ] && break
+              echo "(rate-limited, waiting 15s)" >&2
+              sleep 15
+            done
+            echo "$code"
+          }
+
           # Retry: a new version reaches edge locations over several seconds, so adjacent
           # requests can hit different versions.
           expect() {
             want=$1; shift
             for try in 1 2 3 4 5 6; do
-              got=$(curl -s -o /tmp/body -w '%{http_code}' --max-time 20 "$@" || true)
+              got=$(hit /tmp/body "$@")
               if [ "$got" = "$want" ]; then
                 echo "HTTP $got"
                 return 0
@@ -212,7 +226,7 @@ jobs:
           stylist=$(node scripts/mint-session.ts 2 stylist)
 
           # Check the body, not just the status: a broken run_worker_first returns the SPA HTML with 200.
-          code=$(curl -s -o /tmp/api -w '%{http_code}' --max-time 20 -H "cookie: __Host-chairside_session=$owner" "$base/api/room" || true)
+          code=$(hit /tmp/api -H "cookie: __Host-chairside_session=$owner" "$base/api/room")
           echo "GET /api/room -> HTTP $code"
           head -c 300 /tmp/api; echo
           if [ "$code" != "200" ] || ! grep -q '"seats"' /tmp/api; then
@@ -230,7 +244,7 @@ jobs:
           echo "the database answers"
 
           # Use a fixed sample date: an empty day is a valid reply.
-          code=$(curl -s -o /tmp/day -w '%{http_code}' --max-time 20 -H "cookie: __Host-chairside_session=$owner" "$base/api/day?date=2026-09-23" || true)
+          code=$(hit /tmp/day -H "cookie: __Host-chairside_session=$owner" "$base/api/day?date=2026-09-23")
           echo "GET /api/day -> HTTP $code"
           lines=$(grep -o '"itemId"' /tmp/day | wc -l)
           echo "treatments on that day: $lines"

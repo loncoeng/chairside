@@ -57,7 +57,7 @@ export const TEXT = {
   styling: { ja: "セット面", zh: "剪髮位", en: "Styling chairs" },
   shampoo: { ja: "シャンプー台", zh: "洗頭位", en: "Shampoo stations" },
   unassigned: { ja: "未定", zh: "未定", en: "Unassigned" },
-  busiestAt: { ja: "ピークは {at}", zh: "{at} 最繁忙", en: "busiest at {at}" },
+  busiestAt: { ja: "ピーク {at}", zh: "{at} 最繁忙", en: "busiest at {at}" },
   full: { ja: "満席", zh: "已滿", en: "Full" },
   // Why the two seat kinds are counted apart: see DESIGN.md.
   roomSummary: {

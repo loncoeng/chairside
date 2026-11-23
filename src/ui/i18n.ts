@@ -298,6 +298,11 @@ export const TEXT = {
   role: { ja: "役割", zh: "職位", en: "Role" },
   add: { ja: "追加", zh: "新增", en: "Add" },
   markLeft: { ja: "退職にする", zh: "設為離職", en: "Mark as left" },
+  markLeftAsk: {
+    ja: "{name}さんを {date} 付けで退職にしますか？",
+    zh: "將 {name} 由 {date} 起設為離職？",
+    en: "Mark {name} as left from {date}?",
+  },
   bringBack: { ja: "在籍に戻す", zh: "恢復在職", en: "Bring back" },
   leftOn: { ja: "{date} 退職", zh: "{date} 離職", en: "left {date}" },
   staffSaved: { ja: "保存しました。", zh: "已儲存。", en: "Saved." },

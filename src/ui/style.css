@@ -1624,6 +1624,27 @@ ul.holiday-note li {
 .team li button.link {
   margin-left: auto;
 }
+/* The question and its two answers move as one, onto their own line if needed. */
+.team li.is-asking {
+  flex-wrap: wrap;
+}
+.team-ask {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  color: var(--warn);
+  font-size: 0.85rem;
+}
+.team li .team-ask button.link {
+  margin-left: 0;
+}
+.team li button.team-confirm {
+  color: var(--warn);
+  font-weight: 600;
+}
 .team li.is-gone .team-name {
   color: var(--ink-faint);
 }

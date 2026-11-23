@@ -286,7 +286,7 @@ export function Shop() {
   );
 }
 
-function TeamRow({
+export function TeamRow({
   person,
   busy,
   onSave,
@@ -297,9 +297,11 @@ function TeamRow({
 }) {
   const { t } = useText();
   const gone = person.leftOn !== null;
+  // One click takes somebody off new bookings, so ask first.
+  const [asking, setAsking] = useState(false);
 
   return (
-    <li class={gone ? "is-gone" : undefined}>
+    <li class={gone ? "is-gone" : asking ? "is-asking" : undefined}>
       <Avatar name={person.name} color={person.color} />
       <span class="team-name">{person.name}</span>
       {/* Role (permissions) and grade (price) are separate. */}
@@ -318,13 +320,26 @@ function TeamRow({
             {t("bringBack")}
           </button>
         </>
+      ) : asking ? (
+        <span class="team-ask">
+          <span>{t("markLeftAsk", { name: person.name, date: todayInShop() })}</span>
+          <button
+            type="button"
+            class="link team-confirm"
+            disabled={busy}
+            onClick={() => {
+              setAsking(false);
+              onSave({ leftOn: todayInShop() });
+            }}
+          >
+            {t("markLeft")}
+          </button>
+          <button type="button" class="link" onClick={() => setAsking(false)}>
+            {t("cancel")}
+          </button>
+        </span>
       ) : (
-        <button
-          type="button"
-          class="link"
-          disabled={busy}
-          onClick={() => onSave({ leftOn: todayInShop() })}
-        >
+        <button type="button" class="link" disabled={busy} onClick={() => setAsking(true)}>
           {t("markLeft")}
         </button>
       )}

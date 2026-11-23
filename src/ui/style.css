@@ -1603,6 +1603,7 @@ ul.holiday-note li {
 
 .team li {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.6rem;
   padding: 0.35rem 0;
@@ -1616,40 +1617,41 @@ ul.holiday-note li {
 .team .role {
   margin-left: 0;
 }
-.team-left {
-  color: var(--ink-faint);
-  font-size: 0.8rem;
-  margin-left: auto;
-}
-.team li button.link {
-  margin-left: auto;
-}
-/* The question and its two answers move as one, onto their own line if needed. */
-.team li.is-asking {
-  flex-wrap: wrap;
-}
-.team-ask {
+/* Pushed right; when it does not fit beside the name it wraps as one piece. */
+.team-actions {
   margin-left: auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: baseline;
   gap: 0.25rem 0.75rem;
+}
+.team-actions button.link {
+  white-space: nowrap;
+}
+.team-left {
+  color: var(--ink-faint);
+  font-size: 0.8rem;
+}
+.team-ask {
   color: var(--warn);
   font-size: 0.85rem;
-}
-.team li .team-ask button.link {
-  margin-left: 0;
 }
 .team li button.team-confirm {
   color: var(--warn);
   font-weight: 600;
 }
+/* On a phone every row puts its actions under the name, so the rows line up. */
+@media (max-width: 40rem) {
+  .team li {
+    row-gap: 0.1rem;
+  }
+  .team-actions {
+    flex-basis: 100%;
+  }
+}
 .team li.is-gone .team-name {
   color: var(--ink-faint);
-}
-.team li.is-gone button.link {
-  margin-left: 0.5rem;
 }
 
 /* --- Demo ---------------------------------------------------------------- */
